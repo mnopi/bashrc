@@ -5,6 +5,10 @@ cd "${PROJECT_BASHRC}" > /dev/null 2>&1 || { error.sh "${PROJECT_BASHRC}" "does 
 
 if isuser.sh; then
   clean-project.sh /ala
+	git add . --all
+	bash -c '$(COMMAND) cd $(DIR); bump2version --allow-dirty $(BUMP)'
+	git push -u origin $(BRANCH) --tags
+
 else
   error.sh "${PROJECT_BASHRC}" "can not be uploaded with root"; exit 1
 fi
