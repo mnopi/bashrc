@@ -45,33 +45,17 @@ clean-test:  ## remove test and coverage artifacts
 	@/bin/rm -fr .pytest_cache
 	@find . -name '.mypy_cache' -exec /bin/rm -rf {} +
 
-test: clean darglint doctest pytest  ## all tests
-darglint:  ## darglint docstrings tests
-	@bash -c '$(COMMAND) darglint -v 2 -s google --log-level DEBUG --strictness full $(DIR)/$(PROJECT)/*.py'
-mypy:  ## mypy tests - does not work
-	@bash -c '$(COMMAND) mypy --config-file $(DIR)/setup.cfg --show-traceback $(DIR)/$(PROJECT)/*.py'
-doctest:  ## doctest tests
-	@bash -c '$(COMMAND) python -m doctest $(DIR)/$(PROJECT)/*.py  # -v'
-pytest:  ## pytest tests
-	@bash -c '$(COMMAND) pytest'
+up:
+	git add . --all
+	bump2version --allow-dirty $(BUMP)
+	git push -u origin $(BRANCH) --tags
+	python setup.py sdist
+	python setup.py bdist_wheel
+	twine upload -r j5pu dist/*
+	/usr/local/bin/pip3.8 install -vvvv --upgrade $(PROJECT)
 
-git: add bump push  # git add, bump version and git push
-add:  ## git add all
-	@git add . --all
-bump:  ## bump2version
-	@bash -c '$(COMMAND) cd $(DIR); bump2version --allow-dirty $(BUMP)'
-push:  ## git push
-	@git push -u origin $(BRANCH) --tags
 
-dist: clean git build upload install merge ## builds source and wheel package
-build:  ## build sdist and wheel
-	@bash -c '$(COMMAND) cd $(DIR); python setup.py sdist'
-	@bash -c '$(COMMAND) cd $(DIR); python setup.py bdist_wheel'
-upload:  ## build sdist nd wheel
-	@bash -c '$(COMMAND) cd $(DIR); twine upload -r jose-nferx dist/*'
-install:  ## installs in system
-	@/usr/local/bin/pip3.8 install -vvvv --upgrade $(PROJECT)
-merge: clean ## installs in system
+merge:  ## installs in system
 ifneq ($(BRANCH),master)
 	@echo "BRANCH: $(BRANCH)"
 	@git checkout master
