@@ -1,23 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """The setup script."""
-import pathlib
-
 from setuptools import setup, find_packages
 
 # noinspection PyUnresolvedReferences
-from bashrc import GITHUB_EMAIL, REALNAME, GITHUB_URL
+from bashrc import package, project, scripts_relative, readme, description, GITHUB_EMAIL, REALNAME, GITHUB_URL
 
-project = pathlib.Path(__file__).parent
-scripts = pathlib.Path() / f'{project.name}/scripts'
-readme = project / 'README.md'
-description = project.name
-if readme.is_file():
-    try:
-        description = str(readme).splitlines()[0].split('#')[1]
-    except IndexError:
-        pass
 
+print(scripts_relative, package)
 setup(
     author=REALNAME,
     author_email=GITHUB_EMAIL,
@@ -30,15 +20,15 @@ setup(
         'twine',
         'wheel',
     ],
-    name=project.name,
+    name=package.name,
     package_data={
         project.name: [f'{project.name}/scripts/*'],
     },
-    packages=find_packages(include=[project.name]),
-    scripts=[item for item in scripts.iterdir()],
+    packages=find_packages(include=[package.name]),
+    scripts=scripts_relative,
     setup_requires=[],
     tests_require=[],
     url=f'{GITHUB_URL}/',
-    version='0.1.3',
+    version='0.1.4',
     zip_safe=False,
 )

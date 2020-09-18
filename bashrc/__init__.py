@@ -1,11 +1,25 @@
 # coding=utf-8
 """Bashrc Package."""
 import os
+import pathlib
 
-__all__ = []
+package = pathlib.Path(__file__).parent.resolve()
+project = package.parent
+
+scripts = package / 'scripts'
+scripts_relative = [item.relative_to(project) for item in scripts.iterdir()]
+
+readme = project / 'README.md'
+description = project.name
+if readme.is_file():
+    try:
+        description = str(readme).splitlines()[0].split('#')[1]
+    except IndexError:
+        pass
+
+__all__ = ['package', 'project', 'scripts', 'scripts_relative', 'readme', 'description']
+
 for global_var, global_value in os.environ.items():
     # noinspection PyStatementEffect
     globals()[global_var] = global_value
     __all__.append(global_var)
-
-print(__all__)
