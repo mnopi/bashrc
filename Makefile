@@ -49,8 +49,8 @@ up:
 	git add . --all
 	bump2version --allow-dirty $(BUMP)
 	git push -u origin $(BRANCH) --tags
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python3 setup.py sdist
+	python3 setup.py bdist_wheel
 	twine upload -r j5pu dist/*
 	/usr/local/bin/pip3.8 install -vvvv --upgrade $(PROJECT)
 
