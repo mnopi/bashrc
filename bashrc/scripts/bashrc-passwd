@@ -22,18 +22,14 @@ if ! test -f "${PASSWD_PATH}"; then
   fi
 export GITHUB_PRIVATE_URL="https://${GITHUB_USERNAME}:${INTERNET}@github.com/${GITHUB_USERNAME}"
 export GITHUB_SECRETS_URL="${GITHUB_PRIVATE_URL}/.ssh"
-export GITHUB_SECRETS_PATH="${HOME}/.ssh"
-export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets.sh"
-export GITHUB_SECRETS_FILE_URL="https://${GITHUB_USERNAME}:${INTERNET}@raw.githubusercontent.com/${GITHUB_USERNAME}/.ssh/secrets.sh"
-for var in PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL GITHUB_SECRETS_PATH SECRETS_PATH \
-           GITHUB_SECRETS_FILE_URL; do
+for var in PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL; do
   echo "export ${var}='${!var}'" | tee -a "${PASSWD_PATH}" > /dev/null 2>&1
 done
   info.sh "${PASSWD_PATH}" created
 fi
 # shellcheck disable=SC1090
 source "${PASSWD_PATH}"
-debug.sh PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL GITHUB_SECRETS_PATH SECRETS_PATH GITHUB_SECRETS_FILE_URL
+debug.sh PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL
 echo "${PASSWORD}" | sudo -S true > /dev/null 2>&1
 
 unset source

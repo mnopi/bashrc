@@ -6,11 +6,13 @@ export source="${BASH_SOURCE[0]}"; debug.sh source
 export USERNAME="jose"
 USERHOME="$( [[ "$(uname -s)" == "Darwin" ]] && echo "/Users" || echo "/home" )/${USERNAME}"; export USERHOME
 export PASSWD_PATH="${USERHOME}/.passwd"
-export BASHRC_FILE="bashrc.sh"
+export BASHRC_FILE="bashrc"
 export PROJECT_BASHRC="${USERHOME}/bashrc"
 export GITHUB_USERNAME="j5pu"
 export NFERX_GITHUB_USERNAME="jose-nferx"
 export SECRETS_REPO="secrets"
+export GITHUB_SECRETS_PATH="${HOME}/.ssh"
+export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets.sh"
 
 DARWIN="$(uname -a | grep -i darwin 2>/dev/null)"; export DARWIN
 KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
@@ -18,7 +20,7 @@ DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
 UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
 
 for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE PROJECT_BASHRC GITHUB_USERNAME NFERX_GITHUB_USERNAME \
-           SECRETS_REPO; do
+           SECRETS_REPO GITHUB_SECRETS_PATH SECRETS_PATH; do
   debug.sh "${var}"
 done
 
