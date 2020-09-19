@@ -5,9 +5,13 @@ export source="${BASH_SOURCE[0]}"; debug.sh source
 
 test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
 
-if ! grep source ~/.bashrc | grep "${BASHRC_FILE}" > /dev/null 2>&1; then
-  if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
-    tee -a ~/.bashrc >/dev/null <<EOT
+if isuser.sh; then
+  for user in "${USERNAME}" root kali; do
+    if home="$( home.sh "${user}" )"; then
+      file="${home}/.bashrc"
+      if ! grep source "${file}" | grep "${BASHRC_FILE}" > /dev/null 2>&1; then
+        if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
+          tee -a "${file}" >/dev/null <<EOT
 
 if test -f  "${bashrc_path}";then
   source "${bashrc_path}"
@@ -15,10 +19,13 @@ else
   echo 'bashrc file not found'; return 1
 fi
 EOT
-    info.sh files .bashrc "${bashrc_path}"
-  else
-    error.sh files .bashrc "${BASHRC_FILE} - command not found"
-  fi
+          info.sh files "${file}" "${bashrc_path}"
+        else
+          error.sh files "${file}" "${BASHRC_FILE} - command not found"
+        fi
+      fi
+    fi
+  done
 fi
 
-unset source bashrc_path
+unset source bashrc_path user home file
