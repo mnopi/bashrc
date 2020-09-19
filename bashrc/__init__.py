@@ -7,7 +7,7 @@ package = pathlib.Path(__file__).parent.resolve()
 project = package.parent
 
 scripts = package / 'scripts'
-scripts_relative = [item.relative_to(project) for item in scripts.iterdir()]
+scripts_relative = [str(item.relative_to(project)) for item in scripts.iterdir()]
 
 readme = project / 'README.md'
 description = project.name

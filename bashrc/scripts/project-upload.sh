@@ -33,6 +33,9 @@ if ! test -d "${virtual}"; then
   python3.8 -m venv "${path}/venv"
 fi
 
+# shellcheck disable=SC1090
+source "${virtual}/activate"
+
 while read -r file; do
   "${virtual}/python3" -m pip install --upgrade -r "${file}"
 done < <( find "${path}" -type f -name "requirements*" )
