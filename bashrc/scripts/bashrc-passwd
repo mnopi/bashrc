@@ -7,13 +7,20 @@ test -n "${PASSWD_PATH}" || { error.sh PASSWD_PATH 'not defined'; return 1; }
 debug.sh PASSWD_PATH
 
 if ! test -f "${PASSWD_PATH}"; then
-  read -r -p "$( blue.sh "Enter sudo password: " )" PASSWORD
+  PASSWORD="${1}"
+  if ! test -n "${PASSWORD}"; then
+    read -r -p "$( blue.sh "Enter sudo password: " )" PASSWORD
+  fi
   export PASSWORD
   if test -n "${DARWIN}"; then
-    read -r -p "$( blue.sh "Enter internet/GitHub password: " )" INTERNET
+    INTERNET="${2}"
+    if ! test -n "${INTERNET}"; then
+      read -r -p "$( blue.sh "Enter internet/GitHub password: " )" INTERNET
+    fi
   else
     INTERNET="${PASSWORD}"
   fi
+  export INTERNET
   if echo "${PASSWORD}" | sudo -S true; then
     info.sh passwd "sudo password."
   else

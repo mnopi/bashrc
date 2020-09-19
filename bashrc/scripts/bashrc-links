@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+## source
+# shellcheck disable=SC2034
+export source="${BASH_SOURCE[0]}"; debug.sh source
+
+function home() {
+  unset home
+  if [[ "${1}" == "root" ]]; then
+    home="/var/${1}"
+    test -n "${DARWIN}" || home="/${1}"
+    echo "${home}"
+  elif "$( id "${1}" )"; then
+    home="/Users/${1}"
+    test -n "${DARWIN}" || home="/home/${1}"
+  fi
+  echo "${home}";
+  ! test -n "${home}" || return 1
+}
+
+if isuser; then
+  cd "${USERHOME}" > /dev/null 2>&1 || { error.sh "${USERHOME}" "invalid"; exit 1; }
+  for user in root kali; do
+    if home="$( home "${user}" )"; then
+    home="/var/root"
+    test -n "${DARWIN}" || home="root"
+      for file in .ssh/config $( grep -l "END OPENSSH PRIVATE KEY" .ssh/**/* ) .gitconfig; do
+
+      done
+    fi
+  done
+  cd - > /dev/null || return 1
+fi
+for file in .ssh/config
+
+## To avoid error with daemon env not iCloud
+if test -d "${REBASH}" && test -n "${DARWIN}"; then
+  for file in ${BASH_INSTALL}; do
+    if [[ "$(id -u)" != "0" ]] && [[ ! "${SUDO_UID-}" ]] && test -e "${USERHOME}/${file}"; then
+        if ! sudo test -e "/var/root/${file}" && ! sudo test -L "/var/root/${file}"; then
+          sudo rm -rf "/var/root/${file}"
+          sudo ln -s "${USERHOME}/${file}" "/var/root/${file}"
+          info link "/var/root/${file}"
+        fi
+    fi
+  done
+fi
+
+test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
+
+if ! grep source ~/.bashrc | grep "${BASHRC_FILE}" > /dev/null 2>&1; then
+  if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
+    tee -a ~/.bashrc >/dev/null <<EOT
+
+if test -f  "${bashrc_path}";then
+  source "${bashrc_path}"
+else
+  echo 'bashrc file not found'; return 1
+fi
+EOT
+    info.sh files .bashrc "${bashrc_path}"
+  else
+    error.sh files .bashrc "${BASHRC_FILE} - command not found"
+  fi
+fi
+
+unset source bashrc_path

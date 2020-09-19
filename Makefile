@@ -13,10 +13,23 @@ vars:
 	@echo "DIR: $(DIR)"
 	@echo "PROJECT: $(PROJECT)"
 
-venv:
+project-venv-git-source:
 	@project-venv.sh
-clean:
+project-clean-git-source:
 	@project-clean.sh
-
-upload:
+bashrc-upload-git-source:
 	@bashrc-upload.sh $(BUMP)
+bashrc-upgrade-other:
+	@bashrc-upgrade.sh
+
+bashrc-install-macos:
+	@bashrc-install.sh "${PASSWORD}" "${INTERNET}"
+bashrc-install-other:
+	@bashrc-install.sh "${INTERNET}"
+
+## TODO: el install hace un link con los otros usuarios
+secrets-push-git-source:
+	@secrets-push.sh
+secrets-pull-other:
+	@secrets-pull.sh
+
