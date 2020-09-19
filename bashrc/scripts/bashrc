@@ -4,14 +4,14 @@
 export source="${BASH_SOURCE[0]}"; debug.sh source
 
 export USERNAME="jose"
-USERHOME="$( [[ "$(uname -s)" == "Darwin" ]] && echo "/Users" || echo "/home" )/${USERNAME}"; export USERHOME
+USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
 export PASSWD_PATH="${USERHOME}/.passwd"
 export BASHRC_FILE="bashrc"
 export PROJECT_BASHRC="${USERHOME}/bashrc"
 export GITHUB_USERNAME="j5pu"
 export NFERX_GITHUB_USERNAME="jose-nferx"
 export SECRETS_REPO="secrets"
-export GITHUB_SECRETS_PATH="${HOME}/.ssh"
+export GITHUB_SECRETS_PATH="${USERHOME}/.ssh"
 export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets.sh"
 
 DARWIN="$(uname -a | grep -i darwin 2>/dev/null)"; export DARWIN

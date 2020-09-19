@@ -17,8 +17,10 @@ project-venv-git-source:
 	@project-venv.sh
 project-clean-git-source:
 	@project-clean.sh
+
 bashrc-upload-git-source:
 	@bashrc-upload.sh $(BUMP)
+
 bashrc-upgrade-other:
 	@bashrc-upgrade.sh
 
