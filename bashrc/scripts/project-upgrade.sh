@@ -20,6 +20,7 @@ else
   error.sh upgrade "${name}" "${error}"; exit 1
 fi
 
+## I do not know why requires twice to get it into the path,
 /usr/local/bin/pip3.8 install --upgrade "${name}" > /dev/null 2>&1
 
 unset source error path name
