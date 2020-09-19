@@ -7,8 +7,9 @@ test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
 if ! grep source ~/.bashrc | grep "${BASHRC_FILE}" > /dev/null 2>&1; then
   if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
     tee -a ~/.bashrc >/dev/null <<EOT
-if test -f  \"${bashrc_path}\";then
-  source \"${bashrc_path}\"
+
+if test -f  "${bashrc_path}";then
+  source "${bashrc_path}"
 else
   echo 'bashrc file not found'; return 1
 fi
