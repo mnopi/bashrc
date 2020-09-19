@@ -6,7 +6,7 @@ test -n "${PASSWD_PATH}" || { error.bash PASSWD_PATH 'not defined'; return 1; }
 
 
 if ! grep "${BASHRC_FILE}" ~/.bashrc; then
-  echo "source \"$( command -v "${}" )\"" >> ~/.bashrc
+  echo "source \"$( command -v "${BASHRC_FILE}" )\"" >> ~/.bashrc
 fi
 
 unset source

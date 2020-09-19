@@ -15,6 +15,9 @@ esac; shift
 test -n "${PROJECT_BASHRC}" || { error.sh "PROJECT_BASHRC" "empty"; exit 1; }
 cd "${PROJECT_BASHRC}" > /dev/null 2>&1 || { error.sh "${PROJECT_BASHRC}" "does not exists"; exit 1; }
 
+unset VIRTUAL_ENV PYTHONHOME
+deactivate > /dev/null 2>&1
+
 project-upload.sh "${PROJECT_BASHRC}" "${bump}" "${GITHUB_USERNAME}" || exit 1
 
 cd - > /dev/null || exit 1

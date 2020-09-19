@@ -4,8 +4,7 @@ export source="${BASH_SOURCE[0]}"; debug.sh source
 
 test -n "${GITHUB_SECRETS_FILE_URL}" || { error.sh GITHUB_SECRETS_FILE_URL 'not defined'; return 1; }
 
-path="$( command -v bashrc-secrets )"; export path
-debug.sh "${path}"
+path="$( command -v bashrc-secrets )"; export path; debug.sh path
 # shellcheck disable=SC1090
 if test -f "${path}"; then
   source "${path}"
