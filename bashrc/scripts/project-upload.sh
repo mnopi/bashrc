@@ -74,7 +74,7 @@ if isuser.sh; then
   else
     error.sh twine "${error}"; exit 1
   fi
-  gmerge || exit 1
+  gmerge.sh || exit 1
   project-clean.sh "${path}" || exit 1
   project-upgrade.sh "$( basename "${path}" )" || exit 1
 else
