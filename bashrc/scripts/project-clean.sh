@@ -6,8 +6,10 @@ if ! isuser.sh; then
   error.sh "can not be done with root"; exit 1
 fi
 
-test -n "${1}" || { error.sh "Project Path" "must be specified"; exit 1; }
-cd "${1}" > /dev/null 2>&1 || { error.sh "${1}" "invalid"; exit 1; }
+path="${1:-.}"
+export path; debug.sh path
+
+cd "${path}" > /dev/null 2>&1 || { error.sh "${path}" "invalid"; exit 1; }
 
 /bin/rm -fr build/ > /dev/null
 /bin/rm -fr dist/ > /dev/null
@@ -22,7 +24,6 @@ find . -name '__pycache__' -exec /bin/rm -fr {} +
 /bin/rm -fr .pytest_cache
 find . -name '.mypy_cache' -exec /bin/rm -rf {} +
 
-debug Project: "${1}" clean
 cd - > /dev/null || exit 1
 
-unset source
+unset source path

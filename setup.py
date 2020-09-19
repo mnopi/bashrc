@@ -4,7 +4,7 @@
 from setuptools import setup, find_packages
 
 # noinspection PyUnresolvedReferences
-from bashrc import package, project, scripts_relative, readme, description, GITHUB_EMAIL, REALNAME, GITHUB_URL
+from bashrc import package, project, scripts_relative, readme, description, install_requires, GITHUB_EMAIL, REALNAME, GITHUB_URL
 
 
 print(scripts_relative, package)
@@ -13,13 +13,7 @@ setup(
     author_email=GITHUB_EMAIL,
     description=description,
     include_package_data=True,
-    install_requires=[
-        'bump2version',
-        'pip',
-        'setuptools',
-        'twine',
-        'wheel',
-    ],
+    install_requires=install_requires,
     name=package.name,
     package_data={
         project.name: [f'{project.name}/scripts/*'],
@@ -29,6 +23,6 @@ setup(
     setup_requires=[],
     tests_require=[],
     url=f'{GITHUB_URL}/',
-    version='0.1.4',
+    version='0.1.5',
     zip_safe=False,
 )

@@ -20,10 +20,10 @@ while (( "$#" )); do
   esac; shift
 done
 
+path="${path:-.}"
+bump="${bump:-patch}"
 export bump twine path; debug.sh bump twine path
 
-path="${path:-.}"
-test -n "${path}" || { error.sh "Project Path" "must be specified"; exit 1; }
 cd "${path}" > /dev/null 2>&1 || { error.sh "${path}" "invalid"; exit 1; }
 
 virtual="${path}/venv/bin"
@@ -34,17 +34,17 @@ if ! test -d "${virtual}"; then
 fi
 
 while read -r file; do
-  python3.8 -m pip install --upgrade -r "${file}"
+  "${virtual}/python3" -m pip install --upgrade -r "${file}"
 done < <( find "${path}" -type f -name "requirements*" )
 
 if isuser.sh; then
   project-clean.sh "${path}" || exit 1
 	gadd.sh || exit 1
-  "${path}/bump2version" --allow-dirty "${bump:-patch}" || exit 1
+  "${virtual}/bump2version" --allow-dirty "${bump}" || exit 1
   gpush.sh || exit 1
-  "${path}/python3" setup.py sdist || exit 1
-  "${path}/python3" setup.py bdist_wheel || exit 1
-  "${path}/twine" upload -r "${twine}" || exit 1
+  "${virtual}/python3" setup.py sdist || exit 1
+  "${virtual}/python3" setup.py bdist_wheel || exit 1
+  "${virtual}/twine" upload -r "${twine}" || exit 1
   gmerge || exit 1
   project-clean.sh "${path}" || exit 1
   project-upgrade.sh "$( basename "${path}" )" || exit 1

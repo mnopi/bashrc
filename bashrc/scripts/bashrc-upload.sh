@@ -9,7 +9,6 @@ fi
 case "${1}" in
   major) bump="${1}" ;;
   minor) bump="${1}" ;;
-  *) { error.sh "bump" "must be:" "<major|minor>"; exit 1; };;
 esac; shift
 
 test -n "${PROJECT_BASHRC}" || { error.sh "PROJECT_BASHRC" "empty"; exit 1; }

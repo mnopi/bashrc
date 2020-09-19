@@ -17,6 +17,12 @@ if readme.is_file():
     except IndexError:
         pass
 
+requirements = project / 'requirements.txt'
+if requirements.is_file():
+    install_requires = requirements.read_text().splitlines()
+else:
+    install_requires = list()
+
 __all__ = ['package', 'project', 'scripts', 'scripts_relative', 'readme', 'description']
 
 for global_var, global_value in os.environ.items():
