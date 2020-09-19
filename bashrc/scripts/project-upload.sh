@@ -32,29 +32,10 @@ export bump twine path name; debug.sh bump twine path name
 virtual="${path}/venv/bin"
 export virtual; debug.sh virtual
 
-if ! test -d "${virtual}"; then
-  if error="$( python3.8 -m venv "${path}/venv" 2>&1 )"; then
-    info.sh venv "${name}"
-  else
-    error.sh venv "${name}" "${error}"; exit 1
-  fi
-fi
-
-# shellcheck disable=SC1090
-source "${virtual}/activate"
-
-while read -r file; do
-  export file; debug.sh file
-  if error="$( "${virtual}/python3" -m pip install --upgrade pip wheel setuptools && \
-               "${virtual}/python3" -m pip install --upgrade -r "${file}" 2>&1 )"; then
-    info.sh requirements "${name}"
-  else
-    error.sh requirements "${name}" "${error}"; exit 1
-  fi
-done < <( find "${path}" -mindepth 1 -maxdepth 2 -type f -name "requirements*" )
-
 if isuser.sh; then
+  project-venv.sh "${path}"
   project-clean.sh "${path}" || exit 1
+  find "${path}" -type d -name scripts -exec chmod -R +x "{}" \;
 	gadd.sh || exit 1
   if error="$( "${virtual}/bump2version" --allow-dirty "${bump}" 2>&1 )"; then
     info.sh bump2version "${name}"
