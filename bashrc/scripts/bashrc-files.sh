@@ -6,8 +6,13 @@ test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
 
 if ! grep source ~/.bashrc | grep "${BASHRC_FILE}" > /dev/null 2>&1; then
   if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
-    echo "test -f  \"${bashrc_path}\" && source \"${bashrc_path}\" || { echo 'bashrc file not found'; return 1; }" \
-          >> ~/.bashrc
+    tee ~/.bashrc >/dev/null <<EOT
+if test -f  \"${bashrc_path}\";then
+  source \"${bashrc_path}\"
+else
+  echo 'bashrc file not found'; return 1
+fi
+EOT
     info.sh files .bashrc "${bashrc_path}"
   else
     error.sh files .bashrc "${BASHRC_FILE} - command not found"
