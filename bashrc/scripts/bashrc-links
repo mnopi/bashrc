@@ -3,7 +3,7 @@
 # shellcheck disable=SC2034
 export source="${BASH_SOURCE[0]}"; debug.sh source
 
-if isuser; then
+if isuser.sh; then
   cd "${USERHOME}" > /dev/null 2>&1 || { error.sh "${USERHOME}" "invalid"; return 1; }
   for user in root kali; do
     if home="$( home.sh "${user}" )"; then
