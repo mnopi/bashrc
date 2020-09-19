@@ -1,4 +1,4 @@
-# coding=utf-8
+# -*- coding: utf-8 -*-
 """Bashrc Package."""
 import os
 import pathlib
