@@ -30,11 +30,12 @@ path="$( pwd )"
 name="$( basename "${path}" )"
 export bump twine path name; debug.sh bump twine path name
 
-virtual="${path}/venv/bin"
-export virtual; debug.sh virtual
-
 if isuser.sh; then
   project-venv.sh "${path}"
+  virtual="${path}/venv/bin"
+  export virtual; debug.sh virtual
+  # shellcheck disable=SC1090
+  source "${virtual}/venv/bin/activate"
   project-clean.sh "${path}" || exit 1
   find "${path}" -type d -name scripts -exec chmod -R +x "{}" \;
 	gadd.sh || exit 1
