@@ -7,7 +7,9 @@ if ! isuser.sh; then
 fi
 
 path="${1:-.}"
-export path; debug.sh path
+path="$( pwd )"
+name="$( basename "${path}" )"
+export path name; debug.sh path name
 
 cd "${path}" > /dev/null 2>&1 || { error.sh "${path}" "invalid"; exit 1; }
 
@@ -24,6 +26,7 @@ find . -name '__pycache__' -exec /bin/rm -fr {} +
 /bin/rm -fr .pytest_cache
 find . -name '.mypy_cache' -exec /bin/rm -rf {} +
 
+info.sh clean "${name}"
 cd - > /dev/null || exit 1
 
-unset source path
+unset source path name
