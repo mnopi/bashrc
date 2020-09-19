@@ -55,15 +55,3 @@ up:
 	/usr/local/bin/pip3.8 install -vvvv --upgrade $(PROJECT)
 
 
-merge:  ## installs in system
-ifneq ($(BRANCH),master)
-	@echo "BRANCH: $(BRANCH)"
-	@git checkout master
-	@git merge $(BRANCH)
-	@echo "BRANCH: $$(git rev-parse --abbrev-ref HEAD)"
-	@gall
-	@echo "To delete locally: git branch -d $(BRANCH)"
-	@echo "To delete locally: git push origin --delete  $(BRANCH)"
-else
-	@echo "BRANCH: $(BRANCH) - Nothing to do here."
-endif

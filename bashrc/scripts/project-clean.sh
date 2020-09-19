@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
+export source="${BASH_SOURCE[0]}"; debug.sh source
+
+if ! isuser.sh; then
+  error.sh "can not be done with root"; exit 1
+fi
 
 test -n "${1}" || { error.sh "Project Path" "must be specified"; exit 1; }
 cd "${1}" > /dev/null 2>&1 || { error.sh "${1}" "invalid"; exit 1; }
@@ -17,4 +23,6 @@ find . -name '__pycache__' -exec /bin/rm -fr {} +
 find . -name '.mypy_cache' -exec /bin/rm -rf {} +
 
 debug Project: "${1}" clean
-cd - || exit 1
+cd - > /dev/null || exit 1
+
+unset source

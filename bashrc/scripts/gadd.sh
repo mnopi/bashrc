@@ -10,18 +10,14 @@ if name="$( source gtop 2>&1 )"; then
   export name; debug.sh name
   path="$( git rev-parse --show-toplevel 2>&1 )"; export path; debug.sh path
   cd "${path}" || { error.sh cd "${path}"; exit 1; }
-    if error="$( git pull --no-rebase --quiet --no-stat 2>&1 )"; then
-      info.sh pull "${name}"; exit 0
-    else
-      if error1="$( git pull --no-rebase --quiet --no-stat origin master 2>&1 )"; then
-        info.sh pull "${name}"; exit 0
-      else
-        error.sh "pull ${name}" "${error}\n ${error1}"; exit 1
-      fi
-    fi
+  if error="$( git add . --all 2>&1 )"; then
+    info.sh add "${name}"; exit 0
+  else
+    error.sh add "${name}" "${error}"; exit 1
+  fi
   cd - > /dev/null || exit 1
 else
   error.sh gall "${name}"; exit 1
 fi
 
-unset source name path error error1
+unset source name path error

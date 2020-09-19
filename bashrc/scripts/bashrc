@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# source
+# shellcheck disable=SC2034
+export source="${BASH_SOURCE[0]}"; debug.sh source
+
+export USERNAME="jose"
+USERHOME="$( [[ "$(uname -s)" == "Darwin" ]] && echo "/Users" || echo "/home" )/${USERNAME}"; export USERHOME
+export PASSWD_PATH="${USERHOME}/.passwd"
+export BASHRC_FILE="bashrc.sh"
+export PROJECT_BASHRC="${USERHOME}/bashrc"
+export GITHUB_USERNAME="j5pu"
+export NFERX_GITHUB_USERNAME="jose-nferx"
+export SECRETS_REPO="secrets"
+
+DARWIN="$(uname -a | grep -i darwin 2>/dev/null)"; export DARWIN
+KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
+DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
+UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
+
+for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE PROJECT_BASHRC GITHUB_USERNAME NFERX_GITHUB_USERNAME \
+           SECRETS_REPO; do
+  debug.sh "${var}"
+done
+
+## FIXME: Despues del passwd hay que bajar el brew, git, curl y si es los otros el curl, etc. o sea, sudoers y apt install.
+for script in bashrc-passwd bashrc-secrets bashrc-files.sh vars.sh dirs.sh; do
+  export script; debug.sh script
+  path="$( command -v "${script}" )"; export path
+  # shellcheck disable=SC1090
+  if [[ "${script}" == 'bashrc-secrets' ]]; then
+    warning.sh "sudoers" brew
+  fi
+  if test -f "${path}"; then
+    debug.sh path
+#    source "${path}"
+  else
+    error.sh "${script}" "not found"; return 1
+  fi
+done
+unset source var path script

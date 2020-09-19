@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# source
+# shellcheck disable=SC2034
+export source="${BASH_SOURCE[0]}"; debug.sh source
+
+test -n "${PASSWD_PATH}" || { error.sh PASSWD_PATH 'not defined'; return 1; }
+debug.sh PASSWD_PATH
+
+if ! test -f "${PASSWD_PATH}"; then
+read -r -p "$( blue.sh "Enter sudo password: " )" PASSWORD
+export PASSWORD
+if test -n "${DARWIN}"; then
+  read -r -p "$( blue.sh "Enter internet/GitHub password: " )" INTERNET
+else
+  INTERNET="${PASSWORD}"
+fi
+if echo "${PASSWORD}" | sudo -S true; then
+  info.sh passwd "sudo password."
+else
+  error.sh passwd "sudo password."
+  return 1
+fi
+
+tee /tmp/bashrc >/dev/null <<EOT
+export PASSWORD="${PASSWORD}"
+export INTERNET="${INTERNET}"
+export GITHUB_PRIVATE_URL="https://${GITHUB_USERNAME}@${INTERNET}:github.com/${GITHUB_USERNAME}"
+export GITHUB_SECRETS_URL="${GITHUB_PRIVATE_URL}/.ssh"
+export GITHUB_SECRETS_PATH="${HOME}/.ssh"
+export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets.sh"
+export GITHUB_SECRETS_FILE_URL="https://${GITHUB_USERNAME}@${INTERNET}:raw.githubusercontent.com/${GITHUB_USERNAME}/.ssh/secrets.sh"
+EOT
+info.sh "${PASSWD_PATH}" created
+fi
+# shellcheck disable=SC1090
+source "${PASSWD_PATH}"
+debug.sh PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL GITHUB_SECRETS_PATH SECRETS_PATH GITHUB_SECRETS_FILE_URL
+echo "${PASSWORD}" | sudo -S true > /dev/null 2>&1
+
+unset source
+
+
