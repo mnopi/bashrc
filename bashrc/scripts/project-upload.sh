@@ -22,6 +22,7 @@ done
 
 path="${path:-.}"
 bump="${bump:-patch}"
+test -n "${twine}" || { error.sh "twine repository" "empty"; exit 1; }
 
 cd "${path}" > /dev/null 2>&1 || { error.sh "${path}" "invalid"; exit 1; }
 
