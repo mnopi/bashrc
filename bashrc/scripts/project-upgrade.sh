@@ -11,6 +11,7 @@ path="$( pwd )"
 name="$( basename "${path}" )"
 export path name; debug.sh path name
 
+unset VIRTUAL_ENV PYTHONHOME
 deactivate > /dev/null 2>&1
 
 if error="$( /usr/local/bin/pip3.8 install -vvvv --upgrade "${name}" 2>&1 )"; then

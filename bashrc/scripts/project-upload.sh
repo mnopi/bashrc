@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ${1} - path
 # ${2} - bump: <major|minor>
-# ${3} - twine: <"${GITHUB_USERNAME}"|"${GITHUB_ORGANIZATION_ID}"|pypi>
+# ${3} - twine: <"${GITHUB_USERNAME}"|"${NFERX_GITHUB_USERNAME}"|pypi>
 # shellcheck disable=SC2034
 export source="${BASH_SOURCE[0]}"; debug.sh source
 
@@ -13,8 +13,9 @@ while (( "$#" )); do
   case "${1}" in
     major) bump="${1}" ;;
     minor) bump="${1}" ;;
+    patch) bump="${1}" ;;
     "${GITHUB_USERNAME}") twine="${1}" ;;
-    "${GITHUB_ORGANIZATION_ID}") twine="${1}" ;;
+    "${NFERX_GITHUB_USERNAME}") twine="${1}" ;;
     pypi) twine="${1}" ;;
     *) path="${1}";;
   esac; shift
