@@ -22,17 +22,17 @@ for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE PROJECT_BASHRC GITHUB_USERN
   debug.sh "${var}"
 done
 
-## FIXME: Despues del passwd hay que bajar el brew, git, curl y si es los otros el curl, etc. o sea, sudoers y apt install.
 for script in bashrc-passwd bashrc-secrets bashrc-files.sh vars.sh dirs.sh; do
-  export script; debug.sh script
-  path="$( command -v "${script}" )"; export path
-  # shellcheck disable=SC1090
   if [[ "${script}" == 'bashrc-secrets' ]]; then
+    ## Secrets needs git -> 1.- sudoers, 2.- essentials (brew and curl, git with apt on debian)
     warning.sh "sudoers" brew
   fi
+  export script; debug.sh script
+  path="$( command -v "${script}" )"; export path
   if test -f "${path}"; then
     debug.sh path
-#    source "${path}"
+    # shellcheck disable=SC1090
+    source "${path}"
   else
     error.sh "${script}" "not found"; return 1
   fi

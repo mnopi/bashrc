@@ -23,10 +23,20 @@ bashrc-upload.sh
 bashrc-upgrade.sh
 ```
 
-## Update token
+## Update secrets (token, etc.) and ssh keys on source server and other servers
+
+### On the git source code server
+
+Update the repository and:
 
 ```bash
-bashrc-secrets.sh
+secrets-push.sh
+rebash
+```
+
+#### On other servers
+```bash
+secrets-pull.sh
 rebash
 ```
 
