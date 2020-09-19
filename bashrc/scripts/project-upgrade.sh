@@ -20,4 +20,6 @@ else
   error.sh upgrade "${name}" "${error}"; exit 1
 fi
 
+/usr/local/bin/pip3.8 install --upgrade "${name}" > /dev/null 2>&1
+
 unset source error path name
