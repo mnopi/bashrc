@@ -61,6 +61,7 @@ if isuser.sh; then
   fi
   gmerge.sh || exit 1
   project-clean.sh "${path}" || exit 1
+  echo $VIRTUAL_ENV
   deactivate > /dev/null 2>&1
   project-upgrade.sh "${name}" || exit 1
 else
