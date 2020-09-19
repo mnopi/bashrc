@@ -35,7 +35,7 @@ if isuser.sh; then
   virtual="${path}/venv/bin"
   export virtual; debug.sh virtual
   # shellcheck disable=SC1090
-  source "${virtual}/venv/bin/activate"
+  source "${virtual}/activate"
   project-clean.sh "${path}" || exit 1
   find "${path}" -type d -name scripts -exec chmod -R +x "{}" \;
 	gadd.sh || exit 1
