@@ -34,9 +34,9 @@ if isuser.sh; then
     export file; debug.sh file
     if error="$( "${virtual}/python3" -m pip install --upgrade pip wheel setuptools && \
                  "${virtual}/python3" -m pip install --upgrade -r "${file}" 2>&1 )"; then
-      info.sh requirements "${name}"
+      info.sh requirements "${name}" "${file}"
     else
-      error.sh requirements "${name}" "${error}"; exit 1
+      error.sh requirements "${name} ${file}" "${error}"; exit 1
     fi
   done < <( find "${path}" -mindepth 1 -maxdepth 2 -type f -name "requirements*" )
 else
