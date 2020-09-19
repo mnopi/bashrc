@@ -61,6 +61,11 @@ if isuser.sh; then
   fi
   gmerge.sh || exit 1
   project-clean.sh "${path}" || exit 1
+  if error="$( deactivate  2>&1 )"; then
+    info.sh deactivate "${name}"
+  else
+    error.sh deactivate "${name}" "${error}"; exit 1
+  fi
   project-upgrade.sh "${name}" || exit 1
 else
   error.sh "${PROJECT_BASHRC}" "can not be uploaded with root"; exit 1
