@@ -4,28 +4,42 @@ export starting="${BASH_SOURCE[0]}"; debug.sh starting
 test -n "${PASSWORD}" || { error.sh PASSWORD 'not defined'; exit 1; }
 
 debug.sh DARWIN KALI DEBIAN UBUNTU PASSWORD
+
 function darwin() {
   # "${1}" - force
   # "${1}" - password
-  local group
+  local group file
   while (( "$#" )); do
     case "${1}" in
       force) force="${1}" ;;
       *) password="${1}";;
     esac; shift
   done
+
   password="${password:-${PASSWORD}}"
+  echo "${password}" | sudo -S true  > /dev/null 2>&1 || { error.sh sudoers "${password}" 'sudo -S'; return 1; }
+
   for group in staff admin wheel; do
-    if ! test -f "/etc/sudoers.d/${group}" || test -n "${force}"; then
+    ## TODO: Test
+    file="/etc/sudoers.d/${group}"
+    file="/tmp/${group}"
+    if ! test -f "${file}" || test -n "${force}"; then
       echo "${force}"
       echo "${password}"
-
-#      echo "${password}" | sudo -S true
-#      echo "%${group} ALL=(ALL) NOPASSWD:ALL" | sudo tee "/etc/sudoers.d/${group}" && info sudoers "${group}"
-#      echo 'Defaults !env_reset' | sudo tee -a "/etc/sudoers.d/${group}" >/dev/null 2>&1
-#      echo 'Defaults env_delete = "HOME"' | sudo tee -a "/etc/sudoers.d/${group}" >/dev/null 2>&1
-#      echo 'Defaults env_delete = "PS1"' | sudo tee -a "/etc/sudoers.d/${group}" >/dev/null 2>&1
-#      echo "Defaults: %${group} !logfile, !syslog" | sudo tee -a "/etc/sudoers.d/${group}" >/dev/null 2>&1
+      if sudo tee "${file}" >/dev/null <<EOT; then
+Defaults env_reset
+Defaults !requiretty
+%${group} ALL=(ALL) NOPASSWD:ALL
+Defaults: %${group} !logfile, !syslog
+EOT
+        if /usr/sbin/visudo -cf "${file}"; then
+          info.sh sudoers "${file}"
+        else
+          error.sh sudoers 'visudo -cf' "${file}"; return 1
+        fi
+      else
+        error.sh sudoers tee "${file}"; return 1
+      fi
     fi
   done
 }
