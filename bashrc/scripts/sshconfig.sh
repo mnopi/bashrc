@@ -86,4 +86,6 @@ if test "${USER}" = "${USERNAME}"; then
   authorized_keys || exit 1
 fi
 
+grep -slR "PRIVATE" ~/.ssh | xargs ssh-add >/dev/null 2>&1
+
 unset starting

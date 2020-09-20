@@ -91,7 +91,7 @@ function home_links() {
       sudo -u "${user}" mkdir -p "${home}/.ssh"
       sudo -u "${user}" chmod go-rw "${home}/.ssh"
       touch .ssh/gitconfig
-      for file in .ssh/config .ssh/credentials .ssh/gitconfig \
+      for file in .ssh/config .ssh/gitcredentials .ssh/gitconfig \
                   $( find .ssh -type f -exec grep -l "END OPENSSH PRIVATE KEY" "{}" \; ) .gitconfig; do
         if ! test -L "${home}/${file}"; then
           sudo -u "${user}" rm -r "${home}/${file}"
@@ -105,6 +105,18 @@ function home_links() {
     fi
     done
   cd - > /dev/null || return 1
+  if isuserdarwin; then
+    mkdir -p "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    if test -d "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs" && ! test -d "${ICLOUD}" && ! test -L "${ICLOUD}"; then
+      ln -s "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs" "${ICLOUD}"
+    fi
+
+    mkdir -p "${PYCHARM}/scratches/"
+    ! test -e "${SCRATCHES}" || rm "${SCRATCHES}"
+    if test -d "${PYCHARM}/scratches/" && ! test -d "${SCRATCHES}" && ! test -L "${SCRATCHES}"; then
+      ln -s "${PYCHARM}/scratches/" "${SCRATCHES}"
+    fi
+  fi
 }
 
 if test "${USER}" = "${USERNAME}" && isuser.sh; then

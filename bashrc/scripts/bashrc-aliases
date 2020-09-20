@@ -1,0 +1,353 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2139
+export starting="${BASH_SOURCE[0]}"
+debug.sh starting
+
+## ATHENS
+alias athens='docker -H tcp://repo.nferx.com:2375 logs --details --follow  lumenbiomics'
+
+## BASH_IT
+if ls --color -d . &>/dev/null; then
+  alias ls="ls --color=auto"
+elif ls -G -d . &>/dev/null; then
+  alias ls='ls -G' # Compact view, show colors
+fi
+
+# List directory contents
+alias sl=ls
+alias la='ls -AF' # Compact view, show hidden
+alias ll='ls -al'
+alias l='ls -a'
+alias l1='ls -1'
+
+alias _="sudo"
+
+## CD
+alias ..="cd .."         # Up one level
+alias ...="cd ../.."     # Up two levels
+alias ....="cd ../../.." # Up three levels
+
+alias .b="cd '${PROJECT_BASHRC}'"
+alias .h="cd '${USERHOME}'"
+alias .i="cd '${ICLOUD}'"
+alias .l="cd '${LIBRARY}'"
+alias .m="cd '${MACDEV}'"
+alias .p="cd '${PEN}'"
+
+alias .ansible="cd '${ANSIBLE}'"
+alias .bash="cd '${BASH_D}'"
+alias .caches="cd '${CACHES}'"
+alias .clones="cd '${CLONES}'"
+alias .downloads="cd '${USERHOME}/Downloads'"
+alias .desktop="cd '${USERHOME}/Desktop'"
+alias .documents="cd '${USERHOME}/Documents'"
+alias .dropbox="cd '${DROPBOX}'"
+alias .examples="cd '${EXAMPLES}'"
+alias .files="cd '${FILES}'"
+alias .go="cd '${GOHOME}'"
+alias .jetbrains="cd '${JETBRAINS}'"
+alias .keynote="cd '${KEYNOTE}'"
+alias .latest="cd '${LATEST}'"
+alias .log="cd '${LOG}'"
+alias .lumen="cd '${LUMEN}'"
+alias .mobile="cd '${MOBILE}'"
+alias .numbers="cd '${NUMBERS}'"
+alias .pages="cd '${PAGES}'"
+alias .packages="cd '${PACKAGES}'"
+alias .preferences="cd '${PREFS}'"
+alias .projects="cd '${PROJECTS}'"
+alias .pycharm="cd '${PYCHARM}'"
+alias .options="cd '${PYCHARM_OPTIONS}'"
+alias .repos="cd '${REPOS}'"
+alias .saved="cd '${SAVED}'"
+alias .scratches="cd '${SCRATCHES}'"
+alias .scripts="cd '${SCRIPTS}'"
+alias .servers="cd '${PACKAGES}'"
+alias .support="cd '${SUPPORT}'"
+alias .usb="cd '${USB}'"
+alias .tbot="cd '${USERHOME}/tbot'"
+
+alias .time="cd '${TIME}'"
+alias .tmp="cd /private/tmp"
+alias .tsunami="cd '${USERHOME}/tsunami'"
+
+## CLEAR
+alias c="clear"
+
+## DOCKER
+alias dprune="docker system prune --all --volumes --force"
+alias ddisk="docker system df"
+alias dinfo="docker system info"
+alias devents="docker system events"
+alias dimagesall="docker images -a"
+alias drmi="docker rmi"
+alias dpsa="docker ps -a"
+
+## GREP
+alias pgrep="pgrep -i"
+alias grep='sudo grep --color=auto'
+alias fgrep='sudo fgrep --color=auto'
+alias egrep='sudo egrep --color=auto'
+
+## MISC
+alias finder="open ." # Open current directory in Finder
+alias less='less -R'
+alias more='more -R'
+alias play="ansible-playbook"
+alias rsync_d="rsync -v -a --delete-after --checksum"
+alias speedtest="wget -O /dev/null http://speed.transip.nl/100mb.bin"
+alias update="sudo softwareupdate -aiR" # Install all macOS updates and restart system
+
+## OPEN
+alias oduti="open '${FILES}/duti/developer.text'"
+alias odeudas="brctl download '${NUMBERS}/Julia - Pension Deudas y Estimaciones Lido.numbers' && open '${NUMBERS}/Julia - Pension Deudas y Estimaciones Lido.numbers'"
+alias oreembolsos="brctl download '${NUMBERS}/Reembolsos.numbers' && open '${NUMBERS}/Reembolsos.numbers'"
+alias obrew="open '${BREWFILE}'"
+alias ogem="open '${GEMFILE}'"
+alias onpm="open '${NPMFILE}'"
+alias opip="open '${REQUIREMENTS}'"
+alias oufile="open '${USERFILE}'"
+alias ogithub="'${VISUAL}' '${REPOS}/CLONES/github.repos'"
+alias oj5pu="'${VISUAL}' '${REPOS}/HOME/${GITHUB_USERNAME}.repos'"
+alias olumenbiomics="'${VISUAL}' '${REPOS}/HOME/${GITHUB_ORGANIZATION}.repos'"
+alias oatom="open '${PYCHARM_OPTIONS}/atom-icon-associations.xml'"
+alias opost="open '${JETBRAINS}/python.mio.postfixTemplates'"
+
+## PLUTIL
+alias pltoxml="plutil -convert xml1"    # This converts the existing binary plist file into XML format
+alias pltobin="plutil -convert binary1" # This changes the plist in XML back to binary format
+
+## RM
+alias cache="test -d '${CACHES}' && sudo rm -rf '${CACHES}/*' || echo 'error no cache'"
+alias saved="test -d '${CACHES}/' && sudo rm -rf '${SAVED}/*' || echo 'error no saved'"
+
+## SCALEWAY
+# https://www.scaleway.com/en/docs/how-to-migrate-object-storage-buckets-with-rclone/
+# /Users/j5pu/.config/rclone/rclone.conf
+# https://console.scaleway.com/object-storage/buckets/fr-par/pictures-documents-j5pu/explorer
+alias scalecopy="rclone copy --progress --s3-storage-class=GLACIER"
+alias scalesync="rclone sync --progress --s3-storage-class=GLACIER"
+alias scalels="rclone ls --progress --s3-storage-class=GLACIER scaleway:/"
+alias scalelsd="rclone lsd --progress --s3-storage-class=GLACIER scaleway:/"
+alias scalelsl="rclone lsl --progress --s3-storage-class=GLACIER scaleway:/"
+alias scalesize="rclone size --progress --s3-storage-class=GLACIER scaleway:/"
+alias scalemkdir="rclone mkdir --progress --s3-storage-class=GLACIER"
+alias scalermdir="rclone rmdir --progress --s3-storage-class=GLACIER"
+alias scalermdirs="rclone rmdirs --progress --s3-storage-class=GLACIER"
+alias scalepurge="rclone purge --progress --s3-storage-class=GLACIER"
+alias scaledelete="rclone delete --progress --s3-storage-class=GLACIER"
+alias scalemove="rclone move --progress --s3-storage-class=GLACIER"
+alias scalecleanup="rclone cleanup --progress --s3-storage-class=GLACIER"
+alias scalecheck="rclone check --progress --s3-storage-class=GLACIER"
+
+## SUDO
+[[ "$(uname -s)" == "Linux" ]] && alias updatedb='sudo updatedb'
+alias trash='sudo trash'
+alias rndc='sudo rndc'
+alias find='sudo find'
+alias tcptraceroute='sudo traceroute'
+alias fail2ban-client='sudo fail2ban-client'
+alias sysupgrade='sudo sysupgrade'
+alias dscl='sudo dscl'
+alias dscacheutil='sudo dscacheutil'
+alias spctl='sudo spctl'
+alias scutil='sudo scutil'
+alias xattr='sudo xattr'
+alias networksetup='sudo networksetup'
+alias chflags='sudo chflags'
+alias shutdown="sudo shutdown --no-wall"
+alias du="sudo du"
+alias df="sudo df"
+alias dd="sudo dd"
+alias swapon='sudo swapon'
+alias swapoff="sudo swapoff"
+alias disco="sudo du -sh"
+alias update="sudo apt update"
+alias install="sudo apt install"
+alias remove="sudo apt remove"
+alias upgrade="sudo apt upgrade"
+alias dist-upgrade="sudo apt dist-upgrade"
+alias autoremove="sudo apt autoremove"
+alias autoclean="sudo apt autoclean"
+alias wpa_supplicant='sudo wpa_supplicant'
+alias wpa_passphrase='sudo wpa_passphrase'
+alias dhclient='sudo dhclient'
+alias a2dismode='sudo a2dismode'
+alias a2dissite='sudo a2dissite'
+alias a2enmode='sudo a2enmode'
+alias a2ensite='sudo a2ensite'
+alias add-apt-repository='sudo add-apt-repository'
+alias adduser='sudo adduser'
+alias apache2ctl='sudo apache2ctl'
+alias apachectl='sudo apachectl'
+alias apt='sudo apt'
+alias apt-cache='sudo apt-cache'
+alias search="sudo apt-cache search"
+alias apt-get='sudo apt-get'
+alias aptitude='sudo aptitude'
+alias certbot='sudo certbot'
+alias chattr='sudo chattr'
+alias chkrootkit='sudo chkrootkit'
+alias chmod='sudo chmod'
+alias chown='sudo chown'
+alias dig='sudo dig'
+alias dkms='sudo dkms'
+alias dlocate='sudo dlocate'
+alias dmesg='sudo dmesg'
+alias dnstop='sudo dnstop'
+alias dpkg='sudo dpkg'
+alias dpkg-reconfigure='sudo dpkg-reconfigure'
+alias drill='sudo drill'
+alias fail2ban='sudo fail2ban'
+alias find='sudo find'
+alias fkill='sudo fkill'
+alias fsck='sudo fsck'
+alias fuser='sudo fuser'
+alias getent='sudo getent'
+alias gparted='sudo gparted'
+alias grub-mkconfig='sudo grub-mkconfig'
+alias hostnamectl='sudo hostnamectl'
+alias htpasswd='sudo htpasswd'
+alias ifconfig='sudo ifconfig'
+alias ip='sudo ip'
+alias iptables='sudo iptables'
+alias iw='sudo iw'
+alias journalctl='sudo journalctl'
+alias kill='sudo kill'
+alias killall='sudo killall'
+alias locale-gen='sudo locale-gen'
+alias locate='sudo locate'
+alias lsof='sudo lsof'
+alias lspci='sudo lspci'
+alias mkpasswd='sudo mkpasswd'
+alias mount='sudo mount'
+alias mtr='sudo mtr'
+alias mv='sudo mv'
+alias mysql='sudo mysql'
+alias mysql_secure_installation='sudo mysql_secure_installation'
+alias nc='sudo nc'
+alias netfilter-persistent='sudo netfilter-persistent'
+alias netstat='sudo netstat'
+alias networking='sudo /etc/init.d/networking'
+alias nmap='sudo nmap'
+alias nmcli='sudo nmcli'
+alias nslookup='sudo nslookup'
+alias reboot='sudo reboot'
+alias rkhunter='sudo rkhunter'
+alias route='sudo route'
+alias service='sudo service'
+alias smartctl='sudo smartctl'
+alias software-properties-gtk='sudo software-properties-gtk'
+alias ss='sudo ss'
+alias sysctl='sudo sysctl'
+alias systemctl='sudo systemctl'
+alias systemd-resolve='sudo systemd-resolve'
+alias tasksel='sudo tasksel'
+alias tcpdump='sudo tcpdump'
+alias tcptrack='sudo tcptrack'
+alias telnet='sudo telnet'
+alias traceroute='sudo traceroute'
+alias udevadm='sudo udevadm'
+alias ufw='sudo ufw'
+alias umount='sudo umount'
+alias unbound-anchor='sudo unbound-anchor'
+alias unbound-host='sudo unbound-host'
+alias update-alternatives='sudo update-alternatives'
+alias update-grub='sudo update-grub'
+alias update-grub2='sudo update-grub2'
+alias update-manager='sudo update-manager'
+alias update-rc.d='sudo update-rc.d'
+alias usermod='sudo usermod'
+alias wg-quick='sudo wg-quick'
+alias whois='sudo whois'
+alias addgroup="sudo addgroup"
+alias chgrp="sudo chgrp"
+alias pre-up="sudo pre-up"
+alias a2enmod="sudo a2enmod"
+alias a2dismod="sudo a2dismod"
+alias phpenmod="sudo phpenmod"
+alias phpdismod="sudo phpdismod"
+alias apache2="sudo apache2"
+alias mysqldump="sudo mysqldump"
+alias pecl="sudo pecl"
+alias debconf="sudo debconf"
+alias networkctl="sudo networkctl"
+alias wg="sudo wg"
+alias modprobe="sudo modprobe"
+alias qemu-nbd="sudo qemu-nbd"
+alias partprobe="sudo partprobe"
+alias partx="sudo partx"
+alias vgscan="sudo vgscan"
+alias vgchange="sudo vgchange"
+alias lvdisplay="sudo lvdisplay"
+alias rmmod="sudo rmmod"
+alias losetup="sudo losetup"
+alias parted="sudo parted"
+alias lshw="sudo lshw"
+alias depmod="sudo depmod"
+alias zenmap="sudo zenmap"
+alias ncat="sudo ncat"
+alias nping="sudo nping"
+alias ping="sudo ping"
+alias useradd="sudo useradd"
+alias systemd-analyze="sudo systemd-analyze"
+alias ngrep="sudo ngrep"
+alias nield="sudo nield"
+alias flatpak="sudo flatpak"
+alias debuild="sudo debuild"
+alias make-kpkg="sudo make-kpkg"
+alias debi="sudo debi"
+alias dpkg-source="sudo dpkg-source"
+alias configure-debian="sudo configure-debian"
+alias apt-file="sudo apt-file"
+alias iptables_save='sudo iptables_save'
+alias mysql_upgrade="sudo mysql_upgrade"
+alias mysqld_safe="sudo mysqld_safe"
+alias cat="sudo cat"
+alias apt-all="sudo apt update -y; sudo apt upgrade -y; sudo apt dist-upgrade -y; sudo apt autoremove -y; sudo apt autoclean -y"
+alias more="sudo more"
+alias less="sudo less"
+alias pvscan="sudo pvscan"
+alias pkill="sudo pkill"
+alias hwclock="sudo hwclock"
+alias date="sudo date"
+alias mkfs="sudo mkfs"
+alias mkfs.ext4="sudo mkfs.ext4"
+alias automysqlbackup="sudo automysqlbackup"
+alias update-locale="sudo update-locale"
+alias deluser="sudo deluser"
+alias netplan="sudo netplan"
+alias delgroup="sudo delgroup"
+alias openvpn="sudo openvpn"
+alias nginx="sudo nginx"
+alias apt-add-repository="sudo apt-add-repository"
+alias poweroff="sudo poweroff"
+alias polo-disk="sudo polo-disk"
+alias cubic="sudo cubic"
+alias postfix="sudo postfix"
+alias debconf-set-selections="sudo debconf-set-selections"
+alias fdisk="sudo fdisk"
+alias lsblk="sudo lsblk"
+alias lsusb="sudo lsusb"
+alias opkg="sudo opkg"
+alias spctl="sudo spctl"
+alias scutil="sudo scutil"
+alias kextload="sudo kextload"
+
+## TMUTIL
+alias backups="tmutil listbackups"
+alias latest="tmutil latestbackup"
+alias startbackup="tmutil startbackup"
+
+## TREE
+alias tree="tree -C" # Always use colored `tree` output
+alias treed="tree -d"
+alias tree1="tree -d -L 1"
+alias tree2="tree -d -L 2"
+
+## VI
+if command -v vim >/dev/null 2>&1; then
+  alias vi=vim
+else
+  alias vim=vi
+fi

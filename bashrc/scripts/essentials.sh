@@ -16,6 +16,7 @@ function kali() {
   apt-kali.sh || return 1
   pam-sudo.sh "$@" || return 1
   motd.sh "$@" || return 1
+  sudo mkdir -p "${PEN}"; sudo chown -R "${USERNAME}":"${USERNAME}" "${PEN}"
   sudo rm -rf /etc/update-motd.d/
   sudo sed -i 's/#Banner none/Banner none/' /etc/ssh/sshd_config
   sudo sed -i 's/#LogLevel INFO/LogLevel QUIET/' /etc/ssh/sshd_config

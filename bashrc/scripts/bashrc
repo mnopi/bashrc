@@ -2,7 +2,8 @@
 # shellcheck disable=SC1090
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-for source_name in bashrc-vars bashrc-functions bashrc-completions; do
+for source_name in bashrc-vars bashrc-dirs bashrc-aliases bashrc-functions bashrc-completions\
+                   bashrc-iterm2 bashrc-misc; do
   source_path="$( command -v "${source_name}" )"; export source_path
   if test -f "${source_path}"; then
     debug.sh source_path
@@ -11,15 +12,5 @@ for source_name in bashrc-vars bashrc-functions bashrc-completions; do
     error.sh "${source_name}" "not found"; return 1
   fi
 done
+
 unset starting source_name source_path
-
-paper.sh
-
-if isuserdarwin.sh; then
-  sudo rm -rf ~/Applications ~/Movies ~/Music ~/Pictures ~/Public ~/Sites >/dev/null 2>&1
-  chmod go-rwx ~/.netrc >/dev/null 2>&1
-  chmod -R go-rwx ~/.ssh >/dev/null 2>&1
-  ! test -e /private/var/vm/sleepimage || sudo rm -rf /private/var/vm/sleepimage >/dev/null 2>&1
-fi
-
-grep -slR "PRIVATE" ~/.ssh | xargs ssh-add >/dev/null 2>&1
