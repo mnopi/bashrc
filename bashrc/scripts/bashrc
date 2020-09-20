@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # source
 export source="${BASH_SOURCE[0]}"; debug.sh source
+DARWIN="$(uname -a | grep -i darwin 2>/dev/null)"; export DARWIN  ## First: home.sh uses it (USERHOME)
+KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
+DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
+UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
 
 export USERNAME="jose"
 USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
@@ -12,11 +16,6 @@ export NFERX_GITHUB_USERNAME="jose-nferx"
 export SECRETS_REPO="secrets"
 export GITHUB_SECRETS_PATH="${USERHOME}/.ssh"
 export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets.sh"
-
-DARWIN="$(uname -a | grep -i darwin 2>/dev/null)"; export DARWIN
-KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
-DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
-UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
 
 for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE PROJECT_BASHRC GITHUB_USERNAME NFERX_GITHUB_USERNAME \
            SECRETS_REPO GITHUB_SECRETS_PATH SECRETS_PATH; do
