@@ -7,7 +7,6 @@ upload:
 	@bashrc-upload.sh $(BUMP)
 install:
 	@bashrc-install.sh "$${PASSWORD}" "$${INTERNET}"
-	@bashrc-install.sh aaaa "Zaragoza$."
 
 secrets-push:
 	@secrets-push.sh

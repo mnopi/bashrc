@@ -24,7 +24,7 @@ for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE PROJECT_BASHRC GITHUB_USERN
   debug.sh "${var}"
 done
 
-for script in bashrc-passwd bashrc-secrets bashrc-files bashrc-links vars.sh dirs.sh; do
+for script in bashrc-passwd bashrc-secrets bashrc-files vars.sh dirs.sh; do
   if [[ "${script}" == 'bashrc-secrets' ]]; then
     ## Secrets needs git -> 1.- sudoers, 2.- essentials (brew and curl, git with apt on debian)
     warning.sh "sudoers" brew
