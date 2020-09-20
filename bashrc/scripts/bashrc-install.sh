@@ -4,7 +4,7 @@
 # "${2}" - INTERNET PASSWORD
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-function paswwd() {
+function install_paswwd() {
   # "${1}" - ACCOUNT PASSWORD
   # "${2}" - INTERNET PASSWORD
   local PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL
@@ -53,7 +53,7 @@ fi
 ## END: INIT
 
 ## BEGIN: PASSWD
-! passwd "$@" || exit 1
+! install_paswwd "$@" || exit 1
 
 if test -f "${PASSWD_PATH}"; then
   source "${PASSWD_PATH}"
