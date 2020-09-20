@@ -46,9 +46,17 @@ apt install -y \
 
 ### With pip available
 
+#### With sudo in debian/kali or macos in bootstrap if brew not installed
+```bash
+sudo python3 -m pip install --upgrade bashrc
+```
+
+#### When brew installed:
+
 ```bash
 python3 -m pip install --upgrade bashrc
 ```
+
 
 ```bash
 bashrc-install.sh <account_password> <internet_password>
