@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -x
 user="${1:-${USER}}"
 if [[ "${user}" == "root" ]]; then
   home="/var/${user}"
@@ -11,3 +12,4 @@ if ! test -d "${home}"; then
   exit 1
 fi
 echo "${home}"
+set +x
