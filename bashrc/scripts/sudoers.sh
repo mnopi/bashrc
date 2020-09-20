@@ -14,7 +14,7 @@ function darwin() {
       *) password="${1}";;
     esac; shift
   done
-  password="${password:-PASSWORD}"
+  password="${password:-${PASSWORD}}"
   for group in staff admin wheel; do
     if ! test -f "/etc/sudoers.d/${group}" || test -n "${force}"; then
       echo "${force}"
@@ -40,7 +40,7 @@ function kali() {
       *) password="${1}";;
     esac; shift
   done
-  password="${password:-PASSWORD}"
+  password="${password:-${PASSWORD}}"
 }
 
 ! test -n "${DARWIN}" || darwin "$@" || exit 1
