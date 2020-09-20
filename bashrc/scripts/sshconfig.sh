@@ -29,9 +29,10 @@ Host *
     IdentityFile ~/.ssh/${GITHUB_USERNAME}
 EOT
     info.sh ssh "${file}"
+    if secrets-push.sh; then return 0; else return 1; fi
   else
     error.sh ssh "${file}"
-    exit 1
+    return 1
   fi
 }
 
@@ -50,11 +51,11 @@ EOT
     info.sh ssh "${file}"
   else
     error.sh ssh "${file}"
-    exit 1
+    return 1
   fi
 }
 
-if test "${USER}" = "${USERNAME}" && isuser.sh; then
+if test "${USER}" = "${USERNAME}" && isuserdarwin.sh; then
   etc_hosts || exit 1
   ssh_config || exit 1
 fi

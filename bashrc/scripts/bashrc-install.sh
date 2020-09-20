@@ -41,7 +41,7 @@ function install_paswwd() {
   fi
 }
 
-source "$( command -v bashrc-vars )"  || exit 1
+source "$( command -v bashrc-vars )" || exit 1
 
 install_paswwd "$@" || exit 1
 source "${PASSWD_PATH}" || exit 1
@@ -49,6 +49,7 @@ source "${PASSWD_PATH}" || exit 1
 sudoers.sh "$@" || exit 1
 essentials.sh "$@" || exit 1
 homefiles.sh || exit 1
+gconfig.sh || exit 1
 sshconfig.sh || exit 1
 
 ## BEGIN: SECRETS
