@@ -3,7 +3,7 @@
 # ${2} - bump: <major|minor>
 # ${3} - twine: <"${GITHUB_USERNAME}"|"${GITHUB_ORGANIZATION_ID}"|pypi>
 # shellcheck disable=SC2034
-export source="${BASH_SOURCE[0]}"; debug.sh source
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 if ! isuser.sh; then
   error.sh "can not be done with root"; exit 1
@@ -45,4 +45,4 @@ fi
 
 cd - > /dev/null || exit 1
 
-unset source virtual file error name path
+unset starting virtual file error name path

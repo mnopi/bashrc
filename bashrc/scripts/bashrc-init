@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1090
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
+DARWIN="$(uname -a | grep -i darwin 2>/dev/null)"; export DARWIN  ## First: home.sh uses it (USERHOME)
+KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
+DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
+UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
+
+export USERNAME="jose"
+USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
+export PASSWD_PATH="${USERHOME}/.passwd"
+export BASHRC_FILE="bashrc"
+export PROJECT_BASHRC="${USERHOME}/bashrc"
+export GITHUB_USERNAME="j5pu"
+export NFERX_GITHUB_USERNAME="jose-nferx"
+export SECRETS_REPO="secrets"
+export GITHUB_SECRETS_PATH="${USERHOME}/.ssh"
+export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets"
+
+! test -e "${PASSWD_PATH}" || source "${PASSWD_PATH}"
+! test -e "${SECRETS_PATH}" || source "${SECRETS_PATH}"
+
+for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE PROJECT_BASHRC GITHUB_USERNAME NFERX_GITHUB_USERNAME \
+           SECRETS_REPO GITHUB_SECRETS_PATH SECRETS_PATH PASSWORD INTERNET GITHUB_PRIVATE_URL \
+           GITHUB_SECRETS_URL NFERX_GITHUB_PASSWORD; do
+  debug.sh "${var}"
+done
+
+unset starting var

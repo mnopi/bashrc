@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
-export source="${BASH_SOURCE[0]}"; debug.sh source
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 if ! isuser.sh; then
   error.sh "can not be done with root"; exit 1
@@ -22,4 +22,4 @@ project-upload.sh "${PROJECT_BASHRC}" "${bump}" "${GITHUB_USERNAME}" || exit 1
 
 cd - > /dev/null || exit 1
 
-unset source bump
+unset starting bump

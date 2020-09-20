@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # source
 # shellcheck disable=SC2034
-export source="${BASH_SOURCE[0]}"; debug.sh source
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 test -n "${GITHUB_SECRETS_URL}" || { error.sh GITHUB_SECRETS_URL 'not defined'; return 1; }
 test -n "${GITHUB_SECRETS_PATH}" || { error.sh GITHUB_SECRETS_PATH 'not defined'; return 1; }
@@ -38,4 +38,4 @@ else
   error.sh "${SECRETS_PATH}" "not found"; return 1
 fi
 
-unset source error
+unset starting error

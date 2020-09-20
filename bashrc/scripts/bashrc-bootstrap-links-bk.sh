@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ## source
 # shellcheck disable=SC2034
-export source="${BASH_SOURCE[0]}"; debug.sh source
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 if [[ "${USER}" == "${USERNAME}" ]]; then
   cd "${USERHOME}" > /dev/null 2>&1 || { error.sh "${USERHOME}" "invalid"; return 1; }
@@ -17,4 +17,4 @@ if [[ "${USER}" == "${USERNAME}" ]]; then
   cd - > /dev/null || return 1
 fi
 
-unset source user home file
+unset starting user home file

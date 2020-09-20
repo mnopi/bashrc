@@ -12,4 +12,4 @@ else
   error.sh "${BASH_SOURCE[0]}" "not a git dir"; return 1
 fi
 
-unset source path
+unset path

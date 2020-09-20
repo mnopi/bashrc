@@ -1,42 +1,14 @@
 #!/usr/bin/env bash
-# source
-export source="${BASH_SOURCE[0]}"; debug.sh source
-DARWIN="$(uname -a | grep -i darwin 2>/dev/null)"; export DARWIN  ## First: home.sh uses it (USERHOME)
-KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
-DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
-UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
+# shellcheck disable=SC1090
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-export USERNAME="jose"
-USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
-export PASSWD_PATH="${USERHOME}/.passwd"
-export BASHRC_FILE="bashrc"
-export PROJECT_BASHRC="${USERHOME}/bashrc"
-export GITHUB_USERNAME="j5pu"
-export NFERX_GITHUB_USERNAME="jose-nferx"
-export SECRETS_REPO="secrets"
-export GITHUB_SECRETS_PATH="${USERHOME}/.ssh"
-export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets.sh"
-
-for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE PROJECT_BASHRC GITHUB_USERNAME NFERX_GITHUB_USERNAME \
-           SECRETS_REPO GITHUB_SECRETS_PATH SECRETS_PATH; do
-  debug.sh "${var}"
-done
-
-for script in bashrc-passwd; do
-#for script in bashrc-passwd bashrc-secrets bashrc-files vars.sh dirs.sh; do
-  if [[ "${script}" == 'bashrc-secrets' ]]; then
-    ## Secrets needs git -> 1.- sudoers, 2.- essentials (brew and curl, git with apt on debian)
-    warning.sh "sudoers" brew
-  fi
-  export script; debug.sh script
-  path="$( command -v "${script}" )"; export path
-  if test -f "${path}"; then
-    debug.sh path
-    # shellcheck disable=SC1090
-    source "${path}"
+for source_name in bashrc-init; do
+  source_path="$( command -v "${source_name}" )"; export source_path
+  if test -f "${source_path}"; then
+    debug.sh source_path
+    source "${source_path}"
   else
-    error.sh "${script}" "not found"; return 1
+    error.sh "${source_path}" "not found"; return 1
   fi
-  debug.sh PASSWORD
 done
-unset source var path script
+unset starting source_name source_path

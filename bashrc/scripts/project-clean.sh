@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
-export source="${BASH_SOURCE[0]}"; debug.sh source
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 if ! isuser.sh; then
   error.sh "can not be done with root"; exit 1
@@ -29,4 +29,4 @@ find . -name '.mypy_cache' -exec /bin/rm -rf {} +
 info.sh clean "${name}"
 cd - > /dev/null || exit 1
 
-unset source path name
+unset starting path name

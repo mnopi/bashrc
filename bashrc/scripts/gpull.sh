@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
-export source="${BASH_SOURCE[0]}"; debug.sh source
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 if ! isuser.sh; then
   error.sh "can not be done with root"; exit 1
@@ -24,4 +24,4 @@ else
   error.sh gall "${name}"; exit 1
 fi
 
-unset source name path error error1
+unset starting name path error error1

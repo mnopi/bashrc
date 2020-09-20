@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ## source
 # shellcheck disable=SC2034
-export source="${BASH_SOURCE[0]}"; debug.sh source
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
 
@@ -31,4 +31,4 @@ EOT
   done
 fi
 
-unset source bashrc_path user home file
+unset starting bashrc_path user home file

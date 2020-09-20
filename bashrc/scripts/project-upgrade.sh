@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ${1} - name
 # shellcheck disable=SC2034
-export source="${BASH_SOURCE[0]}"; debug.sh source
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 path="${1:-.}"
 
@@ -23,4 +23,4 @@ fi
 ## I do not know why requires twice to get it into the path,
 /usr/local/bin/pip3.8 install --upgrade "${name}" > /dev/null 2>&1
 
-unset source error path name
+unset starting error path name
