@@ -8,10 +8,9 @@ debug.sh path
 
 # shellcheck disable=SC1090
 if test -f "${path}"; then
-  export BASHRC_USERS="$#"
   source "${path}"
 else
-  error.sh bashrc "not found"; return 1
+  error.sh bashrc "not found"; exit 1
 fi
 
-unset source path BASHRC_USERS
+unset source path

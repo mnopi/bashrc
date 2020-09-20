@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # source
-# shellcheck disable=SC2034
 export source="${BASH_SOURCE[0]}"; debug.sh source
 
 export USERNAME="jose"
@@ -24,7 +23,8 @@ for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE PROJECT_BASHRC GITHUB_USERN
   debug.sh "${var}"
 done
 
-for script in bashrc-passwd bashrc-secrets bashrc-files vars.sh dirs.sh; do
+for script in bashrc-passwd; do
+#for script in bashrc-passwd bashrc-secrets bashrc-files vars.sh dirs.sh; do
   if [[ "${script}" == 'bashrc-secrets' ]]; then
     ## Secrets needs git -> 1.- sudoers, 2.- essentials (brew and curl, git with apt on debian)
     warning.sh "sudoers" brew
