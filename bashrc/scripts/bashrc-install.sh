@@ -41,25 +41,14 @@ function install_paswwd() {
   fi
 }
 
-source "$( command -v bashrc-init )"  || exit 1
+source "$( command -v bashrc-vars )"  || exit 1
 
 install_paswwd "$@" || exit 1
 source "${PASSWD_PATH}" || exit 1
 
 sudoers.sh "$@" || exit 1
 essentials.sh "$@" || exit 1
-
-
-## BEGIN: BOOTSTRAP
-script_name="bashrc-bootstrap.sh"
-script_path="$( command -v "${script_name}" )"; export script_path; debug.sh script_path
-
-if test -f "${script_path}"; then
-  "${script_path}"
-else
-  error.sh install "${script_name}" "not found"; exit 1
-fi
-## END: BOOTSTRAP
+homefiles.sh "$@" || exit 1
 
 ## BEGIN: SECRETS
 if test -f "${SECRETS_PATH}"; then

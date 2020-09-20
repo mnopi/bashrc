@@ -2,7 +2,7 @@
 # shellcheck disable=SC1090
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-for source_name in bashrc-init; do
+for source_name in bashrc-vars; do
   source_path="$( command -v "${source_name}" )"; export source_path
   if test -f "${source_path}"; then
     debug.sh source_path
