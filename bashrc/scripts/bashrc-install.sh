@@ -46,7 +46,7 @@ source "$( command -v bashrc-init )"  || exit 1
 install_paswwd "$@" || exit 1
 source "${PASSWD_PATH}" || exit 1
 
-sudoers.sh force || exit 1
+sudoers.sh || exit 1
 
 
 ## BEGIN: BOOTSTRAP
