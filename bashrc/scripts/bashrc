@@ -37,5 +37,6 @@ for script in bashrc-passwd; do
   else
     error.sh "${script}" "not found"; return 1
   fi
+  debug.sh PASSWORD
 done
 unset source var path script
