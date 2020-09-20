@@ -10,7 +10,7 @@ scripts = package / 'scripts'
 scripts_relative = [str(item.relative_to(project)) for item in scripts.iterdir()]
 
 readme = project / 'README.md'
-description = project.name
+description = package.name
 if readme.is_file():
     try:
         description = str(readme).splitlines()[0].split('#')[1]
