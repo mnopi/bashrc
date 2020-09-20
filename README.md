@@ -48,6 +48,15 @@ apt install -y \
 
 ```bash
 python3 -m pip install --upgrade bashrc
+```
+
+```bash
+bashrc-install.sh <account_password> <internet_password>
+```
+
+or:
+
+```bash
 bashrc-install.sh
 ```
 

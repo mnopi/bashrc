@@ -36,31 +36,18 @@ function install_paswwd() {
   for var in PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL; do
     echo "export ${var}='${!var}'" | tee -a "${PASSWD_PATH}" > /dev/null 2>&1
   done
-    debug.sh PASSWD_PATH GITHUB_USERNAME PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL
+    debug.sh PASSWD_PATH GITHUB_USERNAME
     info.sh "${PASSWD_PATH}" created
   fi
 }
 
-## BEGIN: INIT
-source_name="bashrc-init"
-source_path="$( command -v "${source_name}" )"; export source_path; debug.sh source_path
+! source "$( command -v bashrc-init )"  || exit 1
 
-if test -f "${source_path}"; then
-  source "${source_path}"
-else
-  error.sh install "${source_name}" "not found"; exit 1
-fi
-## END: INIT
-
-## BEGIN: PASSWD
 ! install_paswwd "$@" || exit 1
+! source "${PASSWD_PATH}" || exit 1
 
-if test -f "${PASSWD_PATH}"; then
-  source "${PASSWD_PATH}"
-else
-  error.sh install "${PASSWD_PATH}" "not found"; exit 1
-fi
-## END: PASSWD
+! sudoers.sh || exit 1
+
 
 ## BEGIN: BOOTSTRAP
 script_name="bashrc-bootstrap.sh"
