@@ -5,6 +5,7 @@ SHELL := $(shell command -v bash)
 export PROJECT_BASHRC := $(HOME)/bashrc
 export TERM := xterm-256color
 export GITHUB_USERNAME := j5pu
+export GITHUB_EMAIL := j5pu@icloud.com
 upload:
 	@bashrc-upload.sh $(BUMP)
 install:
