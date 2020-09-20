@@ -2,9 +2,7 @@ BUMP := patch  # major|minor|path
 all: upload
 .PHONY: $(all) all install secrets-push venv vars
 SHELL := $(shell command -v bash)
-#PASSWORD := $(shell bash -l -c echo "${PASSWORD}" )
-INTERNET := $(shell echo $$INTERNET )
-PASSWORD = $${PASSWORD}
+
 upload:
 	@bashrc-upload.sh $(BUMP)
 install:
