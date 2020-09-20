@@ -2,6 +2,7 @@
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 test -n "${PASSWORD}" || { error.sh PASSWORD 'not defined'; exit 1; }
 
+debug.sh DARWIN KALI DEBIAN UBUNTU PASSWORD
 function darwin() {
   # "${1}" - force
   local group
