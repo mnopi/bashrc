@@ -16,6 +16,30 @@ export NFERX_GITHUB_USERNAME="jose-nferx"
 export SECRETS_REPO="secrets"
 export GITHUB_SECRETS_PATH="${USERHOME}/.ssh"
 export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets"
+export PEN_BASENAME="pen"
+export ICLOUD_BASENAME="iCloud"
+export MACDEV_BASENAME="macdev"
+export ICLOUD="${USERHOME}/${ICLOUD_BASENAME}"
+
+PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
+if test -n "${DARWIN}"; then
+  MACDEV="$( defaults read "${USERHOME}/Library/Preferences/com.google.GoogleDrive.plist" NSNavLastRootDirectory | sed "s|~|${USERHOME}|" )"; export MACDEV
+  export FILES="${MACDEV}/files"
+  export REQUESTS_CA_BUNDLE="${FILES}/ssl/ca-bundle.crt"
+  export DEFAULT_CA_BUNDLE_PATH="${REQUESTS_CA_BUNDLE}"
+  export SSL_CERT_FILE="${REQUESTS_CA_BUNDLE}"
+  PEN="${USERHOME}/${PEN_BASENAME}"
+  BREW="/usr/local/bin"
+  BREW_S="/usr/local/sbin"
+  PATH="${PEN}:${PEN}/bin:${PEN}/scripts:${MACDEV}/scripts:${MACDEV}/bin:${ICLOUD}/bin:${USERHOME}/bin:/Applications/PyCharm.app/Contents/MacOS:/usr/local/opt/ruby/bin:/usr/local/opt/python@3.8/bin:/Library/Developer/CommandLineTools/usr/bin:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin:${PATH}"
+elif test -n "${KALI}"; then
+  export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+  PEN="/${PEN_BASENAME}"
+  BREW="/home/linuxbrew/.linuxbrew/bin"
+  BREW_S="/home/linuxbrew/.linuxbrew/sbin"
+  PATH="${PEN}:${PEN}/bin:${PEN}/scripts:${BREW}:${BREW_S}:${PATH}"
+fi
+export PATH PEN BREW
 
 ! test -e "${PASSWD_PATH}" || source "${PASSWD_PATH}"
 echo "${PASSWORD}" | sudo -S true > /dev/null 2>&1
