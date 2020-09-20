@@ -11,11 +11,12 @@ function home_bashrc() {
     for user in "${USERNAME}" root kali; do
       if home="$( home.sh "${user}" )"; then
         file="${home}/.bashrc"
+        sudo -u "${user}" touch "${file}"
         if ! sudo -u "${user}" grep source "${file}" | grep "${BASHRC_FILE}" > /dev/null 2>&1; then
           if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
             if sudo -u "${user}" tee -a "${file}" >/dev/null <<EOT; then
 
-if test -f  "${bashrc_path}";then
+if test -f  "${bashrc_path}"; then
   source "${bashrc_path}"
 else
   echo 'bashrc file not found'; return 1
@@ -23,10 +24,10 @@ fi
 EOT
               info.sh files "${file}" "${bashrc_path}"
             else
-              error.sh files "${file}"
+              error.sh files "${file}"; return 1
             fi
           else
-            error.sh files "${file}" "${BASHRC_FILE} - command not found"
+            error.sh files "${file}" "${BASHRC_FILE} - command not found"; return 1
           fi
         fi
       fi
@@ -54,7 +55,7 @@ function home_links() {
     if home="$( home.sh "${user}" )"; then
       sudo -u "${user}" mkdir -p "${home}/.ssh"
       sudo -u "${user}" chmod go-rw "${home}/.ssh"
-      touch "${home}/.gitconfig"
+      touch "${USERHOME}/.gitconfig"
       for file in .ssh/config $( find .ssh -type f -exec grep -l "END OPENSSH PRIVATE KEY" "{}" \; ) .gitconfig; do
         if ! test -e "${home}/${file}"; then
           if sudo -u "${user}" ln -s "${file}" "${home}/${file}"; then
