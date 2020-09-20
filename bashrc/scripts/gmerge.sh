@@ -11,7 +11,7 @@ if name="$( source gtop 2>&1 )"; then
   path="$( git rev-parse --show-toplevel 2>&1 )"; export path; debug.sh path
   cd "${path}" || { error.sh cd "${path}"; exit 1; }
   branch="$( git rev-parse --abbrev-ref HEAD )"
-  debug branch
+  debug.sh branch
   if [[ "${branch}" != 'master' ]]; then
     git checkout master || exit 1
     git merge "${branch}" || exit 1
