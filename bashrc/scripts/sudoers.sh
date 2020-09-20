@@ -24,15 +24,13 @@ function darwin() {
     file="/etc/sudoers.d/${group}"
     file="/tmp/${group}"
     if ! test -f "${file}" || test -n "${force}"; then
-      echo "${force}"
-      echo "${password}"
       if sudo tee "${file}" >/dev/null <<EOT; then
 Defaults env_reset
 Defaults !requiretty
 %${group} ALL=(ALL) NOPASSWD:ALL
 Defaults: %${group} !logfile, !syslog
 EOT
-        if /usr/sbin/visudo -cf "${file}"; then
+        if /usr/sbin/visudo -cf "${file}" > /dev/null ; then
           info.sh sudoers "${file}"
         else
           error.sh sudoers 'visudo -cf' "${file}"; return 1
