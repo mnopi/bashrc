@@ -9,7 +9,7 @@ source_path="$( command -v "${source_name}" )"; export source_path; debug.sh sou
 if test -f "${source_path}"; then
   source "${source_path}"
 else
-  error.sh install "${source_path}" "not found"; exit 1
+  error.sh install "${source_name}" "not found"; exit 1
 fi
 ## END: INIT
 
@@ -19,15 +19,13 @@ script_path="$( command -v "${script_name}" )"; export script_path; debug.sh scr
 if test -f "${script_path}"; then
   "${script_path}"
 else
-  error.sh install "${script_path}" "not found"; exit 1
+  error.sh install "${script_name}" "not found"; exit 1
 fi
 
-source_name="${PASSWD_PATH}"
-source_path="$( command -v "${source_name}" )"; export source_path; debug.sh source_path
-if test -f "${source_path}"; then
-  "${source_path}"
+if test -f "${PASSWD_PATH}"; then
+  source "${PASSWD_PATH}"
 else
-  error.sh install "${source_path}" "not found"; exit 1
+  error.sh install "${PASSWD_PATH}" "not found"; exit 1
 fi
 ## END: PASSWD
 
@@ -38,17 +36,15 @@ script_path="$( command -v "${script_name}" )"; export script_path; debug.sh scr
 if test -f "${script_path}"; then
   "${script_path}"
 else
-  error.sh install "${script_path}" "not found"; exit 1
+  error.sh install "${script_name}" "not found"; exit 1
 fi
 ## END: BOOTSTRAP
 
 ## BEGIN: SECRETS
-source_name="${SECRETS_PATH}"
-source_path="$( command -v "${source_name}" )"; export source_path; debug.sh source_path
-if test -f "${source_path}"; then
-  "${source_path}"
+if test -f "${SECRETS_PATH}"; then
+  source "${SECRETS_PATH}"
 else
-  error.sh install "${source_path}" "not found"; exit 1
+  error.sh install "${SECRETS_PATH}" "not found"; exit 1
 fi
 ## END: SECRETS
 

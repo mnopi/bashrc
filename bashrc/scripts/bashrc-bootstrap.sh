@@ -10,7 +10,7 @@ for script_name in bashrc-bootstrap-sudoers.sh bashrc-bootstrap-essentials.sh \
     debug.sh script_path
     "${script_path}"
   else
-    error.sh "${script_path}" "not found"; exit 1
+    error.sh "${script_name}" "not found"; exit 1
   fi
 done
 
