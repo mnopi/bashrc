@@ -2,7 +2,9 @@ BUMP := patch  # major|minor|path
 all: upload
 .PHONY: $(all) all install secrets-push venv vars
 SHELL := $(shell command -v bash)
-
+export PROJECT_BASHRC := $(HOME)/bashrc
+export TERM := xterm-256color
+export GITHUB_USERNAME := j5pu
 upload:
 	@bashrc-upload.sh $(BUMP)
 install:
@@ -14,6 +16,7 @@ venv:
 	@project-venv.sh
 
 vars:
+	@echo $(PROJECT_BASHRC)
 	@echo "PASSWORD: $${PASSWORD}"
 	@echo "INTERNET: $${INTERNET}"
 	@echo "BUMP: $(BUMP)"
