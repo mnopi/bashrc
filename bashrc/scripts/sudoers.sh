@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
-test -n "${DARWIN}" || { error.sh DARWIN 'not defined'; return 1; }
-test -n "${KALI}" || { error.sh KALI 'not defined'; return 1; }
-test -n "${DEBIAN}" || { error.sh DEBIAN 'not defined'; return 1; }
-test -n "${UBUNTU}" || { error.sh UBUNTU 'not defined'; return 1; }
+test -n "${DARWIN}" || { error.sh DARWIN 'not defined'; exit 1; }
+test -n "${KALI}" || { error.sh KALI 'not defined'; exit 1; }
+test -n "${DEBIAN}" || { error.sh DEBIAN 'not defined'; exit 1; }
+test -n "${UBUNTU}" || { error.sh UBUNTU 'not defined'; exit 1; }
 
 function darwin() {
   # "${1}" - force
