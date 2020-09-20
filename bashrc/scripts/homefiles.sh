@@ -7,43 +7,78 @@ test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
 
 function home_bashrc() {
   local user home file bashrc_path
-  if [[ "${USER}" == "${USERNAME}" ]]; then
-    for user in "${USERNAME}" root kali; do
-      if home="$( home.sh "${user}" )"; then
-        file="${home}/.bashrc"
-        sudo -u "${user}" touch "${file}"
-        if ! sudo -u "${user}" grep source "${file}" | grep "${BASHRC_FILE}" > /dev/null 2>&1; then
-          if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
-            if sudo -u "${user}" tee -a "${file}" >/dev/null <<EOT; then
-
+  if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
+    if sudo -u "${1}" tee "${2}" >/dev/null <<EOT; then
+# shellcheck disable=SC1090
 if test -f  "${bashrc_path}"; then
   source "${bashrc_path}"
 else
   echo 'bashrc file not found'; return 1
 fi
 EOT
-              info.sh files "${file}" "${bashrc_path}"
-            else
-              error.sh files "${file}"; return 1
-            fi
-          else
-            error.sh files "${file}" "${BASHRC_FILE} - command not found"; return 1
-          fi
-        fi
-      fi
-    done
+      info.sh files "${2}" "${bashrc_path}"
+    else
+      error.sh files "${2}"; return 1
+    fi
+  else
+    error.sh files "${2}" "${BASHRC_FILE} - command not found"; return 1
   fi
 }
 
+function home_hushlogin () {
+  if sudo -u "${1}" touch "${2}"; then
+    info.sh files "${2}"
+  else
+    error.sh files "${2}"; return 1
+  fi
+}
+
+function home_inputrc () {
+  if sudo -u "${1}" cp -f "$( command -v inputrc 2>&1 )" "${2}"; then
+    info.sh files "${2}"
+  else
+    error.sh files "${2}"; return 1
+  fi
+}
+
+function home_profiles () {
+  if sudo -u "${1}" tee "${2}" >/dev/null <<EOT; then
+# shellcheck disable=SC1090
+if [[ -f ~/.bashrc ]]; then
+  . ~/.bashrc
+fi
+EOT
+    info.sh 2 "${2}"
+  else
+    error.sh files "${file}"; return 1
+  fi
+}
+
+function home_file() {
+  local user home file bashrc_path
+  for user in "${USERNAME}" root kali; do
+    if home="$( home.sh "${user}" )"; then
+      file="${home}/.bashrc"
+      home_bashrc "${user}" "${file}" || return 1
+      file="${home}/.hushlogin"
+      home_hushlogin "${user}" "${file}" || return 1
+      file="${home}/.inputrc"
+      home_inputrc "${user}" "${file}" || return 1
+      file="${home}/.profile"
+      home_profiles "${user}" "${file}" || return 1
+      file="${home}/.bash_profile"
+      home_profiles "${user}" "${file}" || return 1
+    fi
+  done
+}
+
 function home_secrets() {
-  local error user home file
-  if [[ "${USER}" == "${USERNAME}" ]]; then
-    if ! test -d "${GITHUB_SECRETS_PATH}"; then
-      if error="$( git clone "${GITHUB_SECRETS_URL}" "${GITHUB_SECRETS_PATH}" --quiet  2>&1 )"; then
-        info.sh clone "${GITHUB_SECRETS_URL}"
-      else
-        error.sh clone "${GITHUB_SECRETS_URL}" "${error}"; return 1
-      fi
+  local error
+  if ! test -d "${GITHUB_SECRETS_PATH}"; then
+    if error="$( git clone "${GITHUB_SECRETS_URL}" "${GITHUB_SECRETS_PATH}" --quiet  2>&1 )"; then
+      info.sh clone "${GITHUB_SECRETS_URL}"
+    else
+      error.sh clone "${GITHUB_SECRETS_URL}" "${error}"; return 1
     fi
   fi
 }
@@ -70,7 +105,13 @@ function home_links() {
   cd - > /dev/null || return 1
 }
 
-home_bashrc "$@" || exit 1
-home_secrets "$@" || exit 1
-home_links "$@" || exit 1
-unset starting bashrc_path user home file
+if test "${USER}" = "${USERNAME}" && isuser.sh; then
+  home_bash_profile || exit 1
+  home_bashrc || exit 1
+  home_inputrc_hush || exit 1
+  home_profile || exit 1
+  home_secrets || exit 1
+  home_links || exit 1
+fi
+
+unset starting bashrc_path

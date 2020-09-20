@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
+
+# shellcheck disable=SC1090
+function rebash() { source ~/.bashrc ; }; export -f rebash

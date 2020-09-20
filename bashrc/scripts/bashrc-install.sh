@@ -48,7 +48,8 @@ source "${PASSWD_PATH}" || exit 1
 
 sudoers.sh "$@" || exit 1
 essentials.sh "$@" || exit 1
-homefiles.sh "$@" || exit 1
+homefiles.sh || exit 1
+sshconfig.sh || exit 1
 
 ## BEGIN: SECRETS
 if test -f "${SECRETS_PATH}"; then
@@ -58,4 +59,4 @@ else
 fi
 ## END: SECRETS
 
-unset starting source_name source_path script_name script_path
+unset starting
