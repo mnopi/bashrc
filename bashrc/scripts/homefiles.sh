@@ -16,9 +16,9 @@ else
   echo 'bashrc file not found'; return 1
 fi
 EOT
-      info.sh files "${2}" "${bashrc_path}"
+      info.sh homefiles "${2}" "${bashrc_path}"
     else
-      error.sh files "${2}"; return 1
+      error.sh homefiles "${2}"; return 1
     fi
   else
     error.sh files "${2}" "${BASHRC_FILE} - command not found"; return 1
@@ -27,17 +27,17 @@ EOT
 
 function home_hushlogin () {
   if sudo -u "${1}" touch "${2}"; then
-    info.sh files "${2}"
+    info.sh homefiles "${2}"
   else
-    error.sh files "${2}"; return 1
+    error.sh homefiles "${2}"; return 1
   fi
 }
 
 function home_inputrc () {
   if sudo -u "${1}" cp -f "$( command -v inputrc 2>&1 )" "${2}"; then
-    info.sh files "${2}"
+    info.sh homefiles "${2}"
   else
-    error.sh files "${2}"; return 1
+    error.sh homefiles "${2}"; return 1
   fi
 }
 
@@ -48,9 +48,9 @@ if [[ -f ~/.bashrc ]]; then
   . ~/.bashrc
 fi
 EOT
-    info.sh 2 "${2}"
+    info.sh homefiles "${2}"
   else
-    error.sh files "${file}"; return 1
+    error.sh homefiles "${file}"; return 1
   fi
 }
 
@@ -93,8 +93,9 @@ function home_links() {
       touch .ssh/gitconfig
       for file in .ssh/config .ssh/credentials .ssh/gitconfig \
                   $( find .ssh -type f -exec grep -l "END OPENSSH PRIVATE KEY" "{}" \; ) .gitconfig; do
-        if ! test -e "${home}/${file}"; then
-          if sudo -u "${user}" ln -s "${file}" "${home}/${file}"; then
+        if ! test -L "${home}/${file}"; then
+          sudo -u "${user}" rm -r "${home}/${file}"
+          if sudo -u "${user}" ln -s "${USERHOME}/${file}" "${home}/${file}"; then
             info.sh link "${home}/${file}"
           else
             error.sh link "${home}/${file}"; return 1

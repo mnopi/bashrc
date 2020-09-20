@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-sudo apt update -y || exit 1
-sudo apt full-upgrade -y || exit 1
-sudo apt install -y \
+if sudo apt -qq update -y; then
+  info.sh apt update
+else
+  error.sh apt update; exit 1
+fi
+
+if sudo apt -qq full-upgrade -y; then
+  info.sh apt full-upgrad
+else
+  error.sh apt full-upgrad; exit 1
+fi
+
+if sudo apt -qq install -y \
   acl \
   apt-transport-https \
   bash-completion \
@@ -35,12 +45,31 @@ sudo apt install -y \
   telnet \
   traceroute \
   wget \
-  unzip-y || exit 1
-sudo apt remove --purge -y \
+  unzip-y; then
+  info.sh apt install
+else
+  error.sh apt install; exit 1
+fi
+
+if sudo apt -qq remove --purge -y \
   unattended-upgrades \
   accountservice \
   open-vm-tools \
   snapd \
-  apparmor
-sudo auto-clean -y || exit 1
-sudo auto-remove -y || exit 1
+  apparmor; then
+  info.sh apt remove
+else
+  error.sh apt remove; exit 1
+fi
+
+if sudo apt -qq auto-clean -y; then
+  info.sh apt auto-clean
+else
+  error.sh apt auto-clean; exit 1
+fi
+
+if sudo apt -qq auto-remove -y; then
+  info.sh apt auto-remove
+else
+  error.sh apt auto-remove; exit 1
+fi

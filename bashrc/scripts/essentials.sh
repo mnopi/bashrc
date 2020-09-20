@@ -16,16 +16,20 @@ function kali() {
   apt-kali.sh || return 1
   pam-sudo.sh "$@" || return 1
   motd.sh "$@" || return 1
-  rm -rf /etc/update-motd.d/
+  sudo rm -rf /etc/update-motd.d/
+  sudo sed -i 's/#Banner none/Banner none/' /etc/ssh/sshd_config
+  sudo sed -i 's/#LogLevel INFO/LogLevel QUIET/' /etc/ssh/sshd_config
+  sudo service ssh restart || return 1
   sudo sed -i 's/^.*" //' /root/.ssh/authorized_keys > /dev/null 2>&1
   sudo sed -i 's/^.*" //' /home/kali/authorized_keys > /dev/null 2>&1
   sudo passwd -d root > /dev/null 2>&1
   sudo passwd -d kali > /dev/null 2>&1
-#  sudo sed -i 's/^session.*optional.*pam_motd.so.*/# MOTD DISABLED/' /etc/pam.d/login
-  sudo sed -i 's/^session.*optional.*pam_motd.so.*/# MOTD DISABLED/' /etc/pam.d/sshd
-  touch /var/lib/cloud/instance/locale-check.skip
+  sudo sed -i 's/^session.*optional.*pam_motd.so.*/# MOTD DISABLED/' /etc/pam.d/login > /dev/null 2>&1
+  sudo sed -i 's/^session.*optional.*pam_motd.so.*/# MOTD DISABLED/' /etc/pam.d/sshd > /dev/null 2>&1
+  sudo mkdir -p /var/lib/cloud/instance/
+  sudo touch /var/lib/cloud/instance/locale-check.skip > /dev/null 2>&1
   sudo mkdir -p /etc/pki/tls/certs/
-  sudo cp -f /etc/ssl/certs/ca-certificates.crt /etc/pki/tls/certs/ca-bundle.crt
+  sudo cp -f /etc/ssl/certs/ca-certificates.crt /etc/pki/tls/certs/ca-bundle.crt > /dev/null 2>&1
   install-brew.sh || return 1
 }
 
