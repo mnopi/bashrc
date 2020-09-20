@@ -4,7 +4,8 @@
 from setuptools import setup, find_packages
 
 # noinspection PyUnresolvedReferences
-from bashrc import package, project, scripts_relative, readme, description, install_requires, GITHUB_EMAIL, REALNAME, GITHUB_URL
+from bashrc import package, project, scripts_relative, readme, description, install_requires, GITHUB_EMAIL, \
+    REALNAME, GITHUB_URL
 
 setup(
     author=REALNAME,
@@ -21,6 +22,6 @@ setup(
     setup_requires=[],
     tests_require=[],
     url=f'{GITHUB_URL}/',
-    version='0.1.48',
+    version='0.1.49',
     zip_safe=False,
 )
