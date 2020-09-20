@@ -22,5 +22,7 @@ function kali() {
   true
 }
 
+! test -n "${DARWIN}" || darwin "$@" || exit 1
+! test -n "${KALI}" || kali "$@" || exit 1
 
 unset starting
