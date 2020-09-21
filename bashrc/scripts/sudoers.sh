@@ -63,7 +63,7 @@ Defaults !requiretty
 %${group} ALL=(ALL) NOPASSWD:ALL
 Defaults: %${group} !logfile, !syslog
 EOT
-        if /usr/sbin/visudo -cf "${file}" > /dev/null ; then
+        if sudo /usr/sbin/visudo -cf "${file}" > /dev/null ; then
           info.sh sudoers "${file}"
         else
           error.sh sudoers 'visudo -cf' "${file}"; return 1
@@ -83,12 +83,10 @@ Defaults !requiretty
 ${user} ALL=(ALL) NOPASSWD:ALL
 Defaults: ${user} !logfile, !syslog
 EOT
-        if error="$( sudo /usr/sbin/visudo -cf "${file}" 2>&1 )"; then
+        if sudo /usr/sbin/visudo -cf "${file}" > /dev/null ; then
           info.sh sudoers "${file}"
         else
-          if ! echo "${error}" | grep "Permission denied" > /dev/null 2>&1; then
-            error.sh sudoers 'visudo -cf' "${file}"; return 1
-          fi
+          error.sh sudoers 'visudo -cf' "${file}"; return 1
         fi
       else
         error.sh sudoers tee "${file}"; return 1
