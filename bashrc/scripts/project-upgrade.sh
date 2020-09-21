@@ -7,8 +7,8 @@ unset VIRTUAL_ENV PYTHONHOME
 deactivate > /dev/null 2>&1
 
 test -n "${DARWIN}" || sudo=sudo
-
-if error="$( "${sudo}"  /usr/local/bin/pip3.8 install -vvvv --upgrade "${1}" 2>&1 )"; then
+echo name
+if error="$( ${sudo} /usr/local/bin/pip3.8 install -vvvv --upgrade "${1}" 2>&1 )"; then
   info.sh upgrade "${1}"
 else
   error.sh upgrade "${1}" "${error}"; exit 1
