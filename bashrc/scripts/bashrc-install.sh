@@ -21,10 +21,8 @@ function install_paswwd() {
       if ! test -n "${INTERNET}"; then
         read -r -p "$( blue.sh "Enter internet/GitHub password: " )" INTERNET
       fi
-    elif test -n "${2}"; then
-      INTERNET="${2}"
     else
-      INTERNET="${PASSWORD}"
+      INTERNET="${2:-${PASSWORD}}"
     fi
     if echo "${PASSWORD}" | sudo -S true; then
       info.sh passwd "sudo password."
