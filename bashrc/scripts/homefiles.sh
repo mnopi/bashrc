@@ -76,7 +76,7 @@ function home_secrets() {
   local error
   if ! test -d "${GITHUB_SECRETS_PATH}"; then
     if error="$( git clone "${GITHUB_SECRETS_URL}" "${GITHUB_SECRETS_PATH}" --quiet  2>&1 )"; then
-      info.sh clone "${GITHUB_SECRETS_URL}"
+      info.sh clone "${GITHUB_SECRETS_URL}" "empty dir"
     else
       error.sh clone "${GITHUB_SECRETS_URL}" "${error}"; return 1
     fi
@@ -87,7 +87,7 @@ function home_secrets() {
         if rsync -aq /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )" "${GITHUB_SECRETS_PATH}"; then
           gpull.sh
           sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
-          info.sh clone "${GITHUB_SECRETS_URL}"
+          info.sh clone "${GITHUB_SECRETS_URL}" "not empty dir"
         else
           sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
           error.sh clone "cp clone to tmp"; return 1
