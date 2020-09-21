@@ -66,6 +66,7 @@ fi
 
 ## PS1
 ## xterm title set to host@user:dir lo hace con esto: \[\e]0;\h@\u: \w\a\]
+SSH_THE_SAME="yes"
 if [[ "$( id -u )" == "0" ]] || [[ "${SUDO_UID-}" ]]; then
     PS1="\[\e]0;\h@\u: \w\a\]${ROJO}\h${INVERSO} ${AZUL}\w${INVERSO} ${ROJO}#${INVERSO} "
 else
