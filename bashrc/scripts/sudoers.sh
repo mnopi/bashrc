@@ -89,9 +89,9 @@ EOT
 #            error.sh sudoers 'visudo -cf' "${file}"; return 1
 #          fi
 #        fi
-      else
-        error.sh sudoers tee "${file}"; return 1
-      fi
+#      else
+#        error.sh sudoers tee "${file}"; return 1
+#      fi
     fi
   done
 }
