@@ -90,10 +90,12 @@ alias fgrep='sudo fgrep --color=auto'
 alias egrep='sudo egrep --color=auto'
 
 ## MISC
+alias cp="cp -r"
 alias finder="open ." # Open current directory in Finder
 alias less='less -R'
 alias more='more -R'
 alias play="ansible-playbook"
+alias rm="sudo rm -r"
 alias rsync_d="rsync -v -a --delete-after --checksum"
 alias speedtest="wget -O /dev/null http://speed.transip.nl/100mb.bin"
 alias update="sudo softwareupdate -aiR" # Install all macOS updates and restart system
