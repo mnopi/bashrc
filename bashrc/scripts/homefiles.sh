@@ -2,7 +2,7 @@
 ## source
 # shellcheck disable=SC2034
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
-
+set -x
 test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
 
 function home_bashrc() {
@@ -146,5 +146,5 @@ if test "${USER}" = "${USERNAME}" && isuser.sh; then
   home_file || exit 1
   home_links || exit 1
 fi
-
+set +x
 unset starting bashrc_path
