@@ -31,7 +31,7 @@ path="$( pwd )"
 name="$( basename "${path}" )"
 export bump twine path name; debug.sh bump twine path name
 
-if isuser.sh; then
+if isuserdarwin.sh; then
   project-venv.sh "${path}"
   virtual="${path}/venv/bin"
   export virtual; debug.sh virtual
