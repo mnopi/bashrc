@@ -85,12 +85,15 @@ function home_secrets() {
     if ! git log > /dev/null 2>&1; then
       if git clone "${GITHUB_SECRETS_URL}" /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )" --quiet; then
         if rsync -aq /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )" "${GITHUB_SECRETS_PATH}"; then
-          gpull.sh
+          if gpull.sh; then
 #          sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
-          info.sh clone "${GITHUB_SECRETS_URL}" "not empty dir"
+            info.sh clone "${GITHUB_SECRETS_URL}" "not empty dir"
+          else
+            error.sh clone "not valid git after rsync"; return 1
+          fi
         else
 #          sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
-          error.sh clone "cp clone to tmp"; return 1
+          error.sh clone "rsync clone to tmp"; return 1
         fi
       else
         error.sh clone "${GITHUB_SECRETS_URL}" /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"; return 1
