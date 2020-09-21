@@ -90,8 +90,8 @@ function home_links() {
     if home="$( home.sh "${user}" )"; then
       sudo -u "${user}" mkdir -p "${home}/.ssh"
       sudo -u "${user}" chmod go-rw "${home}/.ssh"
-      touch .ssh/gitconfig
-      for file in .ssh/config .ssh/gitcredentials .ssh/gitconfig \
+      touch .gitconfig
+      for file in .ssh/config .ssh/gitcredentials .gitconfig \
                   $( find .ssh -type f -exec grep -l "END OPENSSH PRIVATE KEY" "{}" \; ) .gitconfig; do
         if ! test -L "${home}/${file}"; then
           sudo -u "${user}" rm -rf "${home}/${file}"
