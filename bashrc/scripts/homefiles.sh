@@ -85,7 +85,8 @@ function home_secrets() {
     if ! git log > /dev/null 2>&1; then
       if git clone "${GITHUB_SECRETS_URL}" /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )" --quiet; then
         if cp -rf -p /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/ "${GITHUB_SECRETS_PATH}"; then
-          /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
+          gull.sh
+          sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
           info.sh clone "${GITHUB_SECRETS_URL}"
         else
           sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
