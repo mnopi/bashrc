@@ -13,7 +13,7 @@ else
   error.sh apt full-upgrad; exit 1
 fi
 
-if sudo apt -qq install -y \
+if sudo apt -qq install --fix-missing -y \
   acl \
   apt-transport-https \
   bash-completion \
