@@ -3,6 +3,13 @@
 export starting="${BASH_SOURCE[0]}"
 debug.sh starting
 
+## BASHRC
+if test -n "${DARWIN}"; then
+  alias rebashrc="bashrc-upload.sh; bashrc-upgrade.sh; rebash"
+else
+  alias rebashr="bashrc-upgrade.sh; rebash"
+fi
+
 ## ATHENS
 alias athens='docker -H tcp://repo.nferx.com:2375 logs --details --follow  lumenbiomics'
 
