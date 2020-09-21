@@ -19,35 +19,35 @@ case "${username}" in
     ;;
 esac
 
-git config --global user.name "${REALNAME}" || exit 1
-git config --global user.username "${username}" || exit 1
-git config --global github.username "${username}" || exit 1
-git config --global user.email "${email}" || exit 1
-git config --global credential.helper "'store --file ${GIT_STORE}'" || exit 1
-git config --global core.excludesfile "${GITHUB_SECRETS_PATH}/gitignore" || exit 1
-git config --global core.editor vi || exit 1
-git config --global color.ui true || exit 1
-git config --global receive.fsckObjects true || exit 1
-git config --global receive.denyNonFastForwards true || exit 1
-git config --global core.autocrlf input || exit 1
-git config --global bash-it.hide-status 1 || exit 1
+git config user.name "${REALNAME}" || exit 1
+git config user.username "${username}" || exit 1
+git config github.username "${username}" || exit 1
+git config user.email "${email}" || exit 1
+git config credential.helper "'store --file ${GIT_STORE}'" || exit 1
+git config core.excludesfile "${GITHUB_SECRETS_PATH}/gitignore" || exit 1
+git config core.editor vi || exit 1
+git config color.ui true || exit 1
+git config receive.fsckObjects true || exit 1
+git config receive.denyNonFastForwards true || exit 1
+git config core.autocrlf input || exit 1
+git config bash-it.hide-status 1 || exit 1
 
-git config --global filter.lfs.clean "git-lfs clean -- %f" || exit 1
-git config --global filter.lfs.smudge "git-lfs smudge -- %f" || exit 1
-git config --global filter.lfs.process "git-lfs filter-process" || exit 1
-git config --global filter.lfs.required "true" || exit 1
+git config filter.lfs.clean "git-lfs clean -- %f" || exit 1
+git config filter.lfs.smudge "git-lfs smudge -- %f" || exit 1
+git config filter.lfs.process "git-lfs filter-process" || exit 1
+git config filter.lfs.required "true" || exit 1
 
-git config --global credential.https://repo.nferx.com.helper "'store --file ${GIT_STORE}'" || exit 1
+git config credential.https://repo.nferx.com.helper "'store --file ${GIT_STORE}'" || exit 1
 
-git config --global http.postBuffer 15728640 || exit 1
+git config http.postBuffer 15728640 || exit 1
 
-git config --global lfs.batch false || exit 1
-git config --global lfs.https://repo.nferx.com/repository/gitlfs-internal/info/lfs.locksverify true || exit 1
-git config --global lfs.https://repo.nferx.com/repository/gitlfs-internal/.locksverify true || exit 1
-git config --global core.sshCommand /usr/bin/ssh || exit 1
+git config lfs.batch false || exit 1
+git config lfs.https://repo.nferx.com/repository/gitlfs-internal/info/lfs.locksverify true || exit 1
+git config lfs.https://repo.nferx.com/repository/gitlfs-internal/.locksverify true || exit 1
+git config core.sshCommand /usr/bin/ssh || exit 1
 # https://www.lutro.me/posts/different-ssh-keys-per-github-organisation || exit 1
-# git config --global url.git@example.github.com:example.insteadOf = git@github.com:example || exit 1
-# git config --global url.git@example.github.com:example.insteadOf = https://github.com/example || exit 1
+# git config url.git@example.github.com:example.insteadOf = git@github.com:example || exit 1
+# git config url.git@example.github.com:example.insteadOf = https://github.com/example || exit 1
 
 info.sh gconfig  "${GIT_CONFIG}"
 

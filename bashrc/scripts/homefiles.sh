@@ -94,7 +94,7 @@ function home_links() {
       for file in .ssh/config .ssh/gitcredentials .ssh/gitconfig \
                   $( find .ssh -type f -exec grep -l "END OPENSSH PRIVATE KEY" "{}" \; ) .gitconfig; do
         if ! test -L "${home}/${file}"; then
-          sudo -u "${user}" rm -r "${home}/${file}"
+          sudo -u "${user}" rm -rf "${home}/${file}"
           if sudo -u "${user}" ln -s "${USERHOME}/${file}" "${home}/${file}"; then
             info.sh link "${home}/${file}"
           else
@@ -105,7 +105,7 @@ function home_links() {
     fi
     done
   cd - > /dev/null || return 1
-  if isuserdarwin; then
+  if isuserdarwin.sh; then
     mkdir -p "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs"
     if test -d "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs" && ! test -d "${ICLOUD}" && ! test -L "${ICLOUD}"; then
       ln -s "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs" "${ICLOUD}"
