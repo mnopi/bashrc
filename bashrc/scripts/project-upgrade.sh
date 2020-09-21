@@ -14,13 +14,15 @@ export path name; debug.sh path name
 unset VIRTUAL_ENV PYTHONHOME
 deactivate > /dev/null 2>&1
 
-if error="$( /usr/local/bin/pip3.8 install -vvvv --upgrade "${name}" 2>&1 )"; then
+test -n "${DARWIN}" || sudo=sudo
+
+if error="$( "${sudo}"  /usr/local/bin/pip3.8 install -vvvv --upgrade "${name}" 2>&1 )"; then
   info.sh upgrade "${name}"
 else
   error.sh upgrade "${name}" "${error}"; exit 1
 fi
 
 ## I do not know why requires twice to get it into the path,
-/usr/local/bin/pip3.8 install --upgrade "${name}" > /dev/null 2>&1
+"${sudo}" /usr/local/bin/pip3.8 install --upgrade "${name}" > /dev/null 2>&1
 
 unset starting error path name
