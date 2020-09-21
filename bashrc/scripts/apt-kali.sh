@@ -45,7 +45,7 @@ if sudo apt -qq install -y \
   telnet \
   traceroute \
   wget \
-  unzip-y; then
+  unzip; then
   info.sh apt install
 else
   error.sh apt install; exit 1

@@ -9,39 +9,7 @@ docker pull kalilinux/kali:latest
 
 ```bash
 apt update -y; apt full-upgrade -y; apt install -y kali-linux-everything
-apt install -y \
-    acl \
-    apt-transport-https \
-    bash-completion \
-    build-essential \
-    ca-certificates \
-    curl \
-    gawk \
-    gettext \
-    git \
-    gnupg-agent \
-    gnupg2 \
-    httping \
-    iproute2 \
-    kali-linux-everything \
-    libssl-dev \
-    locales-all \
-    lsof \
-    lynx \
-    net-tools \
-    nmap \
-    python3.8 \
-    python3-pip \
-    rsync \
-    screen \
-    software-properties-common \
-    speedtest-cli \
-    sysstat \
-    tcpdump \
-    telnet \
-    traceroute \
-    wget \
-    unzip-y
+sudo python3 -m pip install --upgrade bashrc
 ```
 
 ### With pip available
