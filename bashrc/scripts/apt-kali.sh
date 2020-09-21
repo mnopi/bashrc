@@ -53,7 +53,6 @@ fi
 
 if sudo apt -qq remove --purge -y \
   unattended-upgrades \
-  accountservice \
   open-vm-tools \
   snapd \
   apparmor; then
