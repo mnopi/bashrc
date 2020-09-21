@@ -14,6 +14,13 @@ sudo python3 -m pip install --upgrade bashrc
 
 ### With pip available
 
+#### No python
+```bash
+sudo apt update -y; apt install python3.8 python3-pip -y
+sudo python3 -m pip install --upgrade bashrc
+
+```
+
 #### With sudo in debian/kali or macos in bootstrap if brew not installed
 ```bash
 sudo python3 -m pip install --upgrade bashrc
