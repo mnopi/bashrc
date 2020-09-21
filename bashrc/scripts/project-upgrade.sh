@@ -10,7 +10,7 @@ deactivate > /dev/null 2>&1
 command="/usr/local/bin/python3.8"
 if ! test -n "${DARWIN}"; then
   command="sudo /bin/python3.8"
-
+fi
 
 if error="$( ${command} -m pip install --upgrade "${1}" 2>&1 )"; then
   info.sh upgrade "${1}"
