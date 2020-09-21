@@ -42,6 +42,7 @@ function install_paswwd() {
 }
 
 source "$( command -v bashrc-vars )" || exit 1
+source "$( command -v bashrc-dirs )" || exit 1
 
 install_paswwd "$@" || exit 1
 source "${PASSWD_PATH}" || exit 1

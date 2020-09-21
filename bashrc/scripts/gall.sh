@@ -9,7 +9,7 @@ fi
 message="${1:-'auto commit'}"
 if name="$( source gtop 2>&1 )"; then
   export name; debug.sh name
-  path="$( git rev-parse --show-toplevel 2>&1 )"; export path; debug.sh path
+  path="$( git rev-parse --show-toplevel 2>&1 )" || exit 1; export path; debug.sh path
   cd "${path}" || { error.sh cd "${path}"; exit 1; }
   if error="$( gadd.sh 2>&1 && gcommit.sh "${message}" 2>&1 && gpush.sh 2>&1 && gpull.sh 2>&1 )"; then
     info.sh gall "${name}"; exit 0

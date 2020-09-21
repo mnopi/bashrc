@@ -107,7 +107,8 @@ function home_links() {
   cd - > /dev/null || return 1
   if isuserdarwin.sh; then
     mkdir -p "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    if test -d "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs" && ! test -d "${ICLOUD}" && ! test -L "${ICLOUD}"; then
+    if test -d "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs" && ! test -d "${ICLOUD}" \
+                && ! test -L "${ICLOUD}"; then
       ln -s "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs" "${ICLOUD}"
     fi
 
@@ -120,8 +121,8 @@ function home_links() {
 }
 
 if test "${USER}" = "${USERNAME}" && isuser.sh; then
-  home_file || exit 1
   home_secrets || exit 1
+  home_file || exit 1
   home_links || exit 1
 fi
 
