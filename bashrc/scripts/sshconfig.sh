@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
+export KALI_IP="67.202.15.57"
+export HP_IP="192.168.1.10"
+
 # shellcheck disable=SC1090
 if test "${USER}" = "${USERNAME}" && isuserdarwin.sh && test -n "${1}"; then
   bashrc-upload.sh || exit 1
   bashrc-upgrade.sh || exit 1
-  source ~/.bashrc
 fi
 
 function authorized_keys() {

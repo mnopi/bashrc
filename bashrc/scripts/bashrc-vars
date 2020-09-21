@@ -8,8 +8,7 @@ KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
 DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
 UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
 
-export KALI_IP="67.202.15.57"
-export HP_IP="192.168.1.10"
+
 
 export USERNAME="jose"
 USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
