@@ -57,7 +57,7 @@ elif test -n "${KALI}"; then
   PATH="${BREW}:${BREW_S}:${PATH}"
 fi
 MANPATH="${MACDEV}/man:${ICLOUD}/man:${BREW}/../share/man"
-test -n "${GOPATH}" || PATH="${GOPATH//://bin:}/bin:${PATH}"
+! test -n "${GOPATH}" || PATH="${GOPATH//://bin:}/bin:${PATH}"
 export PATH PEN BREW INFOPATH MANPATH
 
 REALNAME="$(test -n "${DARWIN}" && dscl . -read /Users/"${USERNAME}" RealName RealName | sed -n 's/^ //g;2p' || echo)"
