@@ -8,9 +8,10 @@ test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
 function home_bashrc() {
   local user home file bashrc_path
   if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
-    if sudo -u "${1}" tee "${2}" >/dev/null <<EOT; then
-# shellcheck disable=SC1090
-test -n "${PS1}" || return
+    echo '# shellcheck disable=SC1090' | sudo -u "${1}" tee "${2}" >/dev/null
+    # shellcheck disable=SC2016
+    echo 'test -n "${PS1}" || return' | sudo -u "${1}" tee -a "${2}" >/dev/null
+    if sudo -u "${1}" tee -a "${2}" >/dev/null <<EOT; then
 if test -f  "${bashrc_path}"; then
   source "${bashrc_path}"
 else
