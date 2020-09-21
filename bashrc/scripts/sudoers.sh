@@ -43,7 +43,7 @@ EOT
 function kali() {
   # "${1}" - force
   # "${1}" - password
-  local force password group file user
+  local force password group file user error
   while (( "$#" )); do
     case "${1}" in
       force) force="${1}" ;;
@@ -86,7 +86,8 @@ EOT
           info.sh sudoers "${file}"
         else
           if ! echo "${error}" | grep "Permission denied" > /dev/null 2>&1; then
-          error.sh sudoers 'visudo -cf' "${file}"; return 1
+            error.sh sudoers 'visudo -cf' "${file}"; return 1
+          fi
         fi
       else
         error.sh sudoers tee "${file}"; return 1
