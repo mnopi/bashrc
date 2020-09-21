@@ -43,7 +43,7 @@ EOT
 function kali() {
   # "${1}" - force
   # "${1}" - password
-  local force password group file user error
+  local force password group file user
   while (( "$#" )); do
     case "${1}" in
       force) force="${1}" ;;
@@ -82,6 +82,7 @@ Defaults !requiretty
 ${user} ALL=(ALL) NOPASSWD:ALL
 Defaults: ${user} !logfile, !syslog
 EOT
+        true
 #        if error="$( sudo /usr/sbin/visudo -cf "${file}" 2>&1 )"; then
 #          info.sh sudoers "${file}"
 #        else
@@ -91,7 +92,7 @@ EOT
 #        fi
 #      else
 #        error.sh sudoers tee "${file}"; return 1
-#      fi
+      fi
     fi
   done
 }
