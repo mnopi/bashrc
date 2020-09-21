@@ -148,7 +148,7 @@ function chownaz() {
   sudo chmod -R u+r [a-z,A-Z,0-9]* .[a-z,A-Z,0-9]*
 }
 
-
+if ! test -n "${DARWIN}"; then
 function command_not_found_handle() {
   if [[ -x /usr/lib/command-not-found ]]; then
     /usr/lib/command-not-found -- "$1"
@@ -161,7 +161,7 @@ function command_not_found_handle() {
     return 127
   fi
 }
-
+fi
 function cleandir() {
   [[ "$(ls -A "${1}"/* >/dev/null 2>&1)" ]] || sudo "${RM_PATH}" -rf "${1}"/*
   info "${1}"
