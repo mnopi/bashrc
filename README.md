@@ -49,12 +49,14 @@ bashrc-install.sh
 
 ```bash
 bashrc-upload.sh
+rebash
 ```
 
 #### On other servers
 
 ```bash
 bashrc-upgrade.sh
+rebash
 ```
 
 ## Update secrets (token, etc.) and ssh keys on source server and other servers
