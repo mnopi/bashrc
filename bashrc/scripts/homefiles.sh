@@ -95,8 +95,6 @@ function home_secrets() {
       else
         error.sh clone "${GITHUB_SECRETS_URL}" /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"; return 1
       fi
-    else
-      error.sh clone ".git directory already" "${GITHUB_SECRETS_PATH}"; return 1
     fi
     cd - > /dev/null || return 1
 
