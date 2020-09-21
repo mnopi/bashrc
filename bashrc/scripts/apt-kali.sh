@@ -10,7 +10,7 @@ fi
 if sudo apt -qq full-upgrade -y; then
   info.sh apt full-upgrad
 else
-  error.sh apt full-upgrad; exit 1
+  error.sh apt full-upgrade; exit 1
 fi
 
 if sudo apt -qq install --fix-missing -y \

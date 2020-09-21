@@ -36,7 +36,7 @@ export MACDEV_BASENAME="macdev"
 export ICLOUD="${USERHOME}/${ICLOUD_BASENAME}"
 export GOHOME="${USERHOME}/.go"
 
-PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
+PATH="${HOME}/scripts:${HOME}/bin:${USERHOME}/scripts:${USERHOME}/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
 INFOPATH="${BREW}/../share/info"
 MANPATH="${BREW}/../share/man"
 if test -n "${DARWIN}"; then
