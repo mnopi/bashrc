@@ -3,10 +3,7 @@
 # shellcheck disable=SC2034
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-pwd
-basename pwd
 name="$( basename pwd )"
-echo $name
 
 unset VIRTUAL_ENV PYTHONHOME
 deactivate > /dev/null 2>&1
