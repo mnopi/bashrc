@@ -7,7 +7,7 @@ debug.sh starting
 if test -n "${DARWIN}"; then
   alias rebashrc="bashrc-upload.sh; bashrc-upgrade.sh; rebash"
 else
-  alias rebashr="bashrc-upgrade.sh; rebash"
+  alias rebashrc="bashrc-upgrade.sh; rebash"
 fi
 
 ## ATHENS
