@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
-
+set -x
 # shellcheck disable=SC1090
 if test "${USER}" = "${USERNAME}" && isuserdarwin.sh && test -n "${1}"; then
   bashrc-upload.sh || exit 1
@@ -95,4 +95,5 @@ fi
 
 grep -slR "PRIVATE" ~/.ssh | xargs ssh-add >/dev/null 2>&1
 
+set +x
 unset starting
