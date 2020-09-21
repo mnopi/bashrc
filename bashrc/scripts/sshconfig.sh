@@ -5,7 +5,6 @@ set -x
 if test "${USER}" = "${USERNAME}" && isuserdarwin.sh && test -n "${1}"; then
   bashrc-upload.sh || exit 1
   bashrc-upgrade.sh || exit 1
-  echo hola
   source ~/.bashrc
 fi
 
