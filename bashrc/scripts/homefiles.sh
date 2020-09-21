@@ -84,8 +84,8 @@ function home_secrets() {
     cd "${GITHUB_SECRETS_PATH}"  || { error.sh "${GITHUB_SECRETS_PATH}" "invalid"; return 1; }
     if ! git log > /dev/null 2>&1; then
       if git clone "${GITHUB_SECRETS_URL}" /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )" --quiet; then
-        if cp -rf -p /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/ "${GITHUB_SECRETS_PATH}"; then
-          gull.sh
+        if rsync -aq /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )" "${GITHUB_SECRETS_PATH}"; then
+          gpull.sh
           sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
           info.sh clone "${GITHUB_SECRETS_URL}"
         else
@@ -113,6 +113,9 @@ function home_links() {
       touch .gitconfig
       for file in .ssh/config .ssh/gitcredentials .gitconfig \
                   $( find .ssh -type f -exec grep -l "END OPENSSH PRIVATE KEY" "{}" \; ) .gitconfig; do
+        if ! test -e "${USERHOME}/${file}"; then
+          error.sh link "${USERHOME}/${file}" "not found"; return 1
+        fi
         if ! test -L "${home}/${file}"; then
           sudo -u "${user}" rm -rf "${home}/${file}"
           if sudo -u "${user}" ln -s "${USERHOME}/${file}" "${home}/${file}"; then

@@ -22,7 +22,7 @@ git config --global user.name "${REALNAME}" || exit 1
 git config --global user.username "${username}" || exit 1
 git config --global github.username "${username}" || exit 1
 git config --global user.email "${email}" || exit 1
-git config --global credential.helper "'store --file ${GIT_STORE}'" || exit 1
+git config --global credential.helper "store --file ${GIT_STORE}" || exit 1
 git config --global core.excludesfile "${GITHUB_SECRETS_PATH}/gitignore" || exit 1
 git config --global core.editor vi || exit 1
 git config --global color.ui true || exit 1
