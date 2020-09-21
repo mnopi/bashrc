@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
+# shellcheck disable=SC1090
+if test "${USER}" = "${USERNAME}" && isuserdarwin.sh && ! test -n "${1}"; then
+  bashrc-upload.sh || exit 1
+  bashrc-upgrade.sh || exit 1
+  source ~/.bashrc
+fi
+
 function authorized_keys() {
   local user home file key tmp
   for user in "${USERNAME}" root kali; do
