@@ -82,13 +82,13 @@ Defaults !requiretty
 ${user} ALL=(ALL) NOPASSWD:ALL
 Defaults: ${user} !logfile, !syslog
 EOT
-        if error="$( sudo /usr/sbin/visudo -cf "${file}" 2>&1 )"; then
-          info.sh sudoers "${file}"
-        else
-          if ! echo "${error}" | grep "Permission denied" > /dev/null 2>&1; then
-            error.sh sudoers 'visudo -cf' "${file}"; return 1
-          fi
-        fi
+#        if error="$( sudo /usr/sbin/visudo -cf "${file}" 2>&1 )"; then
+#          info.sh sudoers "${file}"
+#        else
+#          if ! echo "${error}" | grep "Permission denied" > /dev/null 2>&1; then
+#            error.sh sudoers 'visudo -cf' "${file}"; return 1
+#          fi
+#        fi
       else
         error.sh sudoers tee "${file}"; return 1
       fi
