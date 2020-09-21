@@ -13,13 +13,17 @@ if ! test -n "${DARWIN}"; then
   command="sudo /bin/python3.8"
 fi
 
-if error="$( ${command} -m pip install --upgrade "${1:-${name}}" 2>&1 )"; then
-  info.sh upgrade "${1:-${name}}"
+
+if error="$( ${command} -m pip uninstall -y "${1:-${name}}" 2>&1 )"; then
+  info.sh remove "${1:-${name}}"
 else
-  error.sh upgrade "${1:-${name}}" "${error}"; exit 1
+  error.sh remove "${1:-${name}}" "${error}"; exit 1
 fi
 
-## I do not know why requires twice to get it into the path,
-${command} -m pip install --upgrade "${1-${name}}" > /dev/null 2>&1
+if error="$( ${command} -m pip install --upgrade "${1:-${name}}" 2>&1 )"; then
+  info.sh install "${1:-${name}}"
+else
+  error.sh install "${1:-${name}}" "${error}"; exit 1
+fi
 
 unset starting error command
