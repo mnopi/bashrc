@@ -27,6 +27,7 @@ if sudo apt -qq install --fix-missing -y \
   gnupg2 \
   httping \
   iproute2 \
+  ivre \
   kali-linux-everything \
   libssl-dev \
   locales-all \
