@@ -44,6 +44,7 @@ function kali() {
   # "${1}" - force
   # "${1}" - password
   local force password group file user error
+  set -x
   while (( "$#" )); do
     case "${1}" in
       force) force="${1}" ;;
@@ -94,6 +95,7 @@ EOT
       fi
     fi
   done
+set +x
 }
 
 ! test -n "${DARWIN}" || darwin "$@" || exit 1
