@@ -15,6 +15,6 @@ else
 fi
 
 ## I do not know why requires twice to get it into the path,
-"${sudo}" /usr/local/bin/pip3.8 install --upgrade "${1}" > /dev/null 2>&1
+${sudo} /usr/local/bin/pip3.8 install --upgrade "${1}" > /dev/null 2>&1
 
 unset starting error path name
