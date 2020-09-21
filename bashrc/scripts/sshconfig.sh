@@ -31,27 +31,27 @@ function ssh_config() {
   file="${USERHOME}/.ssh/config"
   if tee "${file}" >/dev/null <<EOT; then
 Host *
-    AddressFamily inet
-    BatchMode yes
-    CheckHostIP no
-    ControlMaster auto
-    ControlPath /tmp/ssh-%h-%r-%p
-    ControlPersist 20m
-    IdentitiesOnly yes
-    IdentityFile ~/.ssh/id_rsa
-    LogLevel QUIET
-    StrictHostKeyChecking no
-    User ${USERNAME}
-    UserKnownHostsFile /dev/null
+  AddressFamily inet
+  BatchMode yes
+  CheckHostIP no
+  ControlMaster auto
+  ControlPath /tmp/ssh-%h-%r-%p
+  ControlPersist 20m
+  IdentitiesOnly yes
+  IdentityFile ~/.ssh/id_rsa
+  LogLevel QUIET
+  StrictHostKeyChecking no
+  User ${USERNAME}
+  UserKnownHostsFile /dev/null
 
-  Host github.com
-    HostName github.com
-    User ${GITHUB_ORGANIZATION_ID}
+Host github.com
+  HostName github.com
+  User ${GITHUB_ORGANIZATION_ID}
 
-  Host github.com.${GITHUB_USERNAME}
-    HostName github.com
-    User ${GITHUB_USERNAME}
-    IdentityFile ~/.ssh/${GITHUB_USERNAME}
+Host github.com.${GITHUB_USERNAME}
+  HostName github.com
+  User ${GITHUB_USERNAME}
+  IdentityFile ~/.ssh/${GITHUB_USERNAME}
 EOT
     info.sh ssh "${file}"
     if secrets-push.sh; then return 0; else return 1; fi
