@@ -17,6 +17,7 @@ while (( "$#" )); do
     "${GITHUB_USERNAME}") twine="${1}" ;;
     "${NFERX_GITHUB_USERNAME}") twine="${1}" ;;
     pypi) twine="${1}" ;;
+    git) twine="${1}"; git=git ;;
     *) path="${1}";;
   esac; shift
 done
@@ -56,10 +57,14 @@ if isuserdarwin.sh; then
   else
     error.sh wheel "${name}" "${error}"; exit 1
   fi
-  if error="$( "${virtual}/twine" upload -r "${twine}" dist/* 2>&1 )"; then
-    info.sh twine "${name}"
+  if test "${twine}" = 'git'; then
+    warning.sh twine "${name}" "${twine}"
   else
-    error.sh twine "${name}" "${error}"; exit 1
+    if error="$( "${virtual}/twine" upload -r "${twine}" dist/* 2>&1 )"; then
+      info.sh twine "${name}"
+    else
+      error.sh twine "${name}" "${error}"; exit 1
+    fi
   fi
   gmerge.sh || exit 1
   project-clean.sh "${path}" || exit 1
