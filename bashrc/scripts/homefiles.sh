@@ -10,6 +10,7 @@ function home_bashrc() {
   if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
     if sudo -u "${1}" tee "${2}" >/dev/null <<EOT; then
 # shellcheck disable=SC1090
+test -n "${PS1}" || return
 if test -f  "${bashrc_path}"; then
   source "${bashrc_path}"
 else
