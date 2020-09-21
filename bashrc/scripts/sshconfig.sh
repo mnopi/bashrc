@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-export KALI_IP="67.202.15.57"
-export HP_IP="192.168.1.10"
 
-# shellcheck disable=SC1090
-if test "${USER}" = "${USERNAME}" && isuserdarwin.sh && test -n "${1}"; then
-  bashrc-upload.sh || exit 1
-  bashrc-upgrade.sh || exit 1
-fi
 
 function authorized_keys() {
   local user home file key tmp
@@ -76,8 +69,8 @@ function etc_hosts() {
   if sudo tee "${file}" >/dev/null <<EOT; then
 127.0.0.1       localhost
 255.255.255.255 broadcasthost
-${KALI_IP} kali.com kali
-${HP_IP} hp.com hp
+67.202.15.57 kali.com kali
+192.168.1.10 hp.com hp
 EOT
     info.sh ssh "${file}"
   else
@@ -96,5 +89,10 @@ if test "${USER}" = "${USERNAME}"; then
 fi
 
 grep -slR "PRIVATE" ~/.ssh | xargs ssh-add >/dev/null 2>&1
+
+if test "${USER}" = "${USERNAME}" && isuserdarwin.sh && test -n "${1}"; then
+  bashrc-upload.sh || exit 1
+  bashrc-upgrade.sh || exit 1
+fi
 
 unset starting
