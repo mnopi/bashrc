@@ -37,7 +37,11 @@ for option in ${options}; do
       shopt -s "${option}"
     fi
     if ! [[ "${option}" =~ globstar|direxpand ]]; then
-      shopt -s "${option}"
+      if test "${option}" != "autocd"; then
+        shopt -s "${option}"
+      elif test -n "${PS1}"; then
+        shopt -s "${option}"
+      fi
     fi
   else
     shopt -u "${option}"
