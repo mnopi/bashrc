@@ -80,6 +80,25 @@ function home_secrets() {
     else
       error.sh clone "${GITHUB_SECRETS_URL}" "${error}"; return 1
     fi
+  else
+    cd "${GITHUB_SECRETS_PATH}"  || { error.sh "${GITHUB_SECRETS_PATH}" "invalid"; return 1; }
+    if ! git log > /dev/null 2>&1; then
+      if git clone "${GITHUB_SECRETS_URL}" /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )" --quiet; then
+        if cp -rf -p /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/ "${GITHUB_SECRETS_PATH}"; then
+          /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
+          info.sh clone "${GITHUB_SECRETS_URL}"
+        else
+          sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
+          error.sh clone "cp clone to tmp"; return 1
+        fi
+      else
+        error.sh clone "${GITHUB_SECRETS_URL}" /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"; return 1
+      fi
+    else
+      error.sh clone ".git directory already" "${GITHUB_SECRETS_PATH}"; return 1
+    fi
+    cd - > /dev/null || return 1
+
   fi
 }
 
