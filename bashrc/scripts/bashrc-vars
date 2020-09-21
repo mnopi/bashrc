@@ -35,8 +35,9 @@ export ICLOUD_BASENAME="iCloud"
 export MACDEV_BASENAME="macdev"
 export ICLOUD="${USERHOME}/${ICLOUD_BASENAME}"
 export GOHOME="${USERHOME}/.go"
+export PEN="${USERHOME}/${PEN_BASENAME}"
 
-PATH="${HOME}/scripts:${HOME}/bin:${USERHOME}/scripts:${USERHOME}/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
+PATH="${HOME}/bin:${HOME}/scripts:${USERHOME}/bin:${USERHOME}/scripts:${PEN}/bin:${PEN}/scripts:${USERHOME}/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
 INFOPATH="${BREW}/../share/info"
 MANPATH="${BREW}/../share/man"
 if test -n "${DARWIN}"; then
@@ -45,17 +46,15 @@ if test -n "${DARWIN}"; then
   export REQUESTS_CA_BUNDLE="${FILES}/ssl/ca-bundle.crt"
   export DEFAULT_CA_BUNDLE_PATH="${REQUESTS_CA_BUNDLE}"
   export SSL_CERT_FILE="${REQUESTS_CA_BUNDLE}"
-  PEN="${USERHOME}/${PEN_BASENAME}"
   BREW="/usr/local/bin"
   BREW_S="/usr/local/sbin"
-  PATH="${PEN}:${PEN}/bin:${PEN}/scripts:${MACDEV}/scripts:${MACDEV}/bin:${ICLOUD}/bin:${USERHOME}/bin:/Applications/PyCharm.app/Contents/MacOS:/usr/local/opt/ruby/bin:/usr/local/opt/python@3.8/bin:/Library/Developer/CommandLineTools/usr/bin:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin:${PATH}"
+  PATH="${MACDEV}/scripts:${MACDEV}/bin:${ICLOUD}/bin:${USERHOME}/bin:/Applications/PyCharm.app/Contents/MacOS:/usr/local/opt/ruby/bin:/usr/local/opt/python@3.8/bin:/Library/Developer/CommandLineTools/usr/bin:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin:${PATH}"
   MANPATH="${MACDEV}/man:${ICLOUD}/man:${MANPATH}"
 elif test -n "${KALI}"; then
   export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-  PEN="/${PEN_BASENAME}"
   BREW="/home/linuxbrew/.linuxbrew/bin"
   BREW_S="/home/linuxbrew/.linuxbrew/sbin"
-  PATH="${PEN}:${PEN}/bin:${PEN}/scripts:${BREW}:${BREW_S}:${PATH}"
+  PATH="${BREW}:${BREW_S}:${PATH}"
 fi
 MANPATH="${MACDEV}/man:${ICLOUD}/man:${BREW}/../share/man"
 test -n "${GOPATH}" || PATH="${GOPATH//://bin:}/bin:${PATH}"
