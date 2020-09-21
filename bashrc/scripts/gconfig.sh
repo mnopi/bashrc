@@ -48,6 +48,6 @@ git config --global core.sshCommand /usr/bin/ssh || exit 1
 # git config --global url.git@example.github.com:example.insteadOf = git@github.com:example || exit 1
 # git config --global url.git@example.github.com:example.insteadOf = https://github.com/example || exit 1
 
-info.sh gconfig --global  "${GIT_CONFIG}"
+info.sh gconfig
 
 if secrets-push.sh; then exit 0; else exit 1; fi
