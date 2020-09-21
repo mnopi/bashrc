@@ -150,17 +150,15 @@ function chownaz() {
 
 
 function command_not_found_handle() {
-  if ! test -n "${DARWIN}"; then
-    if [[ -x /usr/lib/command-not-found ]]; then
-      /usr/lib/command-not-found -- "$1"
-      return $?
-    elif [[ -x /usr/share/command-not-found/command-not-found ]]; then
-      /usr/share/command-not-found/command-not-found -- "$1"
-      return $?
-    else
-      printf "%s: command not found\n" "$1" >&2
-      return 127
-    fi
+  if [[ -x /usr/lib/command-not-found ]]; then
+    /usr/lib/command-not-found -- "$1"
+    return $?
+  elif [[ -x /usr/share/command-not-found/command-not-found ]]; then
+    /usr/share/command-not-found/command-not-found -- "$1"
+    return $?
+  else
+    printf "%s: command not found\n" "$1" >&2
+    return 127
   fi
 }
 
