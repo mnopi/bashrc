@@ -43,7 +43,7 @@ EOT
 function kali() {
   # "${1}" - force
   # "${1}" - password
-  local force password group file user
+  local force password group file user error
   while (( "$#" )); do
     case "${1}" in
       force) force="${1}" ;;
@@ -82,22 +82,21 @@ Defaults !requiretty
 ${user} ALL=(ALL) NOPASSWD:ALL
 Defaults: ${user} !logfile, !syslog
 EOT
-        true
-#        if error="$( sudo /usr/sbin/visudo -cf "${file}" 2>&1 )"; then
-#          info.sh sudoers "${file}"
-#        else
-#          if ! echo "${error}" | grep "Permission denied" > /dev/null 2>&1; then
-#            error.sh sudoers 'visudo -cf' "${file}"; return 1
-#          fi
-#        fi
-#      else
-#        error.sh sudoers tee "${file}"; return 1
+        if error="$( sudo /usr/sbin/visudo -cf "${file}" 2>&1 )"; then
+          info.sh sudoers "${file}"
+        else
+          if ! echo "${error}" | grep "Permission denied" > /dev/null 2>&1; then
+            error.sh sudoers 'visudo -cf' "${file}"; return 1
+          fi
+        fi
+      else
+        error.sh sudoers tee "${file}"; return 1
       fi
     fi
   done
 }
 
 ! test -n "${DARWIN}" || darwin "$@" || exit 1
-#! test -n "${KALI}" || kali "$@" || exit 1
+! test -n "${KALI}" || kali "$@" || exit 1
 
 unset starting force password group file user
