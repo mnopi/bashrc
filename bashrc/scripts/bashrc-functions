@@ -162,6 +162,7 @@ function command_not_found_handle() {
   fi
 }
 fi
+
 function cleandir() {
   [[ "$(ls -A "${1}"/* >/dev/null 2>&1)" ]] || sudo "${RM_PATH}" -rf "${1}"/*
   info "${1}"
