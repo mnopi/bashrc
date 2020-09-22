@@ -8,8 +8,6 @@ KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
 DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
 UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
 
-
-
 export USERNAME="jose"
 USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
 export PASSWD_PATH="${USERHOME}/.passwd"
@@ -35,30 +33,8 @@ export ICLOUD_BASENAME="iCloud"
 export MACDEV_BASENAME="macdev"
 export ICLOUD="${USERHOME}/${ICLOUD_BASENAME}"
 export GOHOME="${USERHOME}/.go"
+export GOPATH="${GOHOME}/bin"
 export PEN="${USERHOME}/${PEN_BASENAME}"
-
-PATH="${HOME}/bin:${HOME}/scripts:${USERHOME}/bin:${USERHOME}/scripts:${PEN}/bin:${PEN}/scripts:${USERHOME}/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
-INFOPATH="${BREW}/../share/info"
-MANPATH="${BREW}/../share/man"
-if test -n "${DARWIN}"; then
-  MACDEV="$( defaults read "${USERHOME}/Library/Preferences/com.google.GoogleDrive.plist" NSNavLastRootDirectory | sed "s|~|${USERHOME}|" )"; export MACDEV
-  export FILES="${MACDEV}/files"
-  export REQUESTS_CA_BUNDLE="${FILES}/ssl/ca-bundle.crt"
-  export DEFAULT_CA_BUNDLE_PATH="${REQUESTS_CA_BUNDLE}"
-  export SSL_CERT_FILE="${REQUESTS_CA_BUNDLE}"
-  BREW="/usr/local/bin"
-  BREW_S="/usr/local/sbin"
-  PATH="${MACDEV}/scripts:${MACDEV}/bin:${ICLOUD}/bin:${USERHOME}/bin:/Applications/PyCharm.app/Contents/MacOS:/usr/local/opt/ruby/bin:/usr/local/opt/python@3.8/bin:/Library/Developer/CommandLineTools/usr/bin:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin:${PATH}"
-  MANPATH="${MACDEV}/man:${ICLOUD}/man:${MANPATH}"
-elif test -n "${KALI}"; then
-  export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-  BREW="/home/linuxbrew/.linuxbrew/bin"
-  BREW_S="/home/linuxbrew/.linuxbrew/sbin"
-  PATH="${BREW}:${BREW_S}:${PATH}"
-fi
-MANPATH="${MACDEV}/man:${ICLOUD}/man:${BREW}/../share/man"
-! test -n "${GOPATH}" || PATH="${GOPATH//://bin:}/bin:${PATH}"
-export PATH PEN BREW INFOPATH MANPATH
 
 REALNAME="$(test -n "${DARWIN}" && dscl . -read /Users/"${USERNAME}" RealName RealName | sed -n 's/^ //g;2p' || echo)"
 export REALNAME
@@ -164,21 +140,4 @@ export TERM_PROGRAM='iTerm.app'
 export VERDE="\[\033[1;32m\]"
 export VISUAL=vi
 
-! test -e "${PASSWD_PATH}" || source "${PASSWD_PATH}"
-echo "${PASSWORD}" | sudo -S true > /dev/null 2>&1
-! test -e "${SECRETS_PATH}" || source "${SECRETS_PATH}"
-
-if isuserdarwin.sh; then
-  launchctl setenv PATH "${PATH}"
-  sudo launchctl setenv PATH "${PATH}"
-  sudo launchctl config system path "${PATH}" >/dev/null 2>&1
-  sudo launchctl config user path "${PATH}" >/dev/null 2>&1
-fi
-
-for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE PROJECT_BASHRC GITHUB_USERNAME NFERX_GITHUB_USERNAME \
-           SECRETS_REPO GITHUB_SECRETS_PATH SECRETS_PATH PASSWORD INTERNET GITHUB_PRIVATE_URL \
-           GITHUB_SECRETS_URL NFERX_GITHUB_PASSWORD; do
-  debug.sh "${var}"
-done
-
-unset starting var
+unset starting
