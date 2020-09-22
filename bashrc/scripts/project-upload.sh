@@ -20,7 +20,7 @@ while (( "$#" )); do
     "${NFERX_GITHUB_USERNAME}") twine="${1}" ;;
     pypi) twine="${1}" ;;
     git) twine="${1}"; git=git ;;
-    site) site="${1}" ;;
+    site) site="${1}"; export site ;;
     *) path="${1}";;
   esac; shift
 done
@@ -36,8 +36,8 @@ name="$( basename "${path}" )"
 export bump twine path name; debug.sh bump twine path name
 
 if isuserdarwin.sh; then
-  if test -z "${site}"; then
     project-venv.sh "${path}"
+  if test -z "${site}"; then
     virtual="${path}/venv/bin/"
     source "${virtual}activate"
     export virtual; debug.sh virtual

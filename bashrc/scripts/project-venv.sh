@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090
+# shellcheck disable=SC2034
 # ${1} - path
 # ${2} - bump: <major|minor>
 # ${3} - twine: <"${GITHUB_USERNAME}"|"${GITHUB_ORGANIZATION_ID}"|pypi>
-# shellcheck disable=SC2034
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 if ! isuser.sh; then
@@ -21,19 +22,22 @@ virtual="${path}/venv/bin"
 export virtual; debug.sh virtual
 
 if isuser.sh; then
-  if ! test -d "${virtual}"; then
-    if error="$( python3.8 -m venv "${path}/venv" 2>&1 )"; then
-      info.sh venv "${name}"
-    else
-      error.sh venv "${name}" "${error}"; exit 1
+  # shellcheck disable=SC2154
+  #  export site in project-upload.sh (default use virtual environment if no defined)
+  if test -z "${site}"; then
+    if ! test -d "${virtual}"; then
+      if error="$( python3.8 -m venv "${path}/venv" 2>&1 )"; then
+        info.sh venv "${name}"
+      else
+        error.sh venv "${name}" "${error}"; exit 1
+      fi
     fi
+    source "${virtual}/activate/"
   fi
-  # shellcheck disable=SC1090
-  source "${virtual}/activate"
   while read -r file; do
     export file; debug.sh file
-    if error="$( "${virtual}/python3" -m pip install --upgrade pip wheel setuptools && \
-                 "${virtual}/python3" -m pip install --upgrade -r "${file}" 2>&1 )"; then
+    if error="$( "${virtual}python3" -m pip install --upgrade pip wheel setuptools && \
+                 "${virtual}python3" -m pip install --upgrade -r "${file}" 2>&1 )"; then
       info.sh requirements "${name}" "${file}"
     else
       error.sh requirements "${name} ${file}" "${error}"; exit 1
@@ -45,4 +49,4 @@ fi
 
 cd - > /dev/null || exit 1
 
-unset starting virtual file error name path
+unset starting virtual file error name path site
