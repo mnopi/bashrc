@@ -884,10 +884,6 @@ function killnoterminal() {
   killall Safari >/dev/null 2>&1
 }
 
-function less() {
-  less -R "${*}"
-}
-
 function links() {
   # $1 src
   # $2 dest link
