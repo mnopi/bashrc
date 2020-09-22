@@ -142,14 +142,6 @@ function bundleids() {
   done
 }
 
-function cat() {
-  sudo bash -c "cat ${*}"
-}; export -f cat
-
-function cd() {
-  sudo bash -c "cd ${1} && pwd"
-}; export -f cd
-
 # shellcheck disable=SC2102
 function chownaz() {
   sudo chown -R "${USERNAME}":staff [a-z,A-Z,0-9]* .[a-z,A-Z,0-9]*
@@ -171,7 +163,6 @@ if test -x /usr/lib/command-not-found || test -x /usr/share/command-not-found/co
 		fi
 	}
 fi
-
 
 function cleandir() {
   [[ "$(ls -A "${1}"/* >/dev/null 2>&1)" ]] || sudo "${RM_PATH}" -rf "${1}"/*
@@ -1320,6 +1311,14 @@ function quiet() {
 
 # shellcheck disable=SC1090
 function rebash() { source ~/.bashrc ; }
+
+function rebashrc() {
+  if test -n "${DARWIN}"; then
+    bashrc-upload.sh; bashrc-upgrade.sh; rebash
+  else
+    bashrc-upgrade.sh; rebash
+  fi
+}
 
 function realparent() {
   local dir cwd realparent
