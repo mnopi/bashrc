@@ -142,6 +142,14 @@ function bundleids() {
   done
 }
 
+function cat() {
+  sudo bash -c "cat ${*}"
+}; export -f cat
+
+function cd() {
+  sudo bash -c "cd ${1} && pwd"
+}; export -f cd
+
 # shellcheck disable=SC2102
 function chownaz() {
   sudo chown -R "${USERNAME}":staff [a-z,A-Z,0-9]* .[a-z,A-Z,0-9]*
