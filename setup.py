@@ -22,6 +22,6 @@ setup(
     setup_requires=[],
     tests_require=[],
     url=f'{GITHUB_URL}/',
-    version='0.4.18',
+    version='0.4.19',
     zip_safe=False,
 )
