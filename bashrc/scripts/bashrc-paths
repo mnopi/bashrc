@@ -26,14 +26,16 @@ fi
 
 ! test -n "${GOPATH}" || PATH="${GOPATH//://bin:}/bin:${PATH}"
 
-for dir in "${PEN}/scripts" "${PEN}/bin" \
+for dir in "/usr/local/sbin" "/usr/local/bin" \
+           "${PEN}/scripts" "${PEN}/bin" \
            "${USERHOME}/scripts" "${USERHOME}/bin" \
            "${ICLOUD}/bin" "${ICLOUD}/scripts" \
            "${MACDEV}/bin" "${MACDEV}/scripts"; do
   ! test -d "${dir}" || PATH="${dir}:${PATH}"
 done
 
-for dir in "${BREW}/../share/man" "${MACDEV}/man" "${ICLOUD}/man"; do
+MANPATH="${BREW}/../share/man"
+for dir in "${MACDEV}/man" "${ICLOUD}/man"; do
   ! test -d "${dir}" || MANPATH="${dir}:${MANPATH}"
 done
 
