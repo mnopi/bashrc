@@ -45,19 +45,10 @@ bashrc-install.sh
 
 ### Upload & Upgrade
 
-#### On the git source code server
-
 ```bash
-bashrc-upload.sh
-rebash
+rebashrc
 ```
 
-#### On other servers
-
-```bash
-bashrc-upgrade.sh
-rebash
-```
 
 ## Update secrets (token, etc.) and ssh keys on source server and other servers
 
