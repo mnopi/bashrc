@@ -46,8 +46,10 @@ function home_inputrc () {
 function home_profiles () {
   if sudo -u "${1}" tee "${2}" >/dev/null <<EOT; then
 # shellcheck disable=SC1090
-if [[ -f ~/.bashrc ]]; then
-  . ~/.bashrc
+if [ "${BASH-no}" != "no" ]; then
+  if [[ -f ~/.bashrc ]]; then
+    . ~/.bashrc
+  fi
 fi
 EOT
     info.sh homefiles "${2}"
