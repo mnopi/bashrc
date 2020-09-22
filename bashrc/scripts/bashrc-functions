@@ -284,96 +284,96 @@ function die() {
   return 1
 }
 
-function dock() {
-  local dock system_applications system_utilities DOCK
-  [[ "${dock}" == "yes" ]] || return 0
+#function dock() {
+#  local dock system_applications system_utilities DOCK
+#  [[ "${dock}" == "yes" ]] || return 0
+#
+#  system_applications="/System/Applications"
+#  system_utilities="${system_applications}/utilities"
+#
+#  dockutil --remove all
+#  sleep 1
+#
+#  for app in "/Applications/Pritunl.app" \
+#    "${APPLICATIONS}/Access.app" \
+#    "${system_applications}/System Preferences.app" \
+#    "${system_applications}/App Store.app" \
+#    "${system_applications}/Launchpad.app" \
+#    "/Applications/iTerm.app" \
+#    "${system_utilities}/Terminal.app" \
+#    "${system_applications}/Mail.app" \
+#    "${system_applications}/Contacts.app" \
+#    "${system_applications}/Calendar.app" \
+#    "${system_applications}/Reminders.app" \
+#    "${system_applications}/Notes.app" \
+#    "/Applications/Bear.app" \
+#    "/Applications/Safari.app" \
+#    "/Applications/Firefox.app" \
+#    "/Applications/Google Chrome Canary.app" \
+#    "/Applications/Tor Browser.app" \
+#    "/Applications/GitHub Desktop.app" \
+#    "/Applications/PyCharm.app" \
+#    "/Applications/PyCharm with Anaconda plugin .app" \
+#    "/Applications/GoLand.app" \
+#    "/Applications/Visual Studio Code - Insiders.app" \
+#    "${system_utilities}/Activity Monitor.app" \
+#    "${system_utilities}/Console.app" \
+#    "/Applications/VirtualBox.app" \
+#    "${system_applications}/Preview.app" \
+#    "/Applications/Pages.app" \
+#    "/Applications/Keynote.app" \
+#    "/Applications/Numbers.app" \
+#    "/Applications/Microsoft Word.app" \
+#    "/Applications/Microsoft PowerPoint.app" \
+#    "/Applications/Microsoft Excel.app" \
+#    "/Applications/Spotify.app" \
+#    "${system_applications}/FaceTime.app" \
+#    "${system_applications}/Messages.app" \
+#    "/Applications/Skype.app" \
+#    "/Applications/Slack.app" \
+#    "/Applications/Telegram Desktop.app" \
+#    "/Applications/WhatsApp.app"; do
+#
+#    sleep 1
+#
+#    if [[ -d "${app}" ]]; then
+#      if [[ "${app}" == "${APPLICATIONS}/Access.app" ]]; then
+#        dockutil --no-restart --add "${app}" --replacing "$(basename -s '.app' "${app}")"
+#      else
+#        dockutil --no-restart --add "${app}"
+#      fi
+#    fi
+#  done
+#
+#  for dir in ${DOCK}; do
+#    if [[ "${dir}" != "Downloads" ]]; then
+#      if test -d "${dir}"; then
+#        dockutil --no-restart --section others --sort name --display folder --view list --add "${dir}"
+#      fi
+#    fi
+#  done
+#
+#  dockutil --section others --sort dateadded --display folder --view list --add "${USERHOME}/Downloads" \
+#    --replacing "Downloads"
+#  info dock
+#}
 
-  system_applications="/System/Applications"
-  system_utilities="${system_applications}/utilities"
-
-  dockutil --remove all
-  sleep 1
-
-  for app in "/Applications/Pritunl.app" \
-    "${APPLICATIONS}/Access.app" \
-    "${system_applications}/System Preferences.app" \
-    "${system_applications}/App Store.app" \
-    "${system_applications}/Launchpad.app" \
-    "/Applications/iTerm.app" \
-    "${system_utilities}/Terminal.app" \
-    "${system_applications}/Mail.app" \
-    "${system_applications}/Contacts.app" \
-    "${system_applications}/Calendar.app" \
-    "${system_applications}/Reminders.app" \
-    "${system_applications}/Notes.app" \
-    "/Applications/Bear.app" \
-    "/Applications/Safari.app" \
-    "/Applications/Firefox.app" \
-    "/Applications/Google Chrome Canary.app" \
-    "/Applications/Tor Browser.app" \
-    "/Applications/GitHub Desktop.app" \
-    "/Applications/PyCharm.app" \
-    "/Applications/PyCharm with Anaconda plugin .app" \
-    "/Applications/GoLand.app" \
-    "/Applications/Visual Studio Code - Insiders.app" \
-    "${system_utilities}/Activity Monitor.app" \
-    "${system_utilities}/Console.app" \
-    "/Applications/VirtualBox.app" \
-    "${system_applications}/Preview.app" \
-    "/Applications/Pages.app" \
-    "/Applications/Keynote.app" \
-    "/Applications/Numbers.app" \
-    "/Applications/Microsoft Word.app" \
-    "/Applications/Microsoft PowerPoint.app" \
-    "/Applications/Microsoft Excel.app" \
-    "/Applications/Spotify.app" \
-    "${system_applications}/FaceTime.app" \
-    "${system_applications}/Messages.app" \
-    "/Applications/Skype.app" \
-    "/Applications/Slack.app" \
-    "/Applications/Telegram Desktop.app" \
-    "/Applications/WhatsApp.app"; do
-
-    sleep 1
-
-    if [[ -d "${app}" ]]; then
-      if [[ "${app}" == "${APPLICATIONS}/Access.app" ]]; then
-        dockutil --no-restart --add "${app}" --replacing "$(basename -s '.app' "${app}")"
-      else
-        dockutil --no-restart --add "${app}"
-      fi
-    fi
-  done
-
-  for dir in ${DOCK}; do
-    if [[ "${dir}" != "Downloads" ]]; then
-      if test -d "${dir}"; then
-        dockutil --no-restart --section others --sort name --display folder --view list --add "${dir}"
-      fi
-    fi
-  done
-
-  dockutil --section others --sort dateadded --display folder --view list --add "${USERHOME}/Downloads" \
-    --replacing "Downloads"
-  info dock
-}
-
-function duti() {
-  local ext DUTI_PATH
-  DUTI_PATH="${BREW_PATH}/duti"
-  if test -e "${DUTI_PATH}"; then
-    if [[ ! "${1-}" ]]; then
-      while read -r ext; do
-        "${DUTI_PATH}" -s com.jetbrains.pycharm "${ext}" all
-        "${DUTI_PATH}" -s com.github.atom "${ext}" all
-        "${DUTI_PATH}" -s com.microsoft.VSCodeInsiders "${ext}" all
-      done <"${FILES}"/duti/developer.text
-      info duti
-    else
-      "${DUTI_PATH}" "${@}"
-    fi
-  fi
-}
+#function duti() {
+#  local ext DUTI_PATH
+#  DUTI_PATH="${BREW_PATH}/duti"
+#  if test -e "${DUTI_PATH}"; then
+#    if [[ ! "${1-}" ]]; then
+#      while read -r ext; do
+#        "${DUTI_PATH}" -s com.jetbrains.pycharm "${ext}" all
+#        "${DUTI_PATH}" -s com.github.atom "${ext}" all
+#        "${DUTI_PATH}" -s com.microsoft.VSCodeInsiders "${ext}" all
+#      done <"${FILES}"/duti/developer.text
+#      info duti
+#    else
+#      "${DUTI_PATH}" "${@}"
+#    fi
+#  fi
+#}
 
 function docker-archive-content() {
   #  about 'show the content of the provided Docker image archive'
@@ -1078,26 +1078,26 @@ function macname() {
   fi
 }
 
-function mas() {
-  if "${MAS_PATH}" "$@"; then
-    if [[ "${1}" == "install" ]]; then
-      info mas "$@"
-      if brewdump; then
-        if brewcleanup "$@"; then
-          return 0
-        else
-          return 1
-        fi
-      else
-        return 1
-      fi
-    fi
-    return 0
-  else
-    error mas "$@"
-    return 1
-  fi
-}
+#function mas() {
+#  if "${MAS_PATH}" "$@"; then
+#    if [[ "${1}" == "install" ]]; then
+#      info mas "$@"
+#      if brewdump; then
+#        if brewcleanup "$@"; then
+#          return 0
+#        else
+#          return 1
+#        fi
+#      else
+#        return 1
+#      fi
+#    fi
+#    return 0
+#  else
+#    error mas "$@"
+#    return 1
+#  fi
+#}
 
 function middle() {
   # ${1} - "${BASH_SOURCE[0]}" - name or file to remove before - and after .
@@ -1129,26 +1129,26 @@ function myip() {
   echo -e "Your public IP is: $(green "${res}")"
 }
 
-function npm() {
-  # shellcheck disable=SC2046
-  if test -f "${PATH_HOMEBREW}/npm"; then
-    if [[ ! "${1-}" ]]; then { ! "${NPM_PATH}" install -s -g $(grep -v "#" "${NPMFILE}") && return 0 || return 1; }; fi
-    "${PATH_HOMEBREW}/npm" "${@}"
-  fi
-}
+#function npm() {
+#  # shellcheck disable=SC2046
+#  if test -f "${PATH_HOMEBREW}/npm"; then
+#    if [[ ! "${1-}" ]]; then { ! "${NPM_PATH}" install -s -g $(grep -v "#" "${NPMFILE}") && return 0 || return 1; }; fi
+#    "${PATH_HOMEBREW}/npm" "${@}"
+#  fi
+#}
 
-function opam() {
-  local package
-  if [[ ! "${1-}" ]]; then
-    test -d "${USERHOME}/.opam/opam-init" || opam init
-    /usr/bin/grep -v "^#" "${OPAMFILE}" | while read -r package; do
-      "${OPAM_PATH}" install "${package}"
-    done
-    "${OPAM_PATH}" upgrade --fixup
-    return
-  fi
-  "${PATH_HOMEBREW}/opam" "${@}"
-}
+#function opam() {
+#  local package
+#  if [[ ! "${1-}" ]]; then
+#    test -d "${USERHOME}/.opam/opam-init" || opam init
+#    /usr/bin/grep -v "^#" "${OPAMFILE}" | while read -r package; do
+#      "${OPAM_PATH}" install "${package}"
+#    done
+#    "${OPAM_PATH}" upgrade --fixup
+#    return
+#  fi
+#  "${PATH_HOMEBREW}/opam" "${@}"
+#}
 
 function pass() {
   if [[ "${1-}" ]]; then
@@ -1188,34 +1188,34 @@ function pipupgrade() {
   if "${PIP_PATH}" install --upgrade --use-feature=2020-resolver -r "${REQUIREMENTS}"; then return 0; else return 1; fi
 }
 
-function pip() {
-  if [[ ! "${1-}" ]]; then
-    if pipupgrade; then
-      return 0
-    else
-      return 1
-    fi
-  fi
-  if [[ "${1}" == "add" ]]; then
-    if pipinstall "${2}"; then
-      if pipfreeze; then
-        return 0
-      else
-        return 1
-      fi
-    fi
-  fi
-  if [[ "${1}" == "remove" ]]; then
-    if pipremove "${2}"; then
-      if pipfreeze; then
-        return 0
-      else
-        return 1
-      fi
-    fi
-  fi
-  "${PIP_PATH}" "${@}"
-}
+#function pip() {
+#  if [[ ! "${1-}" ]]; then
+#    if pipupgrade; then
+#      return 0
+#    else
+#      return 1
+#    fi
+#  fi
+#  if [[ "${1}" == "add" ]]; then
+#    if pipinstall "${2}"; then
+#      if pipfreeze; then
+#        return 0
+#      else
+#        return 1
+#      fi
+#    fi
+#  fi
+#  if [[ "${1}" == "remove" ]]; then
+#    if pipremove "${2}"; then
+#      if pipfreeze; then
+#        return 0
+#      else
+#        return 1
+#      fi
+#    fi
+#  fi
+#  "${PIP_PATH}" "${@}"
+#}
 
 function play() {
   local BOOK
@@ -1509,7 +1509,7 @@ function spctldisable() {
   fi
 }
 
-function ssh() { /usr/bin/ssh "${@}"; }
+#function ssh() { /usr/bin/ssh "${@}"; }
 
 function sshlist() {
   #  about 'list hosts defined in ssh config'
