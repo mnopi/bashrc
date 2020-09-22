@@ -41,10 +41,10 @@ done
 
 INFOPATH="${BREW}/../share/info"
 debug.sh PATH
-set -x
+
 if isuserdarwin.sh; then
   launchctl setenv PATH "${PATH}"
-  sudo launchctl setenv PATH "${PATH}"
+  sudo /bin/launchctl setenv PATH "${PATH}"
   sudo launchctl config system path "${PATH}" >/dev/null 2>&1
   sudo launchctl config user path "${PATH}" >/dev/null 2>&1
 fi
