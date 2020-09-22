@@ -13,18 +13,18 @@ export path name; debug.sh path name
 
 cd "${path}" > /dev/null 2>&1 || { error.sh "${path}" "invalid"; exit 1; }
 
-/bin/rm -fr build/ > /dev/null
-/bin/rm -fr dist/ > /dev/null
-/bin/rm -fr .eggs/ > /dev/null
-find . -name '*.egg-info' -exec /bin/rm -fr {} +
-find . -name '*.egg' -exec /bin/rm -f {} +
-find . -name '*.pyc' -exec /bin/rm -f {} +
-find . -name '*.pyo' -exec /bin/rm -f {} +
-find . -name '*~' -exec /bin/rm -f {} +
-find . -name '__pycache__' -exec /bin/rm -fr {} +
-/bin/rm -fr .tox/
-/bin/rm -fr .pytest_cache
-find . -name '.mypy_cache' -exec /bin/rm -rf {} +
+sudo /bin/rm -fr build/ > /dev/null 2>&1
+sudo /bin/rm -fr dist/ > /dev/null 2>&1
+sudo /bin/rm -fr .eggs/ > /dev/null 2>&1
+sudo find . -not \( -path "*/venv/*" -prune \) -name '*.egg-info' -exec /bin/rm -fr {} + > /dev/null 2>&1
+sudo find . -not \( -path "*/venv/*" -prune \) -name '*.egg' -exec /bin/rm -f {} + > /dev/null 2>&1
+sudo find . -not \( -path "*/venv/*" -prune \) -name '*.pyc' -exec /bin/rm -f {} + > /dev/null 2>&1
+sudo find . -not \( -path "*/venv/*" -prune \) -name '*.pyo' -exec /bin/rm -f {} + > /dev/null 2>&1
+sudo find . -not \( -path "*/venv/*" -prune \) -name '*~' -exec /bin/rm -f {} + > /dev/null 2>&1
+sudo find . -not \( -path "*/venv/*" -prune \) -name '__pycache__' -exec /bin/rm -fr {} + > /dev/null 2>&1
+sudo /bin/rm -fr .tox/ > /dev/null 2>&1
+sudo /bin/rm -fr .pytest_cache > /dev/null 2>&1
+sudo find . -not \( -path "*/venv/*" -prune \) -name '.mypy_cache' -exec /bin/rm -rf {} + > /dev/null 2>&1
 
 info.sh clean "${name}"
 cd - > /dev/null || exit 1
