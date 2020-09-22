@@ -18,7 +18,7 @@ path="$( pwd )"
 name="$( basename "${path}" )"
 export path name; debug.sh path name
 
-virtual="${path}/venv/bin"
+virtual="${path}/venv/bin/"
 export virtual; debug.sh virtual
 
 if isuser.sh; then
@@ -32,7 +32,7 @@ if isuser.sh; then
         error.sh venv "${name}" "${error}"; exit 1
       fi
     fi
-    source "${virtual}/activate/"
+    source "${virtual}/activate"
   fi
   while read -r file; do
     export file; debug.sh file
