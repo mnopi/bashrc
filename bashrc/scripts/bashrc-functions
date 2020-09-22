@@ -46,57 +46,57 @@ function base() {
   find "${dir}" -type f -name "*${suffix}" -exec basename -s "${suffix}" "{}" \;
 }
 
-function brew() {
-  local desktop error
-  if ! which brew >/dev/null 2>&1; then
-    if yes yes | "${BASH_PATH}" -c \
-      "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"; then
-      ! brewbundle || return 1
-      desktop="${GITHUB_DESKTOP}/Contents/MacOS/GitHub Desktop"
-      if test -e "${desktop}"; then
-        open "${GITHUB_DESKTOP}"
-        sleep "${delay_access:-8}"
-        read -r -s -p $'Configure GitHub Desktop and press ENTER when finished.\n'
-        killall "${GITHUB_DESKTOP_PROCESS}"
-      fi
-      return 0
-    else
-      error "install brew" "${error}"
-      return 1
-    fi
-  fi
-
-  if [[ ! "${1-}" ]]; then { ! brewbundle && return 0 || return 1; }; fi
-  # shellcheck disable=SC2048
-  if [[ "${1}" =~ ^search$ ]]; then
-    "${BREW_PATH}" "$@"
-    return
-  fi
-  if "${BREW_PATH}" "$@" --quiet; then
-    if [[ "${1}" =~ ^bundle$|^install$|^uninstall$|^remove$|^update$|^upgrade$|^tap$ ]] ||
-      [[ "${2}" =~ ^install|^reinstall$|^remove$|^uninstall$|^update$|^upgrade$|^fetch$ ]]; then
-      if brewdump; then
-        if brewcleanup "$@"; then
-          return 0
-        else
-          return 1
-        fi
-      else
-        return 1
-      fi
-    fi
-    return 0
-  else
-    if [[ "${1}" =~ ^install$|^uninstall$|^remove$ ]]; then
-      error "$@"
-      warning trying cask "$@"
-      brew cask "$@"
-    else
-      error "$@" "${error}"
-      return 1
-    fi
-  fi
-}
+#function brew() {
+#  local desktop error
+#  if ! which brew >/dev/null 2>&1; then
+#    if yes yes | "${BASH_PATH}" -c \
+#      "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"; then
+#      ! brewbundle || return 1
+#      desktop="${GITHUB_DESKTOP}/Contents/MacOS/GitHub Desktop"
+#      if test -e "${desktop}"; then
+#        open "${GITHUB_DESKTOP}"
+#        sleep "${delay_access:-8}"
+#        read -r -s -p $'Configure GitHub Desktop and press ENTER when finished.\n'
+#        killall "${GITHUB_DESKTOP_PROCESS}"
+#      fi
+#      return 0
+#    else
+#      error "install brew" "${error}"
+#      return 1
+#    fi
+#  fi
+#
+#  if [[ ! "${1-}" ]]; then { ! brewbundle && return 0 || return 1; }; fi
+#  # shellcheck disable=SC2048
+#  if [[ "${1}" =~ ^search$ ]]; then
+#    "${BREW_PATH}" "$@"
+#    return
+#  fi
+#  if "${BREW_PATH}" "$@" --quiet; then
+#    if [[ "${1}" =~ ^bundle$|^install$|^uninstall$|^remove$|^update$|^upgrade$|^tap$ ]] ||
+#      [[ "${2}" =~ ^install|^reinstall$|^remove$|^uninstall$|^update$|^upgrade$|^fetch$ ]]; then
+#      if brewdump; then
+#        if brewcleanup "$@"; then
+#          return 0
+#        else
+#          return 1
+#        fi
+#      else
+#        return 1
+#      fi
+#    fi
+#    return 0
+#  else
+#    if [[ "${1}" =~ ^install$|^uninstall$|^remove$ ]]; then
+#      error "$@"
+#      warning trying cask "$@"
+#      brew cask "$@"
+#    else
+#      error "$@" "${error}"
+#      return 1
+#    fi
+#  fi
+#}
 
 function brewbundle() {
   if "${BREW_PATH}" bundle --quiet --file "${BREWFILE}"; then
@@ -882,6 +882,10 @@ function killnoterminal() {
   done
 
   killall Safari >/dev/null 2>&1
+}
+
+function less() {
+  less -R "${*}"
 }
 
 function links() {
