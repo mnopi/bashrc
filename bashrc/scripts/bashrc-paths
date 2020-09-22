@@ -2,7 +2,7 @@
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 unset PATH
-PATH='/usr/bin:/usr/sbin:/bin:/sbin:.'
+PATH='/usr/bin:/usr/sbin:/bin:/sbin'
 
 for dir in /Library/Developer/CommandLineTools/usr/bin \
             /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin \
