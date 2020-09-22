@@ -19,7 +19,7 @@ if name="$( source gtop 2>&1 )"; then
     info.sh "To delete local branch: " "git branch -d ${branch}"
     info.sh "To delete remote branch: " "git push origin --delete  ${branch}"
   else
-    warning.sh "Nothing to do here ${name}: " branch "${branch}"
+    warning.sh merge "${name}" "${branch}"
   fi
   cd - > /dev/null || exit 1
 else
