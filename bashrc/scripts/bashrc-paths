@@ -40,7 +40,8 @@ for dir in "${MACDEV}/man" "${ICLOUD}/man"; do
 done
 
 INFOPATH="${BREW}/../share/info"
-
+debug.sh PATH
+set -x
 if isuserdarwin.sh; then
   launchctl setenv PATH "${PATH}"
   sudo launchctl setenv PATH "${PATH}"
