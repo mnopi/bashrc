@@ -57,7 +57,7 @@ if isuserdarwin.sh; then
   else
     error.sh wheel "${name}" "${error}"; exit 1
   fi
-  if test "${twine}" = 'git'; then
+  if [[ "${twine}" = 'git' ]] ; then
     warning.sh twine "${name}" "${twine}"
   else
     if error="$( "${virtual}/twine" upload -r "${twine}" dist/* 2>&1 )"; then

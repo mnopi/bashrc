@@ -37,7 +37,7 @@ for option in ${options}; do
       shopt -s "${option}"
     fi
     if ! [[ "${option}" =~ globstar|direxpand ]]; then
-      if test "${option}" != "autocd"; then
+      if [[ "${option}" != "autocd" ]]; then
         shopt -s "${option}"
       elif test -n "${PS1}"; then
         shopt -s "${option}"
@@ -49,7 +49,7 @@ for option in ${options}; do
 done
 
 ## DIRCOLORS
-if test "$( uname -s )" = "Linux" && test -f /usr/bin/dircolors; then
+if [[ "$( uname -s )" == "Linux" ]]  && test -f /usr/bin/dircolors; then
   eval "$( /usr/bin/dircolors -b )"
 fi
 

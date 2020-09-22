@@ -79,18 +79,18 @@ EOT
   fi
 }
 
-if test "${USER}" = "${USERNAME}" && isuserdarwin.sh; then
+if [[ "${USER}" = "${USERNAME}" ]]  && isuserdarwin.sh; then
   etc_hosts || exit 1
   ssh_config || exit 1
 fi
 
-if test "${USER}" = "${USERNAME}"; then
+if [[ "${USER}" = "${USERNAME}" ]] ; then
   authorized_keys || exit 1
 fi
 
 grep -slR "PRIVATE" ~/.ssh | xargs ssh-add >/dev/null 2>&1
 
-if test "${USER}" = "${USERNAME}" && isuserdarwin.sh && test -n "${1}"; then
+if [[ "${USER}" == "${USERNAME}" ]] && isuserdarwin.sh && test -n "${1}"; then
   bashrc-upload.sh || exit 1
   bashrc-upgrade.sh || exit 1
 fi

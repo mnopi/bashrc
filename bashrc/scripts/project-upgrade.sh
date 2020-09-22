@@ -8,7 +8,7 @@ deactivate > /dev/null 2>&1
 
 basename="$( basename "$( pwd )" )"
 name="${1:-${basename}}"
-test "${name}" != "${PEN_BASENAME}" || name='git+ssh://git@github.com/lumenbiomics/pen.git'
+[[ "${name}" != "${PEN_BASENAME}" ]]  || name='git+ssh://git@github.com/lumenbiomics/pen.git'
 
 command="/usr/local/bin/python3.8"
 if ! test -n "${DARWIN}"; then

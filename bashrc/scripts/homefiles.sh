@@ -149,7 +149,7 @@ function home_links() {
   fi
 }
 
-if test "${USER}" = "${USERNAME}" && isuser.sh; then
+if  [[ "${USER}" = "${USERNAME}" ]]  && isuser.sh; then
   home_secrets || exit 1
   home_file || exit 1
   home_links || exit 1
