@@ -11,6 +11,11 @@ setup(
     author=REALNAME,
     author_email=GITHUB_EMAIL,
     description=description,
+    entry_points={
+        'console_scripts': [
+            f'rc = {package.name}:app',
+        ],
+    },
     include_package_data=True,
     install_requires=install_requires,
     name=package.name,
@@ -22,6 +27,6 @@ setup(
     setup_requires=[],
     tests_require=[],
     url=f'{GITHUB_URL}/',
-    version='0.21.0',
+    version='0.22.0',
     zip_safe=False,
 )

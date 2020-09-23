@@ -2,6 +2,15 @@
 """Bashrc Package."""
 import os
 import pathlib
+from typing import Text, Literal
+
+import distro
+import shlex
+import typer
+
+Int = bool
+
+app = typer.Typer()
 
 package = pathlib.Path(__file__).parent.resolve()
 project = package.parent
@@ -32,3 +41,62 @@ for global_var, global_value in os.environ.items():
     # noinspection PyStatementEffect
     globals()[global_var] = global_value
     __all__.append(global_var)
+
+
+class Option:
+    """APP/CLI Option."""
+    Function = Literal['version', ]  # type: ignore
+
+    @staticmethod
+    def version():
+        return ['patch', 'minor', 'major', ]
+
+    @staticmethod
+    def option(function: Function = Function.__args__[0], msg: Text = None, default: Int = 0) -> typer.Option:
+        """
+        APP/CLI Option.
+
+        Examples:
+            >>> assert '<typer.models.OptionInfo' in str(Option.option())
+            >>> Option.option(Option.Function.__args__[0], 'Part of version to increase') #doctest: +ELLIPSIS
+            <...
+
+        Args:
+            function: completion function name.
+            msg: cli help message for option.
+            default: index for default choice.
+
+        Returns:
+            typer.Option:
+        """
+        # noinspection PyCallByClass
+        attribute = getattr(Option, function)
+        return typer.Option(attribute()[default], help=msg if msg else function.capitalize(), autocompletion=attribute)
+
+
+dist = distro.LinuxDistribution().info().id
+
+
+@app.command()
+def secrets():
+    """Secrets Update."""
+    global dist
+    if dist == 'darwin':
+        os.system(f'secrets_push.sh')
+    elif dist == 'Kali':
+        os.system(f'secrets_pull.sh')
+
+
+@app.command()
+def up(bump: Text = Option.option(Option.Function.__args__[0], 'Part of version to increase')):
+    """
+    Project Upgrade.
+
+    Args:
+        bump: Part of version to increase.
+    """
+    global dist
+    if dist == 'darwin':
+        os.system(f'bashrc.upload.sh {bump} && rebash')
+    elif dist == 'Kali':
+        os.system(f'bashrc.upgrade.sh && rebash')
