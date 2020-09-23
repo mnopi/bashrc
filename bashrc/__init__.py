@@ -98,7 +98,7 @@ def up(bump: Text = Option.option(Option.Function.__args__[0], 'Part of version 
     """
     global dist
     if dist == 'darwin':
-        os.system(f'bashrc-upload.sh {bump} && rebash')
+        os.system(f'bashrc-upload.sh {bump} && source ~/.bashrc')
     elif dist == 'Kali':
         os.system(f'bashrc-upgrade.sh && rebash')
 
@@ -114,7 +114,3 @@ def version_callback(value: bool):
 def main(version: bool = typer.Option(None, "--version", callback=version_callback, is_eager=True)):
     # Do other global stuff, handle other global options here
     return
-
-
-print(shutil.which("bashrc-upload.sh"))
-print(shutil.which("rst2latex.py"))
