@@ -1,0 +1,55 @@
+#!/usr/bin/env python3.8
+# -*- coding: utf-8 -*-
+import os
+import pathlib
+
+exclude = (
+    'SHELL',
+    'LSCOLORS',
+    'MACROOT',
+    'CLT',
+    'USERFILE',
+    'SUDO_GID',
+    'SSH_PRIVATE_KEY',
+    'LATEST',
+    'SETENV',
+    'APPLICATIONS',
+    'PYTHON38',
+    'SUDO_COMMAND',
+    'ITERM_PREV_PS1',
+    'MOBILE',
+    'ITERM_ORIG_PS1',
+    'INVERSO',
+    'PWD',
+    'SUPPORT',
+    'TIME',
+    'SECRETS_REPO',
+    'KALI_IP',
+    'DEBIAN',
+    'CLONES',
+    'INTERNET_ENCODED',
+    'KEYNOTE',
+    'SCRIPTS_BASENAME',
+    'BASH_D',
+    'SCALEWAY_ENDPOINT',
+    'LS_COLORS',
+    'LIBRARY_NICK',
+    'KALI',
+    'SCRATCHES',
+    'DARWIN',
+    'AZULCLARO',
+    'ICLOUD_NICK',
+    'SCALEWAY_ORGANIZATION_ID',
+    'SCALEWAY_SECRET_KEY',
+    'SYNTHETIC',
+    'SHELLCHECK_OPTS',
+    'PS1',
+    'PS4',
+    'HISTFILESIZE',
+    'SUDO_UID',
+    'MAIL',
+    '_',
+)
+
+pathlib.Path('/etc/environment').write_text(
+    '\n'.join([f'{key}="{value}"' for key, value in os.environ.items() if key not in exclude]))
