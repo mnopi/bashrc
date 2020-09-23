@@ -35,7 +35,7 @@ export ICLOUD="${USERHOME}/${ICLOUD_BASENAME}"
 export GOHOME="${USERHOME}/.go"
 export GOPATH="${GOHOME}/bin"
 export PEN="${USERHOME}/${PEN_BASENAME}"
-
+export PEN_GIT="git+ssh://git@github.com/${GITHUB_ORGANIZATION}/${PEN_BASENAME}.git"
 REALNAME="$(test -n "${DARWIN}" && dscl . -read /Users/"${USERNAME}" RealName RealName | sed -n 's/^ //g;2p' || echo)"
 export REALNAME
 
