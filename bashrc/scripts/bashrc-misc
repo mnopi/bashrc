@@ -54,7 +54,9 @@ if [[ "$( uname -s )" == "Linux" ]]  && test -f /usr/bin/dircolors; then
 fi
 
 ## ENVIRONMENT
-declare -x | grep "declare -x" | cut -d " " -f 3- | grep -Ev 'XPC_FLAGS|XPC_SERVICE_NAME|__CF_USER_TEXT_ENCODING|SSH_PRIVATE_KEY|SHLVL|SECURITYSESSIONID|LaunchInstanceID|COMP_WORDBREAKS|COMMAND_MODE=|' | sudo tee /etc/environment >/ /dev/null 2>&1
+declare -x | grep "declare -x" | cut -d " " -f 3- | grep -Ev \
+  'XPC_FLAGS|XPC_SERVICE_NAME|__CF_USER_TEXT_ENCODING|SSH_PRIVATE_KEY|SHLVL|SECURITYSESSIONID|LaunchInstanceID|COMP_WORDBREAKS|COMMAND_MODE' \
+  | sudo tee /etc/environment > /dev/null 2>&1
 
 ## MACOS
 paper.sh
