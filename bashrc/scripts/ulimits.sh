@@ -2,7 +2,7 @@
 
 file=/etc/security/limits.conf
 
-if tee "${file}" >/dev/null <<EOT; then
+if sudo tee "${file}" >/dev/null <<EOT; then
 * soft     nproc          65535
 * hard     nproc          65535
 * soft     nofile         65535
