@@ -9,6 +9,7 @@ from typing import Text, Literal
 import distro
 import typer
 
+command = 'rc'
 Int = bool
 
 app = typer.Typer()
@@ -98,9 +99,9 @@ def up(bump: Text = Option.option(Option.Function.__args__[0], 'Part of version 
     """
     global dist
     if dist == 'darwin':
-        os.system(f'rc --version && bashrc-upload.sh {bump} && rc --version  && source ~/.bashrc')
+        os.system(f'{command} --version && bashrc-upload.sh {bump} && {command} --version  && source ~/.bashrc')
     elif dist == 'Kali':
-        os.system(f'rc --version && bashrc-upgrade.sh && rc --version && source ~/.bashrc')
+        os.system(f'{command} --version && bashrc-upgrade.sh && {command} --version && source ~/.bashrc')
 
 
 def version_callback(value: bool):
