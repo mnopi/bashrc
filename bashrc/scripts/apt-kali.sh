@@ -74,7 +74,7 @@ else
   error.sh apt auto-remove; exit 1
 fi
 
-if ${BREW} install bash-completion@2 tree awk; then
+if ${BREW} install bash-completion@2 tree ack; then
   info.sh brew install
 else
   error.sh brew install; exit 1
