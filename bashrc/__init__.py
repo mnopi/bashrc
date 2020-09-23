@@ -104,7 +104,7 @@ def up(bump: Text = Option.option(Option.Function.__args__[0], 'Part of version 
 
 def version_callback(value: bool):
     if value:
-        typer.echo(f"rc [{package.name}]: {__version__(package.name)}")
+        typer.echo(f"{__version__(package.name)}")
         raise typer.Exit()
 
 
