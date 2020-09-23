@@ -98,9 +98,9 @@ def up(bump: Text = Option.option(Option.Function.__args__[0], 'Part of version 
     """
     global dist
     if dist == 'darwin':
-        os.system(f'bashrc-upload.sh {bump} && source ~/.bashrc')
+        os.system(f'rc --version && bashrc-upload.sh {bump} && rc --version  && source ~/.bashrc')
     elif dist == 'Kali':
-        os.system(f'bashrc-upgrade.sh && rebash')
+        os.system(f'rc --version && bashrc-upgrade.sh && rc --version && source ~/.bashrc')
 
 
 def version_callback(value: bool):
