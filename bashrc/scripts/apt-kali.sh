@@ -73,3 +73,18 @@ if sudo apt -qq auto-remove -y; then
 else
   error.sh apt auto-remove; exit 1
 fi
+
+if brew install apm-bash-completion docker-compose-completion   maven-completion sonar-completion \
+                bash-completion  docker-machine-completion mix-completion   spring-completion \
+                bash-completion@2 fabric-completion open-completion  stormssh-completion \
+                boom-completion  gem-completion packer-completion t-completion \
+                brew-cask-completion  gradle-completion pip-completion tmuxinator-completion \
+                bundler-completion  grunt-completion  rails-completion  vagrant-completion \
+                cap-completion homesick-completion rake-completion  wp-cli-completion \
+                django-completion kitchen-completion  ruby-completion  yarn-completion \
+                docker-completion launchctl-completion  rustc-completion  zsh-completions; then
+  info.sh brew install
+else
+  error.sh brew install; exit 1
+fi
+
