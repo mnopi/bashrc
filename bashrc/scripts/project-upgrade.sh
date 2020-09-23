@@ -16,7 +16,7 @@ if ! test -n "${DARWIN}"; then
 fi
 
 if error="$( ${command} -m pip uninstall "${name}" -y 2>&1 && ${command} -m pip install --upgrade "${name}" 2>&1 )"; then
-  info.sh uinstall "${name}"
+  info.sh install "${name}"
 else
   error.sh install "${name}" "${error}"; exit 1
 fi
