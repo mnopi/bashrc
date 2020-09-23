@@ -17,17 +17,9 @@ function kali() {
   pam-sudo.sh "$@" || return 1
   motd.sh "$@" || return 1
   ulimits.sh || return 1
-  wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
-  echo "deb http://repo.mongodb.org/apt/debian buster/mongodb-org/4.4 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
-  sudo apt update
-  echo "mongodb-org hold" | sudo dpkg --set-selections
-  echo "mongodb-org-server hold" | sudo dpkg --set-selections
-  echo "mongodb-org-shell hold" | sudo dpkg --set-selections
-  echo "mongodb-org-mongos hold" | sudo dpkg --set-selections
-  echo "mongodb-org-tools hold" | sudo dpkg --set-selections
-  sudo systemctl start mongod
-  sudo systemctl daemon-reload
-  sudo systemctl enable mongod
+  mongo.sh || return 1
+  sshtunnel.sh || return 1
+  docker.sh || return 1
   sudo apt-get install -y mongodb-org
   sudo mkdir -p "${PEN}"; sudo chown -R "${USERNAME}":"${USERNAME}" "${PEN}"
   sudo rm -rf /etc/update-motd.d/
