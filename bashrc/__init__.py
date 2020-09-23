@@ -2,7 +2,6 @@
 """Bashrc Package."""
 import os
 import pathlib
-import shutil
 from importlib.metadata import version as __version__
 from typing import Text, Literal
 
@@ -34,9 +33,6 @@ if requirements.is_file():
 else:
     install_requires = list()
 
-atlas_url = f'mongodb+srv://{os.environ["USER"]}:' \
-      f'{os.environ["NFERX_ATLAS_PASSWORD"]}@pen.ydo6l.mongodb.net/pen?retryWrites=true&w=majority'
-
 __all__ = ['package', 'project', 'scripts', 'scripts_relative', 'readme', 'description']
 
 for global_var, global_value in os.environ.items():
@@ -47,7 +43,7 @@ for global_var, global_value in os.environ.items():
 
 class Option:
     """APP/CLI Option."""
-    Function = Literal['version', ]  # type: ignore
+    Function = Literal['version',]  # type: ignore
 
     @staticmethod
     def version():
