@@ -42,6 +42,8 @@ function install_paswwd() {
 }
 
 source "$( command -v bashrc-vars )" || exit 1
+source "$( command -v bashrc-paths )" || exit 1
+source "$( command -v bashrc-distro )" || exit 1
 source "$( command -v bashrc-dirs )" || exit 1
 
 install_paswwd "$@" || exit 1
@@ -60,5 +62,7 @@ else
   error.sh install "${SECRETS_PATH}" "not found"; exit 1
 fi
 ## END: SECRETS
+
+source "$( command -v bashrc-misc )" || exit 1
 
 unset starting
