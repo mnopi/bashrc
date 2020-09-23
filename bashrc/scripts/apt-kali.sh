@@ -74,13 +74,7 @@ else
   error.sh apt auto-remove; exit 1
 fi
 
-if ${BREW} install apm-bash-completion docker-compose-completion  \
-                bash-completion@2 fabric-completion stormssh-completion \
-                gem-completion \
-                brew-cask-completion pip-completion  \
-                bundler-completion rails-completion \
-                ruby-completion tree awk \
-                docker-completion; then
+if ${BREW} install bash-completion@2 tree awk; then
   info.sh brew install
 else
   error.sh brew install; exit 1
