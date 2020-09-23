@@ -75,13 +75,12 @@ else
 fi
 
 if ${BREW} install apm-bash-completion docker-compose-completion  \
-                bash-completion@2 fabric-completion open-completion stormssh-completion \
+                bash-completion@2 fabric-completion stormssh-completion \
                 gem-completion \
-                brew-cask-completion gradle-completion pip-completion tmuxinator-completion \
-                bundler-completion  rails-completion vagrant-completion \
-                cap-completion homesick-completion rake-completionn \
-                ruby-completion  yarn-completion tree awk \
-                docker-completion launchctl-completion; then
+                brew-cask-completion pip-completion  \
+                bundler-completion rails-completion \
+                ruby-completion tree awk \
+                docker-completion; then
   info.sh brew install
 else
   error.sh brew install; exit 1
