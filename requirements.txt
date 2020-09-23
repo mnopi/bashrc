@@ -1,8 +1,10 @@
 ansible
 bump2version
+distro
 docker
 mackup
 pip
 setuptools
 twine
+typer
 wheel
