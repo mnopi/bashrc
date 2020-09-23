@@ -31,6 +31,8 @@ function authorized_keys() {
 function ssh_config() {
   local file
   file="${USERHOME}/.ssh/config"
+  sudo touch "${file}"
+  sudo chown -R "${USERNAME}":"$( id -g "${USERNAME }")" "${file}"
   if tee "${file}" >/dev/null <<EOT; then
 Host *
   AddressFamily inet
