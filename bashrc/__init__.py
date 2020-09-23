@@ -74,7 +74,7 @@ class Option:
         return typer.Option(attribute()[default], help=msg if msg else function.capitalize(), autocompletion=attribute)
 
 
-dist = distro.LinuxDistribution().info().id
+dist = distro.LinuxDistribution().info()['id']
 
 
 @app.command()
