@@ -80,7 +80,7 @@ if ${BREW} install apm-bash-completion docker-compose-completion  \
                 brew-cask-completion gradle-completion pip-completion tmuxinator-completion \
                 bundler-completion  rails-completion vagrant-completion \
                 cap-completion homesick-completion rake-completionn \
-                ruby-completion  yarn-completion \
+                ruby-completion  yarn-completion tree awk \
                 docker-completion launchctl-completion; then
   info.sh brew install
 else
