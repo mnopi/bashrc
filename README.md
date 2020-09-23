@@ -34,13 +34,13 @@ python3 -m pip install --upgrade bashrc
 
 
 ```bash
-bashrc-install.sh <account_password> <internet_password> <force>
+rc up  # bashrc-install.sh <account_password> <internet_password> <force>
 ```
 
 or:
 
 ```bash
-bashrc-install.sh
+rc up  # bashrc-install.sh
 ```
 
 ### Upload & Upgrade
@@ -57,13 +57,13 @@ rebashrc
 Update the repository and:
 
 ```bash
-secrets-push.sh
+rc secrets  # secrets-push.sh
 rebash
 ```
 
 #### On other servers
 ```bash
-secrets-pull.sh
+rc secrets  #secrets-pull.sh 
 rebash
 ```
 
@@ -74,7 +74,7 @@ rebash
 Perform any tests and:
 
 ```bash
-project-upload.sh <path> <major|minor> <j5pu|jose-nferx|pypi>
+rc up  # project-upload.sh <path> <major|minor> <j5pu|jose-nferx|pypi>
 ```
 
 #### On other servers
