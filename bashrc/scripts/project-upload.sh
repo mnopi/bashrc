@@ -34,8 +34,6 @@ cd "${path}" > /dev/null 2>&1 || { error.sh "${path}" "invalid"; exit 1; }
 path="$( pwd )"
 name="$( basename "${path}" )"
 export bump twine path name; debug.sh bump twine path name
-echo $path
-echo $name
 if isuserdarwin.sh; then
     project-venv.sh "${path}"
   if test -z "${site}"; then
