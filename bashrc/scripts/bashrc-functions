@@ -770,11 +770,9 @@ function ipv6() {
       continue
     else
       if sudo networksetup -setv6off "${iface}" >/dev/null 2>&1; then
-        info "IPv6" "${iface}"
-        return 0
+        info.sh "IPv6" "${iface}"
       else
-        error ipv6
-        return 1
+        error.sh ipv6
       fi
     fi
   done < <(networksetup -listallnetworkservices | grep -v "asterisk")
