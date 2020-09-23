@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 # noinspection PyUnresolvedReferences
 from bashrc import package, project, scripts_relative, readme, description, install_requires, GITHUB_EMAIL, \
-    REALNAME, GITHUB_URL
+    REALNAME, GITHUB_URL, command
 
 setup(
     author=REALNAME,
@@ -13,7 +13,7 @@ setup(
     description=description,
     entry_points={
         'console_scripts': [
-            f'rc = {package.name}:app',
+            f'{command} = {package.name}:app',
         ],
     },
     include_package_data=True,
@@ -27,6 +27,6 @@ setup(
     setup_requires=[],
     tests_require=[],
     url=f'{GITHUB_URL}/',
-    version='0.31.15',
+    version='0.31.16',
     zip_safe=False,
 )
