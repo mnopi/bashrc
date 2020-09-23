@@ -15,6 +15,12 @@ if ! test -n "${DARWIN}"; then
   command="sudo /bin/python3.8"
 fi
 
+if error="$( ${command} -m pip uninstall "${name}" -y 2>&1 )"; then
+  info.sh uninstall "${name}"
+else
+  error.sh uninstall "${name}" "${error}"; exit 1
+fi
+
 if error="$( ${command} -m pip install --upgrade "${name}" 2>&1 )"; then
   info.sh upgrade "${name}"
 else
