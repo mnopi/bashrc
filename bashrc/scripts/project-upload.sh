@@ -76,7 +76,7 @@ if isuserdarwin.sh; then
   deactivate > /dev/null 2>&1
   project-upgrade.sh "${name}" || exit 1
 else
-  error.sh "${PROJECT_BASHRC}" "can not be uploaded with root"; exit 1
+  error.sh "${BASHRC}" "can not be uploaded with root"; exit 1
 fi
 
 cd - > /dev/null || exit 1

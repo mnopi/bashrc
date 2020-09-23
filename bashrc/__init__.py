@@ -2,10 +2,10 @@
 """Bashrc Package."""
 import os
 import pathlib
+from importlib.metadata import version as __version__
 from typing import Text, Literal
 
 import distro
-import shlex
 import typer
 
 Int = bool
@@ -100,3 +100,18 @@ def up(bump: Text = Option.option(Option.Function.__args__[0], 'Part of version 
         os.system(f'bashrc.upload.sh {bump} && rebash')
     elif dist == 'Kali':
         os.system(f'bashrc.upgrade.sh && rebash')
+
+
+def version_callback(value: bool):
+    if value:
+        typer.echo(f"rc [{package.name}]: {__version__}")
+        raise typer.Exit()
+
+
+# noinspection PyUnusedLocal
+@app.callback()
+def main(
+    version: bool = typer.Option(None, "--version", callback=version_callback, is_eager=True),
+):
+    # Do other global stuff, handle other global options here
+    return
