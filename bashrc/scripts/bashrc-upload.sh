@@ -13,7 +13,7 @@ case "${1}" in
 esac; shift
 
 test -n "${BASHRC}" || { error.sh " BASHRC" "empty"; exit 1; }
-cd "${ BASHRC}" > /dev/null 2>&1 || { error.sh "${ BASHRC}" "does not exists"; exit 1; }
+cd "${BASHRC}" > /dev/null 2>&1 || { error.sh "${BASHRC}" "does not exists"; exit 1; }
 
 unset VIRTUAL_ENV PYTHONHOME
 deactivate > /dev/null 2>&1
