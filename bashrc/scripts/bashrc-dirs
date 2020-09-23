@@ -3,6 +3,7 @@
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 export ANSIBLE="${USERHOME}/ansible"
+export BAPY="${USERHOME}/bapy"
 export CLONES="${USERHOME}/clones"
 export EXAMPLES="${USERHOME}/examples"
 export LIBRARY="${USERHOME}/Library"

@@ -44,7 +44,7 @@ if isuser.sh; then
     fi
   done < <( find "${path}" -mindepth 1 -maxdepth 2 -type f -name "requirements*" )
 else
-  error.sh "${PROJECT_BASHRC}" "can not be uploaded with root"; exit 1
+  error.sh "${BASHRC}" "can not be uploaded with root"; exit 1
 fi
 
 cd - > /dev/null || exit 1

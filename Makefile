@@ -17,7 +17,7 @@ venv:
 	@project-venv.sh
 
 vars:
-	@echo $(PROJECT_BASHRC)
+	@echo $(BASHRC)
 	@echo "PASSWORD: $${PASSWORD}"
 	@echo "INTERNET: $${INTERNET}"
 	@echo "BUMP: $(BUMP)"
