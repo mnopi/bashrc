@@ -84,9 +84,9 @@ def secrets():
     """Secrets Update."""
     global dist
     if dist == 'darwin':
-        os.system(f'secrets_push.sh')
+        os.system(f'secrets-push.sh')
     elif dist == 'Kali':
-        os.system(f'secrets_pull.sh')
+        os.system(f'secrets-pull.sh')
 
 
 @app.command()
