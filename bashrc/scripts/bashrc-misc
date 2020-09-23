@@ -68,6 +68,8 @@ if isuserdarwin.sh; then
   ! test -e /private/var/vm/sleepimage || sudo rm -rf /private/var/vm/sleepimage >/dev/null 2>&1
 fi
 
+##.ssh
+sudo chmod -R go-rw "${HOME}"
 
 ## PS1
 ## xterm title set to host@user:dir lo hace con esto: \[\e]0;\h@\u: \w\a\]
