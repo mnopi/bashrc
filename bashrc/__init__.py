@@ -2,6 +2,7 @@
 """Bashrc Package."""
 import os
 import pathlib
+import shutil
 from importlib.metadata import version as __version__
 from typing import Text, Literal
 
@@ -97,9 +98,9 @@ def up(bump: Text = Option.option(Option.Function.__args__[0], 'Part of version 
     """
     global dist
     if dist == 'darwin':
-        os.system(f'bashrc.upload.sh {bump} && rebash')
+        os.system(f'{shutil.which(package.name)}/bashrc.upload.sh {bump} && rebash')
     elif dist == 'Kali':
-        os.system(f'bashrc.upgrade.sh && rebash')
+        os.system(f'{shutil.which(package.name)}/bashrc.upgrade.sh && rebash')
 
 
 def version_callback(value: bool):
@@ -110,8 +111,6 @@ def version_callback(value: bool):
 
 # noinspection PyUnusedLocal
 @app.callback()
-def main(
-    version: bool = typer.Option(None, "--version", callback=version_callback, is_eager=True),
-):
+def main(version: bool = typer.Option(None, "--version", callback=version_callback, is_eager=True)):
     # Do other global stuff, handle other global options here
     return

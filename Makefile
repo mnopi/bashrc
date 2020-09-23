@@ -1,4 +1,4 @@
-BUMP := minor  # <major|minor|patch>
+BUMP := patch  # <major|minor|patch>
 all: upload
 .PHONY: all install secrets-push secrets-pull venv vars
 SHELL := $(shell command -v bash)
