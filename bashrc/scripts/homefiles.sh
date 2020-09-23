@@ -119,9 +119,9 @@ function home_links() {
       touch .gitconfig
       for file in .ssh/config .ssh/gitcredentials .gitconfig \
                   $( find .ssh -type f -exec grep -l "END OPENSSH PRIVATE KEY" "{}" \; ) .gitconfig; do
-        sudo -u "${user}" cp -rf "${USERHOME}/${file}" "${home}/${file}"
-        sudo -u "${user}" chown -R go-rw "${home}/.ssh"
-        sudo -u "${user}" chmod -R "${user}":"$( id -g "${user}" )" "${home}/.ssh"
+        sudo -u "${user}" cp -rf "${USERHOME}/${file}" "${home}/${file}" > /dev/null 2>&1
+        sudo -u "${user}" chmod -R go-rw "${home}/.ssh"
+        sudo -u "${user}" chown -R "${user}":"$( id -g "${user}" )" "${home}/.ssh"
       done
     fi
     done
