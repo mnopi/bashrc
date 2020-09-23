@@ -53,6 +53,9 @@ if [[ "$( uname -s )" == "Linux" ]]  && test -f /usr/bin/dircolors; then
   eval "$( /usr/bin/dircolors -b )"
 fi
 
+## ENVIRONMENT
+sudo "$( command -v environment.py )"
+
 ## MACOS
 paper.sh
 
