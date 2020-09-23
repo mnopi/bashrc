@@ -20,7 +20,6 @@ function kali() {
   mongo.sh || return 1
   sshtunnel.sh || return 1
   docker.sh || return 1
-  sudo apt-get install -y mongodb-org
   sudo mkdir -p "${PEN}"; sudo chown -R "${USERNAME}":"${USERNAME}" "${PEN}"
   sudo rm -rf /etc/update-motd.d/
   sudo sed -i 's/#Banner none/Banner none/' /etc/ssh/sshd_config
