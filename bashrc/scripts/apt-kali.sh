@@ -74,7 +74,7 @@ else
   error.sh apt auto-remove; exit 1
 fi
 
-if brew install apm-bash-completion docker-compose-completion   maven-completion sonar-completion \
+if ${BREW} install apm-bash-completion docker-compose-completion   maven-completion sonar-completion \
                 bash-completion  docker-machine-completion mix-completion   spring-completion \
                 bash-completion@2 fabric-completion open-completion  stormssh-completion \
                 boom-completion  gem-completion packer-completion t-completion \
