@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+  # shellcheck disable=SC1090
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 function accountcreate() {
@@ -1559,6 +1560,19 @@ function synthetic() {
 function tmutildir() {
   # ${1} - (tmutil listbackups) - name or file to remove before - and after .
   echo "${1}" | cut -d '-' -f 2 | cut -d '.' -f 1
+}
+
+function upall() {
+  if test -n "${DARWIN}"; then
+    rc up
+    bapy up
+    pen up
+    source ~/.bashrc
+#    python3.8 -m pip install --upgrade bashrc bapy "${PEN_GIT}"
+  else
+    sudo python3.8 -m pip install --upgrade bashrc bapy "${PEN_GIT}"
+    source ~/.bashrc
+  fi
 }
 
 function usage() {
