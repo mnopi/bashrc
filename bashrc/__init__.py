@@ -72,13 +72,10 @@ class Option:
         return typer.Option(attribute()[default], help=msg if msg else function.capitalize(), autocompletion=attribute)
 
 
-dist = distro.LinuxDistribution().info()['id']
-
-
 @app.command()
 def secrets():
     """Secrets Update."""
-    global dist
+    dist = distro.LinuxDistribution().info()['id']
     if dist == 'darwin':
         os.system(f'secrets-push.sh')
     elif dist == 'Kali':
@@ -93,7 +90,7 @@ def up(bump: Text = Option.option(Option.Function.__args__[0], 'Part of version 
     Args:
         bump: Part of version to increase.
     """
-    global dist
+    dist = distro.LinuxDistribution().info()['id']
     if dist == 'darwin':
         os.system(f'{command} --version && bashrc-upload.sh {bump} && {command} --version  && source ~/.bashrc')
     elif dist == 'Kali':
