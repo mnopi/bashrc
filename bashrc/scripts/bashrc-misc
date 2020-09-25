@@ -66,6 +66,8 @@ if isuserdarwin.sh; then
   chmod go-rwx ~/.netrc >/dev/null 2>&1
   chmod -R go-rwx ~/.ssh >/dev/null 2>&1
   ! test -e /private/var/vm/sleepimage || sudo rm -rf /private/var/vm/sleepimage >/dev/null 2>&1
+  cp -rf "${PYCHARM_OPTIONS}/atom-icon-associations.xml" \
+         "${PYCHARM_OPTIONS}/atom-icon-associations.xml~bk" >/dev/null 2>&1
 fi
 
 ##.ssh
