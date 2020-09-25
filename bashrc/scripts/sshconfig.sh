@@ -2,7 +2,6 @@
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 
-
 function authorized_keys() {
   local user home file key tmp
   for user in "${USERNAME}" root kali; do
@@ -32,7 +31,7 @@ function ssh_config() {
   local file
   file="${USERHOME}/.ssh/config"
   sudo touch "${file}"
-  sudo chown -R "${USERNAME}":"$( id -g "${USERNAME }")" "${file}"
+  sudo chown -R "${USERNAME}":"$( id -g "${USERNAME}")" "${file}"
   if tee "${file}" >/dev/null <<EOT; then
 Host *
   AddressFamily inet
