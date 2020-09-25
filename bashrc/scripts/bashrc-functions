@@ -1564,10 +1564,7 @@ function tmutildir() {
 
 function upall() {
   if test -n "${DARWIN}"; then
-    rc up
-    bapy up
-    pen up
-    source ~/.bashrc
+    python3.8 -m pip install --upgrade bashrc bapy "${PEN_GIT}"
 #    python3.8 -m pip install --upgrade bashrc bapy "${PEN_GIT}"
   else
     sudo python3.8 -m pip install --upgrade bashrc bapy "${PEN_GIT}"
