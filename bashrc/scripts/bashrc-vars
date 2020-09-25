@@ -80,7 +80,6 @@ export INTERNET_HASH="$(! command -v openssl >/dev/null 2>&1 || openssl passwd -
 export INTERNET_ENCODED='1Zaragoza%24%2E'
 
 export INVERSO="\[\033[00m\]"
-export KALI_IP="35.153.66.76"
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LIBRARY_NICK="l"

@@ -279,7 +279,7 @@ alias ufw='sudo ufw'
 alias umount='sudo umount'
 alias unbound-anchor='sudo unbound-anchor'
 alias unbound-host='sudo unbound-host'
-if test -n "${DARWIN}"; then
+if [[ "$(uname -s)" == "Darwin" ]]; then
   alias upall="python3.8 -m pip install --upgrade bashrc bapy ${PEN_GIT}"
 else
   alias upall="sudo python3.8 -m pip install --upgrade bashrc bapy ${PEN_GIT}"
