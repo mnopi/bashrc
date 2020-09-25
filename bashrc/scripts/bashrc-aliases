@@ -280,9 +280,9 @@ alias umount='sudo umount'
 alias unbound-anchor='sudo unbound-anchor'
 alias unbound-host='sudo unbound-host'
 if test -n "${DARWIN}"; then
-  alias upall="python3.8 -m pip install --upgrade bashrc bapy git+ssh://git@github.com/lumenbiomics/pen.git"
+  alias upall="python3.8 -m pip install --upgrade bashrc bapy ${PEN_GIT}"
 else
-  alias upall="sudo python3.8 -m pip install --upgrade bashrc bapy git+ssh://git@github.com/lumenbiomics/pen.git"
+  alias upall="sudo python3.8 -m pip install --upgrade bashrc bapy ${PEN_GIT}"
 fi
 alias upall=
 alias update-alternatives='sudo update-alternatives'
