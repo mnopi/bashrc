@@ -20,7 +20,16 @@ for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE BASHRC GITHUB_USERNAME NFER
   debug.sh "${var}"
 done
 
-for source_name in bashrc-dirs bashrc-aliases bashrc-functions bashrc-completions\
+if source_path="$( command -v bashrc-dirs )"; then
+  source "${source_path}"
+else
+  error.sh "${source_path}" "not found"; return 1
+fi
+
+# Variables and paths before return for non-interactive to have it in PyCharm, etc.
+test -n "${PS1}" || return
+
+for source_name in bashrc-aliases bashrc-functions bashrc-completions\
                    bashrc-iterm2 bashrc-misc; do
   if source_path="$( command -v "${source_name}" )"; then
     source "${source_path}"
