@@ -48,10 +48,8 @@ function home_profiles () {
   if sudo -u "${1}" tee "${2}" >/dev/null <<EOT; then
 # shellcheck disable=SC1090
 PATH='/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:.'
-if [ "${BASH-no}" != "no" ]; then
-  if [[ -f ~/.bashrc ]]; then
-    . ~/.bashrc
-  fi
+if [[ -f ~/.bashrc ]]; then
+  . ~/.bashrc
 fi
 EOT
     info.sh homefiles "${2}"
