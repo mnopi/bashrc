@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
+
+if test -n "${DARWIN}"; then
+  export FILES="${MACDEV}/files"
+  export REQUESTS_CA_BUNDLE="${FILES}/ssl/ca-bundle.crt"
+  export DEFAULT_CA_BUNDLE_PATH="${REQUESTS_CA_BUNDLE}"
+  export SSL_CERT_FILE="${REQUESTS_CA_BUNDLE}"
+elif test -n "${KALI}"; then
+  export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+fi
+
+unset starting

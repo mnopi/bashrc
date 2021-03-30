@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2155
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
+
+export ANSIBLE="${USERHOME}/ansible"
+export BAPY="${USERHOME}/bapy"
+export CLONES="${USERHOME}/clones"
+export EXAMPLES="${USERHOME}/examples"
+export LIBRARY="${USERHOME}/Library"
+export LUMEN="${USERHOME}/lumen"
+export MNOPI="${USERHOME}/mnopi"
+export PEN="${USERHOME}/pen"
+export SCRATCHES="${USERHOME}/scratches"
+export SERVERS="${USERHOME}/servers"
+
+export VISUAL="/Applications/Visual Studio Code - Insiders.app/Contents/MacOS/Electron"
+
+export CACHES="${LIBRARY}/Caches"
+export MOBILE="${LIBRARY}/Mobile Documents"
+export PREFS="${LIBRARY}/Preferences"
+export SAVED="${LIBRARY}/Saved Application State"
+export SUPPORT="${LIBRARY}/Application Support"
+
+export KEYNOTE="${MOBILE}/com~apple~Keynote/Documents"
+export NUMBERS="${MOBILE}/com~apple~Numbers/Documents"
+export PAGES="${MOBILE}/com~apple~Pages/Documents"
+
+export JETBRAINS="${SUPPORT}/JetBrains"
+export PYCHARM="${JETBRAINS}/PyCharm${PYCHARM_VERSION}"
+export PYCHARM_OPTIONS="${PYCHARM}/options"
+
+export LOG_BASENAME="${USERNAME}"
+export LOG="/var/log/${USERNAME}"
+sudo mkdir -p "${LOG}" >/dev/null 2>&1
+sudo chown -R "${USERNAME}":"$( id -g "${USERNAME}" )" "${LOG}" >/dev/null 2>&1
+sudo /bin/chmod -R g+s "${LOG}"
+
+export APPLICATIONS="${MACDEV}/applications"
+export BASH_D="${MACDEV}/${BASH_D_BASENAME}"
+export PACKAGES="${MACDEV}/packages"
+export REPOS="${MACDEV}/repos"
+export SCRIPTS="${MACDEV}/scripts"
+
+export MSF_DATABASE_CONFIG="${USERHOME}/msf4/db"
+
+export BREWFILE="${PACKAGES}/Brewfile"
+export GEMFILE="${PACKAGES}/Gemfile"
+export NPMFILE="${PACKAGES}/npmfile"
+export OPAMFILE="${PACKAGES}/Opamfile"
+export USERFILE="${PACKAGES}/Userfile"
+export REQUIREMENTS="${PACKAGES}/requirements.txt"
+
+export USB="/Volumes/USB-2TB"
+export TIME="${USB}/Backups.backupdb/$( hostname )"
+export DATA="$( [[ "$(uname -s)" == "Darwin" ]] && diskutil info disk1s1 | grep "Volume Name" | awk '{$1=$2=""; print $0}' | sed 's/^ *//g' || echo )"
+export LATEST="${TIME}/Latest/${DATA}"
+
+export SYNTHETIC="${USERHOME}/Desktop ${USERHOME}/Documents ${USERHOME}/Downloads ${MACDEV} ${ICLOUD} ${PEN}"
+export DOCK="${USERHOME} ${ALL} ${USERHOME}/Desktop ${USERHOME}/Documents ${ICLOUD} ${LIBRARY} ${PEN} ${DRIVE} ${USERHOME}/Downloads"
+
+unset starting

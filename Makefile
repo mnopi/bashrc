@@ -4,7 +4,8 @@ all: upload
 SHELL := $(shell command -v bash)
 
 upload:
-	@bashrc-upload.sh $(BUMP)
+	@#scripts/bashrc-upload.sh $(BUMP)
+	@scripts/upload.sh bashrc
 install:
 	@bashrc-install.sh "$${PASSWORD}" "$${INTERNET}"
 

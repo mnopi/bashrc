@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1090
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
+
+for source_name in bashrc-vars bashrc-dirs bashrc-paths bashrc-distro; do
+  if source_path="$( command -v "${source_name}" )"; then
+    source "${source_path}"
+  else
+    error.sh "${source_path}" "not found"; return 1
+  fi
+done
+
+! test -e "${PASSWD_PATH}" || source "${PASSWD_PATH}"
+echo "${PASSWORD}" | sudo -S true > /dev/null 2>&1
+! test -e "${SECRETS_PATH}" || source "${SECRETS_PATH}"
+
+for var in USERNAME USERHOME PASSWD_PATH BASHRC_FILE BASHRC GITHUB_USERNAME NFERX_GITHUB_USERNAME \
+           SECRETS_REPO GITHUB_SECRETS_PATH SECRETS_PATH PASSWORD INTERNET GITHUB_PRIVATE_URL \
+           GITHUB_SECRETS_URL NFERX_GITHUB_PASSWORD; do
+  debug.sh "${var}"
+done
+
+## SHELL ROOT
+if test -n "${DARWIN}" && [[ "$( id -u )" == "0" ]] || [[ "${SUDO_UID-}" ]]; then
+  if [[ -f /usr/local/bin/bash ]] && [[ "${SHELL}" != /usr/local/bin/bash ]]; then
+    /usr/bin/sudo /usr/bin/chsh -s /usr/local/bin/bash > /dev/null 2>&1
+    export SHELL=/usr/local/bin/bash
+  fi
+fi
+
+# Variables and paths before return for non-interactive to have it in PyCharm, etc.
+test -n "${PS1}" || return
+
+for source_name in bashrc-aliases bashrc-functions bashrc-completions\
+                   bashrc-iterm2 bashrc-misc; do
+  if source_path="$( command -v "${source_name}" )"; then
+    source "${source_path}"
+  else
+    error.sh "${source_path}" "not found"; return 1
+  fi
+done
+
+unset starting source_name source_path var

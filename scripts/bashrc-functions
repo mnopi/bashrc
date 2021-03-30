@@ -1,0 +1,1664 @@
+#!/usr/bin/env bash
+  # shellcheck disable=SC1090
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
+
+function accountcreate() {
+  local id groupid password username
+  username="${1:-admin}"
+  id="${2:-550}"
+  groupid="${3:-$(id -g "${USERNAME}")}"
+  password="${4:-${PASSWORD}}"
+  if ! sudo dscl . -read /Users/"${username}" >/dev/null 2>&1 && ! id 550 >/dev/null 2>&1; then
+    sudo dscl . -create /Users/"${username}" || return 1
+    sudo dscl . -create /Users/"${username}" UserShell "${SHELL}" || return 1
+    sudo dscl . -create /Users/"${username}" RealName "${username}" || return 1
+    sudo dscl . -create /Users/"${username}" UniqueID "${id}" || return 1
+    sudo dscl . -create /Users/"${username}" PrimaryGroupID "${groupid}" || return 1
+    sudo dscl . -create /Users/"${username}" NFSHomeDirectory /Users/"${username}" || return 1
+    sudo dscl . -passwd /Users/"${username}" "${password}" || return 1
+    sudo dscl . -append /Groups/"${username}" GroupMembership "${username}" || return 1
+    info accountcreate "${username}"
+  fi
+}
+
+function add_ssh() {
+  #  about 'add entry to ssh config'
+  #  param '1: host'
+  #  param '2: hostname'
+  #  param '3: user'
+  #  group 'ssh'
+
+  [[ $# -ne 3 ]] && echo "add_ssh host hostname user" && return 1
+  [[ ! -d ~/.ssh ]] && mkdir -m 700 ~/.ssh
+  [[ ! -e ~/.ssh/config ]] && touch ~/.ssh/config && chmod 600 ~/.ssh/config
+  echo -en "\n\nHost $1\n  HostName $2\n  User $3\n  ServerAliveInterval 30\n  ServerAliveCountMax 120" >>~/.ssh/config
+}
+
+function base() {
+  local suffix
+  # "${1}" - suffix
+  # "${2:-.}" - dir
+
+  # base rst
+
+  suffix=".${1}"
+  dir="${2:-.}"
+
+  find "${dir}" -type f -name "*${suffix}" -exec basename -s "${suffix}" "{}" \;
+}
+
+function brew() {
+  local desktop error
+  if ! which brew >/dev/null 2>&1; then
+    if yes yes | bash -c \
+      "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"; then
+      ! brewbundle || return 1
+      desktop="${GITHUB_DESKTOP}/Contents/MacOS/GitHub Desktop"
+      if test -e "${desktop}"; then
+        open "${GITHUB_DESKTOP}"
+        sleep "${delay_access:-8}"
+        read -r -s -p $'Configure GitHub Desktop and press ENTER when finished.\n'
+        killall "${GITHUB_DESKTOP_PROCESS}"
+      fi
+      return 0
+    else
+      error.sh "install brew" "${error}"
+      return 1
+    fi
+  fi
+
+  if [[ ! "${1-}" ]]; then { ! brewbundle && return 0 || return 1; }; fi
+  # shellcheck disable=SC2048
+  if [[ "${1}" =~ ^search$ ]]; then
+    "${BREW}/brew" "$@"
+    return
+  fi
+  if "${BREW}/brew" "$@" --quiet; then
+    if [[ "${1}" =~ ^bundle$|^install$|^uninstall$|^remove$|^update$|^upgrade$|^tap$ ]] ||
+      [[ "${2}" =~ ^install|^reinstall$|^remove$|^uninstall$|^update$|^upgrade$|^fetch$ ]]; then
+      if brewdump; then
+        if brewcleanup "$@"; then
+          return 0
+        else
+          return 1
+        fi
+      else
+        return 1
+      fi
+    fi
+    return 0
+  else
+    if [[ "${1}" =~ ^install$|^uninstall$|^remove$ ]]; then
+      error.sh "$@"
+      warning.sh trying cask "$@"
+      brew "${@/$1/$1 --cask }"
+    else
+      error.sh "$@" "${error}"
+      return 1
+    fi
+  fi
+}
+
+function brewbundle() {
+  if "${BREW}/brew" bundle --quiet --file "${BREWFILE}"; then
+    if brewcleanup "brew bundle"; then
+      return 0
+    else
+      return 1
+    fi
+  else
+    return 1
+  fi
+
+}
+
+function brewcleanup() {
+  if "${BREW}/brew" bundle cleanup --quiet --force --file "${BREWFILE}"; then
+    sudo xattr -r -d com.apple.quarantine /Applications/* >/dev/null 2>&1
+    rm -f "${BREWFILE}".lock.json
+    info.sh brew cleanup
+    quarantine
+    return 0
+  else
+    return 1
+  fi
+}
+
+function brewdump() {
+  if "${BREW}/brew" bundle dump --describe --quiet --force --file "${BREWFILE}"; then
+    info.sh brew dump
+    return 0
+  else
+    error.sh brew dump
+    return 1
+  fi
+
+}
+
+function bundleids() {
+  local app
+  for app in /Applications/*.app; do
+    mdls -name kMDItemCFBundleIdentifier -r "${app}"
+    echo
+  done
+}
+
+# shellcheck disable=SC2102
+function chownaz() {
+  sudo chown -R "${USERNAME}":staff [a-z,A-Z,0-9]* .[a-z,A-Z,0-9]*
+  sudo chmod -R u+r [a-z,A-Z,0-9]* .[a-z,A-Z,0-9]*
+}
+
+function cleanupgrade() {
+  softwareupdate --install --all
+  freevolume
+  evict
+  brew
+  brew cleanup
+  brew update
+  brew upgrade
+  brew upgrade --cask
+  brew cleanup
+
+  pip "$@"
+  npm "$@"
+  gems "$@"
+  gem cleanup
+
+  sudo rm -rf "${HOME}/.Bin"/* > /dev/null 2>&1
+  sudo rm -rf "${HOME}/.Trash"/* > /dev/null 2>&1
+  killall bird > /dev/null 2>&1
+  sudo rm -rf "${HOME}/Library/Application\ Support/CloudDocs"/* > /dev/null 2>&1
+  killall bird >/dev/null 2>&1
+  sudo rm -rf "${HOME}/Library/Caches"/* > /dev/null 2>&1
+  for subdir in "${HOME}/Library/Containers/"*; do
+    sudo rm -rf "${subdir}/Data/Library/Caches"/* > /dev/null 2>&1
+  done
+  sudo rm -rf "${HOME}/Library/Containers/com.apple.mail/Data/Library/Mail\ Downloads"/* > /dev/null 2>&1
+  sudo rm -rf "${HOME}/Library/Logs"/* > /dev/null 2>&1
+  sudo rm -rf "${ICLOUD}/.Bin"/* > /dev/null 2>&1
+  sudo rm -rf "${ICLOUD}/.Trash"/* > /dev/null 2>&1
+
+  sudo rm -rf "/Library/logs"/* > /dev/null 2>&1
+  sudo rm -rf "/Volumes/USB-2TB/.Trashes"/* > /dev/null 2>&1
+
+  sudo rm -rf "/private/var/folders"/* > /dev/null 2>&1
+  sudo rm -rf "/private/var/log"/* > /dev/null 2>&1
+  sudo rm -rf  "/private/var/vm/sleepimage" > /dev/null 2>&1
+
+  sudo rm -rf  "${MACROOT}/.DocumentRevisions-V100" > /dev/null 2>&1
+  sudo rm -rf  "${MACROOT}/.Spotlight-V100" > /dev/null 2>&1
+
+  for snap in $(sudo tmutil listlocalsnapshots / | grep com.apple.TimeMachine |
+    sed 's/com.apple.TimeMachine.//g' | cut -d '.' -f1 | awk '{print $1}'); do
+    sudo tmutil deletelocalsnapshots "${snap}" > /dev/null 2>&1
+  done
+
+  sudo mkdir -p /private/var/log/"${USERNAME}" >/dev/null 2>&1
+  sudo chown -R "${USERNAME}" /private/var/log/"${USERNAME}" >/dev/null 2>&1
+
+  purgable
+  permissions
+  evict
+  freevolume
+  sudo purge
+}
+
+function containerip() {
+  local INSTANCE_NAME
+  export INSTANCE_NAME="$1"
+  docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$INSTANCE_NAME"
+}
+
+function csrutilcheck() {
+  if ! csrutil status | grep disabled >/dev/null 2>&1; then
+    echo " - Disable csrutil to continue: csrutil disable"
+    read -n 1 -s -r -p "Press any key to reboot: "
+    echo
+    sudo reboot
+  fi
+}
+
+function defaultsdiff() {
+  local name delete
+  read -rp "Enter name of defaults change: " name
+
+  defaults read >"${USERHOME}/Downloads/defaults-${name}~before.txt"
+
+  read -n 1 -s -r -p "Press any key after is changed: "
+
+  defaults read >"${USERHOME}/Downloads/defaults-${name}~after.txt"
+
+  diff "${USERHOME}/Downloads/defaults-${name}~before.txt" "${USERHOME}/Downloads/defaults-${name}~after.txt" \
+    >"${USERHOME}/Downloads/defaults-${name}~diff.txt"
+
+  more "${USERHOME}/Downloads/defaults-${name}~diff.txt"
+
+  read -r -n 1 -p "Press 'y' to delete ${USERHOME}/Downloads/defaults-${name}~diff.txt: " delete
+  [[ "${delete}" == "y" ]] && "${RM_PATH}" "${USERHOME}/Downloads/defaults-${name}~diff.txt"
+  "${RM_PATH}" "${USERHOME}/Downloads/defaults-${name}~before.txt" "${USERHOME}/Downloads/defaults-${name}~after.txt"
+}
+
+function die() {
+  # Trace function and line
+  # die "~/.profile.sh" "not found"
+  # ${1} - red
+  # ${2} - white
+
+  # f1() { die "~/.profile.sh" "not found"; }
+  # f2() { f1; }
+  # f3() { f2; }
+  #f3
+
+  local frame=0 fr
+  echo "$(tput setaf 1)${1}$(tput sgr0) ${2}"
+  while fr="$(caller "${frame}")"; do
+    echo "     $(tput setaf 5)${fr}$(tput sgr0)"
+    ((frame++))
+  done
+
+  return 1
+}
+
+#function dock() {
+#  local dock system_applications system_utilities DOCK
+#  [[ "${dock}" == "yes" ]] || return 0
+#
+#  system_applications="/System/Applications"
+#  system_utilities="${system_applications}/utilities"
+#
+#  dockutil --remove all
+#  sleep 1
+#
+#  for app in "/Applications/Pritunl.app" \
+#    "${APPLICATIONS}/Access.app" \
+#    "${system_applications}/System Preferences.app" \
+#    "${system_applications}/App Store.app" \
+#    "${system_applications}/Launchpad.app" \
+#    "/Applications/iTerm.app" \
+#    "${system_utilities}/Terminal.app" \
+#    "${system_applications}/Mail.app" \
+#    "${system_applications}/Contacts.app" \
+#    "${system_applications}/Calendar.app" \
+#    "${system_applications}/Reminders.app" \
+#    "${system_applications}/Notes.app" \
+#    "/Applications/Bear.app" \
+#    "/Applications/Safari.app" \
+#    "/Applications/Firefox.app" \
+#    "/Applications/Google Chrome Canary.app" \
+#    "/Applications/Tor Browser.app" \
+#    "/Applications/GitHub Desktop.app" \
+#    "/Applications/PyCharm.app" \
+#    "/Applications/PyCharm with Anaconda plugin .app" \
+#    "/Applications/GoLand.app" \
+#    "/Applications/Visual Studio Code - Insiders.app" \
+#    "${system_utilities}/Activity Monitor.app" \
+#    "${system_utilities}/Console.app" \
+#    "/Applications/VirtualBox.app" \
+#    "${system_applications}/Preview.app" \
+#    "/Applications/Pages.app" \
+#    "/Applications/Keynote.app" \
+#    "/Applications/Numbers.app" \
+#    "/Applications/Microsoft Word.app" \
+#    "/Applications/Microsoft PowerPoint.app" \
+#    "/Applications/Microsoft Excel.app" \
+#    "/Applications/Spotify.app" \
+#    "${system_applications}/FaceTime.app" \
+#    "${system_applications}/Messages.app" \
+#    "/Applications/Skype.app" \
+#    "/Applications/Slack.app" \
+#    "/Applications/Telegram Desktop.app" \
+#    "/Applications/WhatsApp.app"; do
+#
+#    sleep 1
+#
+#    if [[ -d "${app}" ]]; then
+#      if [[ "${app}" == "${APPLICATIONS}/Access.app" ]]; then
+#        dockutil --no-restart --add "${app}" --replacing "$(basename -s '.app' "${app}")"
+#      else
+#        dockutil --no-restart --add "${app}"
+#      fi
+#    fi
+#  done
+#
+#  for dir in ${DOCK}; do
+#    if [[ "${dir}" != "Downloads" ]]; then
+#      if test -d "${dir}"; then
+#        dockutil --no-restart --section others --sort name --display folder --view list --add "${dir}"
+#      fi
+#    fi
+#  done
+#
+#  dockutil --section others --sort dateadded --display folder --view list --add "${USERHOME}/Downloads" \
+#    --replacing "Downloads"
+#  info dock
+#}
+
+function duti() {
+  local ext DUTI_PATH
+  DUTI_PATH="${BREW}/duti"
+  if test -e "${DUTI_PATH}"; then
+    if [[ ! "${1-}" ]]; then
+      while read -r ext; do
+        "${DUTI_PATH}" -s com.github.atom "${ext}" all
+        "${DUTI_PATH}" -s com.microsoft.VSCodeInsiders "${ext}" all
+        "${DUTI_PATH}" -s com.jetbrains.pycharm "${ext}" all
+      done <"${FILES}"/duti/developer.text
+      info.sh duti
+    else
+      "${DUTI_PATH}" "${@}"
+    fi
+  fi
+}
+
+function docker-archive-content() {
+  #  about 'show the content of the provided Docker image archive'
+  #  group 'docker'
+  #  param '1: image archive name'
+  #  example 'docker-archive-content images.tar.gz'
+
+  if [ -n "$1" ]; then
+    tar -xzOf "$1" manifest.json | jq '[.[] | .RepoTags] | add'
+  fi
+}
+
+function docker-compose-fresh() {
+  #  about 'Shut down, remove and start again the docker-compose setup, then tail the logs'
+  #  group 'docker-compose'
+  #  param '1: name of the docker-compose.yaml file to use (optional). Default: docker-compose.yaml'
+  #  example 'docker-compose-fresh docker-compose-foo.yaml'
+
+  local DCO_FILE_PARAM=""
+  if [ -n "$1" ]; then
+    echo "Using docker-compose file: $1"
+    DCO_FILE_PARAM="--file $1"
+  fi
+
+  docker-compose "$DCO_FILE_PARAM" stop
+  docker-compose "$DCO_FILE_PARAM" "${RM_PATH}"
+  docker-compose "$DCO_FILE_PARAM" up -d
+  docker-compose "$DCO_FILE_PARAM" logs -f --tail 100
+}
+
+function docker-compose-restart() {
+  docker-compose stop "${@}"
+  docker-compose "${RM_PATH}" -f -v "${@}"
+  docker-compose create --force-recreate "${@}"
+  docker-compose start "${@}"
+}
+
+function docker-enter() {
+  #  about 'enter the specified docker container using bash'
+  #  group 'docker'
+  #  param '1: Name of the container to enter'
+  #  example 'docker-enter oracle-xe'
+
+  docker exec -it "$@" /bin/bash
+}
+
+function docker-image-dependencies() {
+  #  about 'attempt to create a Graphiz image of the supplied image ID dependencies'
+  #  group 'docker'
+  local OUT
+  if hash dot 2>/dev/null; then
+    OUT=$(mktemp -t docker-viz-XXXX.png)
+    docker images -viz | dot -Tpng >"$OUT"
+    case $OSTYPE in
+    linux*)
+      xdg-open "$OUT"
+      ;;
+    darwin*)
+      open "$OUT"
+      ;;
+    esac
+  else
+    echo >&2 "Can't show dependencies; Graphiz is not installed"
+  fi
+}
+
+function docker-remove-images() {
+  #  about 'attempt to remove images with supplied tags or all if no tags are supplied'
+  #  group 'docker'
+  local DOCKER_IMAGES ID_ARRAY
+  if [ -z "$1" ]; then
+    # shellcheck disable=SC2046
+    docker rmi $(docker images -q)
+  else
+    DOCKER_IMAGES=""
+    # shellcheck disable=SC2068
+    for IMAGE_ID in $@; do DOCKER_IMAGES="$DOCKER_IMAGES\|$IMAGE_ID"; done
+    # Find the image IDs for the supplied tags
+    # shellcheck disable=SC2207
+    # shellcheck disable=SC1083
+    ID_ARRAY=($(docker images | grep "${DOCKER_IMAGES:2}" | awk {'print $3'}))
+    # Strip out duplicate IDs before attempting to remove the image(s)
+    # shellcheck disable=SC2068
+    # shellcheck disable=SC2046
+    docker rmi $(echo ${ID_ARRAY[@]} | tr ' ' '\n' | sort -u | tr '\n' ' ')
+  fi
+}
+
+function docker-remove-most-recent-container() {
+  #  about 'attempt to remove the most recent container from docker ps -a'
+  #  group 'docker'
+  docker ps -ql | xargs docker rm
+}
+
+function docker-remove-most-recent-image() {
+  #  about 'attempt to remove the most recent image from docker images'
+  #  group 'docker'
+  docker images -q | head -1 | xargs docker rmi
+}
+
+function docker-remove-stale-assets() {
+  #  about 'attempt to remove exited containers and dangling images'
+  #  group 'docker'
+  docker ps --filter status=exited -q | xargs docker rm --volumes
+  docker images --filter dangling=true -q | xargs docker rmi
+}
+
+function docker-runtime-environment() {
+  #  about 'attempt to list the environmental variables of the supplied image ID'
+  #  group 'docker'
+  docker run "$@" env
+}
+
+function down4me() {
+  #    about 'checks whether a website is down for you, or everybody'
+  #    param '1: website url'
+  #    example '$ down4me http://www.google.com'
+  #    group 'base'
+  curl -Ls "http://downforeveryoneorjustme.com/$1" | sed '/just you/!d;s/<[^>]*>//g'
+}
+
+function enableroot() {
+  if dsenableroot -u "${USERNAME}" -p "${PASSWORD}" -r "${PASSWORD}"; then
+    info enableroot
+    return 0
+  else
+    error enableroot
+    return 0
+  fi
+}
+
+function evict() {
+  cd "${ICLOUD}" || exit
+  brctl evict .
+  cd - || exit
+  cd "${ICLOUD}/Documents" || exit
+  brctl evict .
+  cd - || exit
+}
+
+function fonts() {
+  "${CP_PATH}" -r -p "${FILES}"/Fonts/ "${LIBRARY}/Fonts"
+  info fonts
+}
+
+function findup() {
+  local start_dir pattern path
+  # https://unix.stackexchange.com/questions/6463/find-searching-in-parent-directories-instead-of-subdirectories
+  ## findup some_dir -iname "pattern" -execdir start_dir \;
+  ## some_dir: print the names of all of some_dir's ancestors (including itself) up to / in which a file with:
+  ## pattern: is found (Default: .env), starting from:
+  ## start_dir:
+
+  start_dir="${1:-.}"
+  pattern="${2:-.env}"
+
+  if [[ -d "${start_dir}" ]]; then
+    path="${start_dir}"
+  else
+    echo "- Error: start_dir: ${start_dir:-''}, does not exist"
+    return 1
+  fi
+
+  while [[ "${path}" != "" && ! -e "${path}/${pattern}" ]]; do
+    path=${path%/*}
+  done
+  if [[ "${path:-}" ]]; then
+    echo "${path}"
+  else
+    echo "- Error: .env file not found" >&2
+    return 1
+  fi
+}
+
+function free() {
+  if command -v diskutil >/dev/null 2>&1; then
+    local ContainerFreeSpace
+    # shellcheck disable=SC2034
+    ContainerFreeSpace="$(diskutil info disk1s1 | grep 'Container Free Space' | awk '{print $4,$5 }')"
+    export DEBUG="yes"
+    debug.sh ContainerFreeSpace
+    unset DEBUG
+  fi
+}
+
+function freetotal() {
+  if command -v diskutil >/dev/null 2>&1; then
+    diskutil info /dev/disk1s1 | awk '
+        /Container Total Space/     { total = $4" "$5 }
+        /Container Free Space/      { avail = $4" "$5 }
+        END { printf("%s\n%s\n", total, avail) }'
+  fi
+}
+
+function freevolume() {
+  if command -v diskutil >/dev/null 2>&1; then
+    local Total Free
+    # shellcheck disable=SC2034
+    Total="$(diskutil info disk1s1 | grep 'Container Total Space' | awk '{print $4,$5 }')"; export Total
+    # shellcheck disable=SC2034
+    Free="$(diskutil info disk1s1 | grep 'Container Free Space' | awk '{print $4,$5 }')"; export Free
+    export DEBUG="yes"
+    debug.sh Total Free
+    unset DEBUG Total Free
+  fi
+}
+
+# shellcheck disable=SC2034
+function gclone() {
+  local action add bitbucket command error execute file gitlab line PARENT parent pagure path prefix pwd repo \
+        submodules suffix url user
+  bitbucket="https://bitbucket.org/"
+  gitlab="https://gitlab.com/"
+  pagure="https://pagure.io/"
+  prefix="${!1:-${GIT_PREFIX}}"
+
+  if [[ "${1-}" ]]; then
+    prefix="${!1:-${GIT_PREFIX}}"
+    case "${1}" in
+      add|bitbucket|github|gitlab) user="${2}"; repo="${3}"; [[ "${1}" != 'bitbucket' ]] \
+                                || command='hg'; [[ "${1}" != 'add' ]] || { add="yes"; parent="${CLONES}"; } ;;
+      pagure) repo="${2}" ;;
+      *) case "${1}" in
+          j) user="${GITHUB_USERNAME}" ;;
+          l) user="${GITHUB_ORGANIZATION}"; prefix="${GITHUB_ORGANIZATION_ID_CLONE_PREFIX_SSH}" ;;
+          *) user="${1}" ;;
+        esac; repo="${2}"
+    esac; user="${user:+${user}/}"; command=${command:-git}
+
+    while (( "$#" )); do
+      case "${1}" in
+        add|bitbucket|github|gitlab|pagure|"${user//\/}"|"${repo}") true ;;
+        __1|__2|__3|__4|__5) suffix="${1}" ;;
+        submodules) submodules="--recurse-submodules" ;;
+        *)          parent="${1}"; mkdir -p "${parent}" ;;
+      esac; shift
+    done
+    parent="${parent:-.}"
+    url="${prefix}${user}${repo}.git";
+    path="${parent}/${repo}${suffix}"
+
+    if test -d "${path}" && grep "^${repo}$" "${REPOS}/HOME/"*.repos > /dev/null 2>&1; then
+      #  For project else pull for clones, mnopi and lumen
+      cd "${path}" || true
+      action="gpush"
+      execute="${action} clone_function"
+    elif test -d "${path}"; then
+      cd "${path}" || true
+      action="gpull"
+      execute="${action}"
+    else
+      action="gclone"
+      execute="${command} clone ${submodules} ${url} ${path} --quiet"
+    fi
+    pwd="$( pwd )"
+    debug.sh action add command desktop execute parent path prefix pwd repo submodules url user
+    if error="$( ${execute} 2>&1 )"; then
+      info "${action}" "${repo##*/}"
+      echo -n
+      if command -v github > /dev/null 2>&1; then
+        github open "${path}"
+        pkill "${GITHUB_DESKTOP_PROCESS}"
+      fi
+      if [[ "${add-}" ]] && [[ "${action}" == "gclone" ]]; then
+        file="$( find "${REPOS}" -type f -name "*github*" )"
+        echo "${user//\/} ${repo}" >> "${file}"
+        if error=$( sortfile "${file}" 2>&1 ); then
+          info 'gclone add' "${user//\/}/${repo}"
+        else
+          error sortfile "${file}" "${error}"; return 1
+        fi
+      fi
+      return 0
+    else
+      error "${action}" "${repo##*/}" "${error}"; return 1
+    fi
+  else
+    if error=$( sortdir "${REPOS}" 2>&1 ); then
+      while read -r PARENT; do
+        parent="${!PARENT}"
+        debug.sh PARENT parent
+        while read -r line; do
+          debug.sh line
+          # shellcheck disable=SC2086
+          gclone ${line} "${!PARENT}"
+        done < <( grep -REv '^#|^$' "${REPOS}/${PARENT}" | sed 's/#//g' | grep -v "^ " | \
+                  grep -v "^$" | sed "s|${REPOS}/${PARENT}/||g" | sed 's/.repos:/ /g' )
+        if [[ "${PARENT}" =~ ^CLONES$|^LUMEN ]]; then
+          gclonesrm "${!PARENT}" "${REPOS}/${PARENT}" "${suffix}"
+        fi
+      done < <( find "${REPOS}" -type d -mindepth 1 -maxdepth 1 -exec basename "{}" \; )
+    else
+      error sortdir "${REPOS}" "${error}"; return 1
+    fi
+  fi
+}
+
+function gclonesrm() {
+  local basename field index repo rm suffix
+  suffix=${3}
+  if test -d "${1}" && test -d "${2}"; then
+      while read -r basename; do
+        field='__'
+        repo="$( echo "${basename}"  | awk -F "${field}" '{print $1}' )"
+        index="$( echo "${basename}"  | awk -F "${field}" '{print $2}' )"
+        suffix="${index:+${field}${index}}"
+        if ! find "${2}" -type f -name "*.repos" -exec grep -v '#' "{}" \; | grep " ${repo}" | \
+             grep " ${suffix}"> /dev/null 2>&1; then
+          # shellcheck disable=SC2034
+          rm='true'
+          for file in "${2}/pagure.repos" "${2}/lumenbiomics.repos"; do
+            if test -f "${file}"; then
+              if grep "^${repo}" "${file}" > /dev/null 2>&1; then
+                 # shellcheck disable=SC2034
+                rm=
+              fi
+            fi
+          done
+          if [[ "${rm-}" ]]; then
+            debug.sh basename repo rm suffix
+            ! rm -r "${1:?}/${basename:?}" || warning gclonesrm "${basename}"
+          fi
+        fi
+    done < <( find "${1}" -type d -mindepth 1 -maxdepth 1 -exec basename "{}" \; )
+  fi
+}
+
+function gems() {
+  # shellcheck disable=SC2046
+  if [[ ! "${1-}" ]]; then
+    bundle config set system 'true'
+    bundle --quiet --gemfile="${GEMFILE}"
+    rm -f "${GEMFILE}".lock
+    return
+  fi
+}
+
+function grepd() { sudo grep -rsI "${1}" "${2:-.}"; }
+
+function googledrive() {
+  local app path
+  path="${1:-${USERHOME}/${MACDEV_BASENAME}}"
+  app="Backup and Sync"
+  killall "${app}" >/dev/null 2>&1
+  defaults write com.google.GoogleDrive.plist NSNavLastRootDirectory "${path}"
+  open "/Applications/${app}.app" >/dev/null 2>&1
+  info googledrive "$(defaults read com.google.GoogleDrive.plist NSNavLastRootDirectory)"
+}
+
+function hosts() { perl -MSocket -le 'print inet_ntoa inet_aton shift' "${1}"; }
+
+function ideaproperties() {
+  local file
+  file="${PYCHARM}/idea.properties"
+  # /Applications/PyCharm.app/Contents/bin/idea.properties
+  tee "${file}" >/dev/null <<EOT
+apple.awt.fileDialogForDirectories=true
+apple.awt.graphics.UseQuartz=true
+apple.awt.fullscreencapturealldisplays=false
+apple.laf.useScreenMenuBar=true
+com.apple.mrj.application.live-resize=false
+CVS_PASSFILE=~/.cvspass
+ide.mac.useNativeClipboard=false
+idea.cycle.buffer.size=disabled
+idea.dynamic.classpath=false
+idea.fatal.error.notification=disabled
+idea.no.launcher=false
+idea.jars.nocopy=true
+idea.max.content.load.filesize=20000
+idea.max.intellisense.filesize=2500
+idea.popup.weight=heavy
+idea.smooth.progress=false
+java.endorsed.dirs=
+javax.swing.rebaseCssSizeMap=true
+sun.java2d.d3d=false
+sun.java2d.pmoffscreen=false
+sun.java2d.uiScale.enabled=true
+swing.bufferPerWindow=true
+EOT
+}
+
+function ips() {
+  #    about 'display all ip addresses for this host'
+  if command -v ifconfig &>/dev/null; then
+    ifconfig | awk '/inet /{ gsub(/addr:/, ""); print $2 }'
+  elif command -v ip &>/dev/null; then
+    ip addr | grep -oP 'inet \K[\d.]+'
+  else
+    echo "You don't have ifconfig or ip command installed!"
+  fi
+}
+
+function ipv6() {
+  local iface
+  while read -r iface; do
+    if networksetup -getinfo "${iface}" | grep "IPv6: Off" >/dev/null 2>&1; then
+      continue
+    else
+      if sudo networksetup -setv6off "${iface}" >/dev/null 2>&1; then
+        info.sh "IPv6" "${iface}"
+      else
+        error.sh ipv6
+      fi
+    fi
+  done < <(networksetup -listallnetworkservices | grep -v "asterisk")
+}
+
+function keychaininternet() {
+  # $1 - <add/find> if "add" and exists then "update"
+  # $2 - server name
+  # $3 - account name <email/user>
+  # $4 - password
+  #
+  # i.e: keychain-internet.bash add vfemail.net f1981@tushmail.com password
+  # i.e: keychain-internet.bash find vfemail.net f1981@tushmail.com
+  local value update
+  if ! value="$(security find-internet-password -s "${2}" -a "${3}")" >/dev/null 2>&1; then
+    unset value
+  else
+    update="-U"
+  fi
+
+  if [[ "${1}" == "add" ]]; then
+    security add-internet-password -s "${2}" -a "${3}" -w "${4}" -A "${update}"
+  elif [[ "${1}" == "find" ]]; then
+    [[ "${value:-}" ]] && echo "${value}" || return 1
+  else
+    echo "- Error: valid options <add/find>"
+    return 1
+  fi
+}
+
+function keychainnote() {
+  # keychain-note.bash ID_RSA
+  security find-generic-password -w -s "${1}" | xxd -p -r | plutil -extract "NOTE" xml1 -o - - |
+    xmllint --xpath '//string/text()' -
+}
+
+function keychainvar() {
+  # $1 - <add/find> if "add" and exists then "update"
+  # $2 - var name
+  # $3 - [var value] - for add option
+  #
+  # i.e: keychain-var.bash add SSH_PORT 9999
+  # i.e: keychain-var.bash find SSH_PORT
+  local update value
+  if ! value="$(security find-generic-password -s "${USER}" -a "${2}")" >/dev/null 2>&1; then
+    unset value
+  else
+    update="-U"
+  fi
+
+  if [[ "${1}" == "add" ]]; then
+    security add-generic-password -s "${USER}" -a "${2}" -w "${3}" -A "${update}"
+  elif [[ "${1}" == "find" ]]; then
+    [[ "${value:-}" ]] && echo "${value}" || return 1
+  else
+    echo "- Error: valid options <add/find>"
+    return 1
+  fi
+}
+
+function killgrep() {
+  # pgrep - da los resultados de all en pattern
+  # pkill - mata all de pattern
+
+  # pgrep -x "System Preferences" - da el match exacto
+  # killall - necesita el nombre exacto
+  local pattern
+  [[ "$(uname -s)" == "Darwin" ]] || {
+    error "Darwin only"
+    return 1
+  }
+
+  if [[ "${1-}" ]]; then
+    pattern="${1}"
+  else
+    error "Kill Grep": "\$1 undefined"
+    return 1
+  fi
+
+  if ! /usr/bin/pgrep "${pattern}" >/dev/null 2>&1; then
+    info "Kill Grep: '${pattern}'"
+  else
+    if pkill "${pattern}"; then
+      info "Kill Grep: '${pattern}'"
+    else
+      return 1
+    fi
+  fi
+}
+
+function killnoterminal() {
+  local app_name app
+  osascript -e 'tell application "System Preferences" to quit'
+  for app in /Applications/*.app; do
+    app_name="$(basename "${app}" | cut -d '.' -f 1)"
+    if [[ "${app}" != /Applications/PyCharm.app ]]; then
+      killall "'${app_name}'" >/dev/null 2>&1
+    fi
+  done
+
+  for app in /System/Applications/Utilities/*.app; do
+    if [[ "${app}" != /System/Applications/Utilities/Terminal.app ]]; then
+      killall "'${app_name}'" >/dev/null 2>&1
+    fi
+  done
+
+  killall Safari >/dev/null 2>&1
+}
+
+function links() {
+  # $1 src
+  # $2 dest link
+  # $3 force - borra dest si hay: algo, otro link o broken link
+  local force src_dirname src_basename src dest_dirname dest_basename dest realpath remove_dest_broken_link \
+    remove_dest remove_dest_valid_link
+  force="No"
+
+  [[ "${1-}" ]] || {
+    error "src '\${1}' undefined"
+    return 1
+  }
+  test -e "${1}" || {
+    error "src '${1}' not found"
+    return 1
+  }
+  ! test -L "${1}" || {
+    error "src '${1}' can not be a symlink"
+    return 1
+  }
+
+  src_dirname="$(
+    cwd="$(pwd)"
+    cd "$(dirname "${1}")" || {
+      error "src_dirname '$(dirname "${1}")' does not exist"
+      return 1
+    }
+    pwd
+    cd "${cwd}" || return
+  )"
+  src_basename="$(basename "${1}")"
+  src="${src_dirname}/${src_basename}"
+
+  [[ "${2-}" ]] || {
+    error "dest '\${2}' undefined"
+    return 1
+  }
+
+  dest_dirname="$(
+    cwd="$(pwd)"
+    cd "$(dirname "${2}")" || {
+      error "dest_dirname '$(dirname "${2}")' does not exist"
+      return 1
+    }
+    pwd
+    cd "${cwd}" || return
+  )"
+  dest_basename="$(basename "${2}")"
+  dest="${dest_dirname}/${dest_basename}"
+
+  if [[ "${3-}" ]] && [[ "${3}" == "force" ]]; then
+    force="Yes"
+  elif [[ "${3-}" ]] && [[ "${3}" != "force" ]]; then
+    error "\${3} '${3}' must be 'force' or empty"
+    return 1
+  fi
+
+  if test -e "${dest}" && ! test -L "${dest}"; then
+    if [[ "${force}" != "Yes" ]]; then
+      read -r -p "There is an existing dest '${dest}' and is not symlinked. \
+                 Press 'Yes' to remove it and continue or 'No' to exit [Yes/No]: " remove_dest
+      [[ "${remove_dest}" == "Yes" ]] && force="Yes" || return 1
+    fi
+    if [[ "${force}" == "Yes" ]]; then
+      "${RM_PATH}" -r "${dest}"
+      ln -s "${src}" "${dest}"
+      info "Link dest rm, new link: ${src} ${dest}" || return 1
+      return
+    fi
+  fi
+
+  if test -e "${dest}" && test -L "${dest}"; then
+    realpath="$(python -c "import os; print(os.path.realpath('${dest}'))")"
+    if test -e "${realpath}"; then
+      if [[ "${realpath}" == "${src}" ]]; then
+        export DEBUG="yes"
+        debug.sh "Link: ${src} ${dest}"
+        unset DEBUG
+        return
+      else
+        if [[ "${force}" != "Yes" ]]; then
+          read -r -p "There is an existing symlink to realpath '${realpath}' different to src '${src}'. \
+                     Press 'Yes' to remove it and continue or 'No' to exit [Yes/No]: " remove_dest_valid_link
+          [[ "${remove_dest_valid_link}" == "Yes" ]] && force="Yes" || return 1
+        fi
+        if [[ "${force}" == "Yes" ]]; then
+          "${RM_PATH}" -r "${dest}"
+          ln -s "${src}" "${dest}"
+          info "Link changed: ${src} ${dest}" || return 1
+          return
+        fi
+      fi
+    fi
+  fi
+
+  if ! test -e "${dest}" && test -L "${dest}"; then
+    if [[ "${force}" != "Yes" ]]; then
+      read -r -p "There is an existing broken symlink different to src '${src}'. \
+                 Press 'Yes' to remove it and continue or 'No' to exit [Yes/No]: " remove_dest_broken_link
+      [[ "${remove_dest_broken_link}" == "Yes" ]] && force="Yes" || return 1
+    fi
+    if [[ "${force}" == "Yes" ]]; then
+      "${RM_PATH}" -r "${dest}"
+      ln -s "${src}" "${dest}"
+      info "Broken link fixed: ${src} ${dest}" || return 1
+      return
+    fi
+  fi
+
+  if ! test -e "${dest}" && ! test -L "${dest}"; then
+    ln -s "${src}" "${dest}"
+    info "New link: ${src} ${dest}" || return 1
+    return
+  fi
+}
+
+function locateenable() {
+  if sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist >/dev/null 2>&1; then
+    return
+  else
+    return 1
+  fi
+}
+
+function lsgrep() {
+  #    about 'search through directory contents with grep'
+  #    group 'base'
+  # shellcheck disable=SC2010
+  ls | grep "$*"
+}
+
+function mackupcfg() {
+  local file
+  ## Only .mackup.cfg needed.
+  file="${USERHOME}/.mackup.cfg"
+  if ! test -e "${file}"; then
+    tee "${file}" >/dev/null <<EOT
+[storage]
+engine = ${MACKUP_ENGINE}
+path = ${USERHOME}
+directory = ${MACDEV_BASENAME}
+
+[applications_to_sync]
+all
+EOT
+    info mackupcfg
+    return 0
+  fi
+}
+
+function mackuprestore() {
+  local app app_name error
+  if test -f "${USERHOME}/.mackup"; then
+    return 0
+  else
+    if error="$(mackup restore --force)"; then
+      # Kill every app but terminal.
+      osascript -e 'tell application "System Preferences" to quit'
+      for app in /Applications/*.app; do
+        app_name="$(basename "${app}" | cut -d '.' -f 1)"
+        if [[ "${app}" != /Applications/PyCharm.app ]]; then
+          killall "'${app_name}'" >/dev/null 2>&1
+        fi
+      done
+      for app in /System/Applications/Utilities/*.app; do
+        if [[ "${app}" != /System/Applications/Utilities/Terminal.app ]]; then
+          killall "'${app_name}'" >/dev/null 2>&1
+        fi
+      done
+      killall Safari >/dev/null 2>&1
+      info mackup restore
+      return 0
+    else
+      error mackup restore "${error}"
+      return 1
+    fi
+  fi
+}
+
+function macname() {
+  local computername
+  read -r -p "Enter Computer Name: " computername
+
+  if sudo scutil --set HostName "${computername}" && sudo scutil --set LocalHostName "${computername}" &&
+    sudo scutil --set LocalHostName "${computername}" && sudo scutil --set ComputerName "${computername}" &&
+    sudo dscacheutil -flushcache; then
+    info macname "${computername}"
+    return 0
+  else
+    error macname "${computername}"
+    return 1
+  fi
+}
+
+function mas() {
+  if "${BREW}/mas" "$@"; then
+    if [[ "${1}" == "install" ]]; then
+      info.sh mas "$@"
+      if brewdump; then
+        if brewcleanup "$@"; then
+          return 0
+        else
+          return 1
+        fi
+      else
+        return 1
+      fi
+    fi
+    return 0
+  else
+    error.sh mas "$@"
+    return 1
+  fi
+}
+
+function middle() {
+  # ${1} - "${BASH_SOURCE[0]}" - name or file to remove before - and after .
+  echo "${1}" | cut -d '-' -f 2 | cut -d '.' -f 1
+}
+
+function mkcd() {
+  #    about 'make one or more directories and cd into the last one'
+  #    param 'one or more directories to create'
+  #    example '$ mkcd foo'
+  #    example '$ mkcd /tmp/img/photos/large'
+  #    example '$ mkcd foo foo1 foo2 fooN'
+  #    example '$ mkcd /tmp/img/photos/large /tmp/img/photos/self /tmp/img/photos/Beijing'
+  #    group 'base'
+  mkdir -p -- "$@" && eval cd -- "\"\$$#\""
+}
+
+function myip() {
+  #    about 'displays your ip address, as seen by the Internet'
+  #    group 'base'
+  local list res
+  list=("http://myip.dnsomatic.com/" "http://checkip.dyndns.com/" "http://checkip.dyndns.org/")
+  for url in ${list[*]}; do
+    if res=$(curl -fs "${url}"); then
+      break
+    fi
+  done
+  res=$(echo "$res" | grep -Eo '[0-9\.]+')
+  echo -e "Your public IP is: $(green "${res}")"
+}
+
+function npm() {
+  # shellcheck disable=SC2086
+  sudo ${NPM} install -g npm@latest
+  if test -f "${NPMFILE}"; then
+    if [[ ! "${1-}" ]]; then
+      # shellcheck disable=SC2046
+      if "${NPM}" install -s -g $(grep -v "#" "${NPMFILE}"); then
+        return 0
+      else
+        return 1
+      fi
+    fi
+  else
+    ${SUDO} "${NPM}" "${@}"
+  fi
+}
+
+#function opam() {
+#  local package
+#  if [[ ! "${1-}" ]]; then
+#    test -d "${USERHOME}/.opam/opam-init" || opam init
+#    /usr/bin/grep -v "^#" "${OPAMFILE}" | while read -r package; do
+#      "${OPAM_PATH}" install "${package}"
+#    done
+#    "${OPAM_PATH}" upgrade --fixup
+#    return
+#  fi
+#  "${PATH_HOMEBREW}/opam" "${@}"
+#}
+
+function pass() {
+  if [[ "${1-}" ]]; then
+    "${@}"
+  fi
+}
+
+function pdfclean() {
+  local file
+  while read -r file; do
+    echo "$(tput setaf 2)${file}$(tput sgr0)"
+    mutool clean "${file}" /tmp/clean.pdf >/dev/null
+    exiftool -all:all /tmp/clean.pdf >/dev/null
+    touch -t "$(date "+%Y%m%d%H%M.%S")" /tmp/clean.pdf >/dev/null
+    exiftool -overwrite_original -all= /tmp/clean.pdf >/dev/null
+    qpdf --linearize /tmp/clean.pdf "${file}" >/dev/null
+    exiftool -all:all "${file}" >/dev/null
+  done < <(find "${1:-${USERHOME}/Documents/Salud/Reembolsos}" -type f -name "*.pdf")
+  sudo rm -rf /tmp/clean.pdf
+}
+
+function permissions() { diskutil resetUserPermissions / "$(id -u)"; }
+
+function pipfreeze() {
+  if test -e "${REQUIREMENTS}"; then
+    if ${PYTHON39} -m pip freeze > "${REQUIREMENTS}"; then return 0; else return 1; fi
+  fi
+}
+
+# shellcheck disable=SC2086
+function pipinstall() {
+  local prefix
+  if [[ "${DARWIN-}" ]]; then
+    prefix="--prefix $( brew --prefix )"
+  fi
+  if ${PYTHON39} -m pip install --upgrade --no-cache-dir ${prefix} "${@}"; then return 0; else return 1; fi
+}
+
+function pipremove() {
+  if "${BREW}/pip-autoremove" "$@"; then return 0; else return 1; fi
+}
+
+# shellcheck disable=SC2086
+function pipupgrade() {
+  local prefix
+  if [[ "${DARWIN-}" ]]; then
+    prefix="--prefix $( brew --prefix )"
+  fi
+  if test -e "${REQUIREMENTS}"; then
+    if ${PYTHON39} -m pip install --upgrade --no-cache-dir ${prefix} -r "${REQUIREMENTS}"; then
+      return 0
+    else
+      return 1
+    fi
+  fi
+}
+
+function pip() {
+  if [[ ! "${1-}" ]] && test -n "${REQUIREMENTS}"; then
+    if pipupgrade; then
+      return 0
+    else
+      return 1
+    fi
+  fi
+  if [[ "${1}" == "add" ]]; then
+    if pipinstall "${2}"; then
+      if pipfreeze; then
+        return 0
+      else
+        return 1
+      fi
+    fi
+  fi
+  if [[ "${1}" == "remove" ]]; then
+    if pipremove "${2}"; then
+      if pipfreeze; then
+        return 0
+      else
+        return 1
+      fi
+    fi
+  fi
+  ${SUDO} "${PYTHON39}" -m pip "${@}"
+}
+
+function play() {
+  local BOOK
+  if [[ -f /usr/local/bin/ansible ]] || [[ -f /usr/bin/ansible ]]; then
+    BOOK="${1}"
+    shift
+    ansible-playbook "$(find "${ANSIBLE}" -type f -name "${BOOK}.yml" \( -path "*/${BOOK}.yml" -or -path "*/debug/*" \
+      -or -path "*/play*/*" \))" "${@}"
+    unset BOOK
+  fi
+}
+
+function pmdown() {
+  #    about 'preview markdown file in a browser'
+  #    param '1: markdown file'
+  #    example '$ pmdown README.md'
+  #    group 'base'
+  if command -v markdown &>/dev/null; then
+    markdown "$1" | browser
+  else
+    echo "You don't have a markdown command installed!"
+  fi
+}
+
+function printer() {
+  if ! lpstat -p HP 2>/dev/null | grep enable >/dev/null 2>&1; then
+    # /etc/cups/ppd/HP.ppd
+    lpadmin -p HP -v "dnssd://HP._ipps._tcp.local." -P "${FILES}/Printers/HP.ppd" -o printer-is-shared=false \
+      >/dev/null 2>&1
+    cupsenable HP -E >/dev/null 2>&1
+    cupsaccept HP >/dev/null 2>&1
+
+    cmd_print lpstat -p HP | grep enable >/dev/null 2>&1
+  fi
+}
+
+function purgable() {
+  free
+  sudo dd if=/dev/zero of=/private/tmp/purgar bs=15m
+  sudo rm -rfv /private/tmp/purgar
+  free
+}
+
+function py() { pycharm "${1}"; }
+
+function pypi() {
+  python3 -m pip install --upgrade setuptools wheel
+  python3 setup.py sdist bdist_wheel
+  twine upload dist/*
+}
+
+function pycharmoptions() {
+  local file xms mem cache
+  local mem
+  file="${PYCHARM}/pycharm.vmoptions"
+  xms="$( [[ "$( hostname )" == 'pro' ]] && echo 256 || echo 128 )"
+  mem="$( [[ "$( hostname )" == 'pro' ]] && echo 4096 || echo 2048 )"
+  cache="$( [[ "$( hostname )" == 'pro' ]] && echo 1024 || echo 512 )"
+  tee "${file}" >/dev/null <<EOT
+-Xms${xms}m
+-Xmx${mem}m
+-XX:ReservedCodeCacheSize=${cache}m
+-XX:+UseConcMarkSweepGC
+-XX:SoftRefLRUPolicyMSPerMB=50
+-ea
+-XX:CICompilerCount=2
+-Dsun.io.useCanonPrefixCache=false
+-Djdk.http.auth.tunneling.disabledSchemes=""
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:-OmitStackTraceInFastThrow
+-Dsun.io.useCanonCaches=false
+-Djdk.attach.allowAttachSelf=true
+-Dkotlinx.coroutines.debug=off
+-Djdk.module.illegalAccess.silent=true
+-XX:+UseCompressedOops
+-Dfile.encoding=UTF-8
+
+-XX:ErrorFile=${LOG}/java_error_in_pycharm_%p.log
+-XX:HeapDumpPath=${LOG}/java_error_in_pycharm.hprof
+EOT
+  ideaproperties
+}
+
+function quarantine() { sudo xattr -r -d com.apple.quarantine /Applications/* >/dev/null 2>&1; }
+
+function quiet() {
+  #    about 'what *does* this do?'
+  #    group 'base'
+  # shellcheck disable=SC2048
+  $* &>/dev/null &
+}
+
+# shellcheck disable=SC1090
+function rebash() { source ~/.bashrc ; }; export -f rebash
+
+function rebashrc() {
+  local bump
+  bump="${1:-patch}"
+  if test -n "${DARWIN}"; then
+    upload.sh "${bump}"|| return 1; rebash
+  else
+    upgrade.sh || return 1; rebash
+  fi
+}
+
+function realparent() {
+  local dir cwd realparent
+  [[ "${0##*/}" == "bash" ]] && dir="${BASH_SOURCE%/*}" || dir="${0%/*}"
+  [[ "${dir}" != "${BASH_SOURCE%}" ]] || dir="$(pwd)"
+  realparent="$(
+    cwd="$(pwd)"
+    cd "${dir}" || return 1
+    pwd
+    cd "${cwd}" || return 1
+  )"
+  debug.sh realparent >&2
+  echo "${realparent}"
+}
+
+function realfile() {
+  local realfile
+  [[ "${0##*/}" == "bash" ]] && realfile="${BASH_SOURCE[0]}" || realfile="${0}"
+  debug.sh realfile >&2
+  echo "${realfile}"
+}
+
+# shellcheck disable=SC2035,SC2061
+function rmnumber() {
+  find "${USERHOME}" -type f -name *' (1).'* -exec sudo rm -rv "{}" \;
+  find "${USERHOME}" -type f -name *' (2).'* -exec sudo rm -rv "{}" \;
+  find "${USERHOME}" -type f -name *' (3).'* -exec sudo rm -rv "{}" \;
+  find "${USERHOME}" -type f -name *' (4).'* -exec sudo rm -rv "{}" \;
+  find "${USERHOME}" -type f -name *' (5).'* -exec sudo rm -rv "{}" \;
+  find "${USERHOME}" -type f -name '.com.apple.backupd.mdmv'* -exec sudo rm -r "{}" \;
+  find "${USERHOME}" -type f -name *' (1).'*
+  find "${USERHOME}" -type f -name *' (2).'*
+  find "${USERHOME}" -type f -name *' (3).'*
+  find "${USERHOME}" -type f -name *' (4).'*
+  find "${USERHOME}" -type f -name *' (5).'*
+}
+
+function rmnumber_old() {
+  local start number_2_dot number_2 number_1_p file_md5 number_2_p number_3_p file file_number directory file_number_md5
+  start="${1:-${USERHOME}}"
+
+  number_2_dot='* 2.*'
+  number_2='* 2'
+  number_1_p='* (1).*'
+  number_2_p='* (2).*'
+  number_3_p='* (3).*'
+
+  while read -r directory; do
+    #  echo "######### Entering: ${directory}"
+    for number in "${number_2_dot}" "${number_2}" "${number_1_p}" "${number_2_p}" "${number_3_p}"; do
+      while read -r file_number; do
+        file_number_md5="$(md5 -q "${file_number}")"
+        #    echo "#### Start: $( basename "${file_number}" ) - ${file_number_md5}"
+        while read -r file; do
+          if [[ "${file_number}" != "${file}" ]]; then
+            file_md5="$(md5 -q "${file}")"
+            #          echo "## Start: $( basename "${file}" ) - ${file_md5}"
+            if [[ "${file_md5}" == "${file_number_md5}" ]]; then
+              #            echo "- Diferente: file_md5: ${file_md5}, file: ${file} | file_number_md5:
+              #            ${file_number_md5}, file_number: ${file_number}"
+              sudo "${RM_PATH}" -v "${file_number}"
+              break 1
+            fi
+            #          echo "## Finish: $( basename "${file}" ) - ${file_md5}"
+          fi
+        done < <(sudo find "${directory}" -mindepth 1 -maxdepth 1 -type f ! -name "${file_number}" | sort -u)
+        #    echo "#### Finish: $( basename "${file_number}" ) - ${file_number_md5}"
+      done < <(sudo find "${directory}" -mindepth 1 -maxdepth 1 -type f -name "${number}" | sort -u) &
+    done
+  done < <(sudo find "${start}" -type d | sort -u)
+}
+
+function scat() {
+  for i in "$@"; do
+    if [ -d "$i" ]; then
+      ls "$i"
+    else
+      cat "$i"
+    fi
+  done
+}
+
+function set_env() {
+  local value
+  if [[ "$(id -u)" != "0" ]] && [[ ! "${SUDO_UID-}" ]]  && test -n "${DARWIN}"; then
+    if [[ "${2-}" ]]; then
+      value="${2}"
+    else
+      value="${!1}"
+    fi
+    if [[ "$(launchctl getenv "${1}")" != "${value}" ]]; then
+      launchctl setenv "${1}" "${value}"
+      sudo launchctl setenv "${1}" "${value}"
+    fi
+  fi
+}
+
+function simpleapp() {
+  ## simpleapp your-shell-script.sh "YourAppName"
+  local APPNAME SOURCE_ICNS_DIR BASE_DIR PAQUETE ICNS_FILE SUFFIX_SH_DIR SUFFIX_ICNS_DIR \
+    PAQUETE_PATH INSTALL_ICNS_DIR INSTALL_SH_DIR
+  APPNAME=${2:-$(basename "${1}" '.sh')}
+
+  SOURCE_ICNS_DIR="${USERHOME}/Library/Application Support/Pictures"
+  BASE_DIR="/Applications"
+  PAQUETE="${APPNAME}.app"
+  SUFFIX_SH_DIR="Contents/MacOS"
+  SUFFIX_ICNS_DIR="Contents/Resources"
+
+  PAQUETE_PATH="${BASE_DIR}/${PAQUETE}"
+  INSTALL_SH_DIR="${PAQUETE_PATH}/${SUFFIX_SH_DIR}"
+  INSTALL_ICNS_DIR="${PAQUETE_PATH}/${SUFFIX_ICNS_DIR}"
+
+  ICNS_FILE="${SOURCE_ICNS_DIR}/${APPNAME}.icns"
+
+  if [[ ! -x "${1}" ]]; then
+    echo "${1}: No existe o no es ejecutable"
+  fi
+
+  if [[ ! -f "${ICNS_FILE}" ]]; then
+    echo "${ICNS_FILE}: No existe"
+  fi
+
+  sudo mkdir -p "${INSTALL_SH_DIR}"
+  sudo ln -sf "${1}" "${INSTALL_SH_DIR}/${APPNAME}"
+
+  sudo mkdir -p "${INSTALL_ICNS_DIR}"
+  sudo ln -sf "${1}" "${INSTALL_ICNS_DIR}/${APPNAME}"
+
+  # sudo chmod +x "${INSTALL_SH_DIR}/${APPNAME}"
+
+  echo "${PWD}/$APPNAME.app"
+}
+
+function sortfile() {
+  local error name path
+  path="${1}"
+  name="$(basename "${path}")"
+  if [[ -s "${path}" ]]; then
+    if error="$(sort -u "${path}" | grep -v "^ " |
+      grep -v "^$" >"/tmp/${name}" && mv "/tmp/${name}" "${path}" 2>&1)"; then
+      info sortfile "${name}"
+      return 0
+    else
+      error sortfile "${name}" "${error}"
+      export SORT_RC=1
+      return "${SORT_RC}"
+    fi
+  fi
+}
+
+function sortdir() {
+  local file
+  if test -d "${1}"; then
+    while read -r file; do
+      sortfile "${file}"
+    done < <(find "${1:-.}" -not -path '*/\.*' -type f -name "*")
+    info sortdir "${1}"
+    return "${SORT_RC}"
+  else
+    error sortdir "${1}" not found
+    export SORT_RC=1
+    return "${SORT_RC}"
+  fi
+}
+
+function sourcedir() {
+  # ${1} - dir to source
+  # ${2} - prefix
+  # ${3} - suffix
+  ## Removes the last character if /
+  local dir script
+  if [[ "${1: -1}" == "/" ]]; then
+    dir="${1::-1}"
+  else
+    dir="${1}"
+  fi
+
+  test -e "${dir}" || perror "${dir}" "not found"
+  # shellcheck disable=SC2231
+  # shellcheck disable=SC2086
+  if ls -1 "${dir}"/${2}*"${3}" >/dev/null 2>&1; then
+    for script in "${dir}"/${2}*"${3}"; do
+      if test -e "${script}"; then
+        # shellcheck disable=SC1090
+        source "${script}" || perror "${script}" "source error"
+      else
+        error "${script}" "not found"
+      fi
+    done
+  fi
+}
+
+function spctldisable() {
+  if sudo spctl --status | /usr/bin/grep enabled >/dev/null 2>&1; then
+    if sudo spctl --master-disable >/dev/null 2>&1; then
+      info spctl disabled
+      return 0
+    else
+      error spctl disabled
+      return 1
+    fi
+  fi
+}
+
+#function ssh() { /usr/bin/ssh "${@}"; }
+
+function sshlist() {
+  #  about 'list hosts defined in ssh config'
+  #  group 'ssh'
+
+  awk '$1 ~ /Host$/ {for (i=2; i<=NF; i++) print $i}' ~/.ssh/config
+}
+
+function sshroot() {
+  local ssh_dir
+  ssh_dir="${USERHOME}/.ssh"
+  if test -d "${ssh_dir}"; then
+    # shellcheck disable=SC1090
+    if find "${ssh_dir}"/ -type f -name id_rsa -exec ssh-add "{}" \;; then
+      info sshroot
+      return 0
+    else
+      error sshroot
+      return 1
+    fi
+  else
+    error "${ssh_dir}" "not found"
+    return 1
+  fi
+}
+
+function subprocess_test() {
+  echo bien
+  echo mal >&2
+}
+
+function synthetic() {
+  local first dir_basename
+  first="yes"
+  for dir in ${SYNTHETIC}; do
+    [[ -d "${dir}" ]] || continue
+    dir_basename="$(basename "${dir}")"
+    case "${dir_basename}" in
+    "${USERNAME}")
+      dir_basename="${HOME_NICK}"
+      ;;
+    "${ICLOUD_BASENAME}")
+      dir_basename="${ICLOUD_NICK}"
+      ;;
+    Library)
+      dir_basename="${LIBRARY_NICK}"
+      ;;
+    "${MACDEV_BASENAME}")
+      dir_basename="${MACDEV_NICK}"
+      ;;
+    "${PEN_BASENAME}")
+      dir_basename="${PEN_NICK}"
+      ;;
+    esac
+    if [[ "${first}" == "yes" ]]; then
+      printf '%s\t%s\n' "${dir_basename}" "System/Volumes/Data${dir}" | sudo tee "/etc/synthetic.conf" >/dev/null 2>&1
+      first="no"
+    else
+      printf '%s\t%s\n' "${dir_basename}" "System/Volumes/Data${dir}" |
+        sudo tee -a "/etc/synthetic.conf" >/dev/null 2>&1
+    fi
+  done
+}
+
+function tmutildir() {
+  # ${1} - (tmutil listbackups) - name or file to remove before - and after .
+  echo "${1}" | cut -d '-' -f 2 | cut -d '.' -f 1
+}
+
+function upall() {
+  local bump
+  bump="${1:-patch}"
+  if test -n "${DARWIN}"; then
+    /usr/local/bin/upload.sh "${bump}" || return 1
+    /usr/local/bin/upload.sh pen "${bump}" || return 1
+    rebash
+  else
+    /usr/local/bin/upgrade.sh || return 1
+    /usr/local/bin/upgrade.sh pen || return 1
+    rebash
+  fi
+}; export -f upall
+
+function usage() {
+  #    about 'disk usage per directory, in Mac OS X and Linux'
+  #    param '1: directory name'
+  #    group 'base'
+  if [[ "$(uname)" = "Darwin" ]]; then
+    if [ -n "$1" ]; then
+      du -hd 1 "$1"
+    else
+      du -hd 1
+    fi
+
+  elif [[ "$(uname)" = "Linux" ]]; then
+    if [ -n "$1" ]; then
+      du -h --max-depth=1 "$1"
+    else
+      du -h --max-depth=1
+    fi
+  fi
+}
+
+function usershell() {
+  local error old user
+  for user in "${USERNAME}" root; do
+    old="$(dscl . -read /Users/"${user}" UserShell | awk '{print $2}')"
+    if test -e /usr/local/bin/bash && [[ "${old}" != /usr/local/bin/bash ]]; then
+      if error="$(/usr/bin/sudo /usr/bin/dscl . -change "/Users/${user}" UserShell "${old}" /usr/local/bin/bash)"; then
+        info usershell "${user}"
+        return 0
+      else
+        error usershell "${user}" "${error}"
+        return 1
+      fi
+    fi
+  done
+}
+
+function volume() {
+  # Adjust volume on macOS
+  local PCT
+  PCT=$1
+  if command -v osascript >/dev/null 2>&1; then
+    osascript -e 'set volume output volume "'"$PCT"'"'
+  fi
+}
+
+function xattraz() {
+  # shellcheck disable=SC2102
+  sudo xattr -r -d "${1}" [a-z,A-Z,0-9]* .[a-z,A-Z,0-9]*
+}

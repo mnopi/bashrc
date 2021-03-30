@@ -8,9 +8,9 @@ from bashrc import package, project, scripts_relative, readme, description, inst
     REALNAME, GITHUB_URL, command
 
 setup(
-    author=REALNAME,
-    author_email=GITHUB_EMAIL,
-    description=description,
+    # author=REALNAME,
+    # author_email=GITHUB_EMAIL,
+    # description=description,
     entry_points={
         'console_scripts': [
             f'{command} = {package.name}:app',
@@ -26,7 +26,7 @@ setup(
     scripts=scripts_relative,
     setup_requires=[],
     tests_require=[],
-    url=f'{GITHUB_URL}/',
+    # url=f'{GITHUB_URL}/',
     version='0.31.54',
     zip_safe=False,
 )
