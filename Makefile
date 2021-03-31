@@ -5,7 +5,7 @@ SHELL := $(shell command -v bash)
 
 upload:
 	@#scripts/bashrc-upload.sh $(BUMP)
-	@scripts/upload.sh bashrc
+	@scripts/upload.sh bashrc pypi
 install:
 	@bashrc-install.sh "$${PASSWORD}" "$${INTERNET}"
 
