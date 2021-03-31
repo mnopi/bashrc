@@ -27,6 +27,9 @@ if requirements.is_file():
 else:
     install_requires = list()
 
+packages = find_packages()
+packages.remove('tests')
+
 setup(
     # author=REALNAME,
     # author_email=GITHUB_EMAIL,
@@ -42,7 +45,7 @@ setup(
     # package_data={
     #     project.name: [f'{project.name}/scripts/*'],
     # },
-    packages='rc',
+    packages=find_packages(),
     scripts=scripts_relative,
     # setup_requires=[],
     # tests_require=[],
