@@ -8,7 +8,7 @@ import os
 import pathlib
 
 
-project = pathlib.Path(__file__).resolve()
+project = pathlib.Path(__file__).parent.resolve()
 
 scripts = project / 'scripts'
 scripts_relative = [str(item.relative_to(project)) for item in scripts.iterdir()]
