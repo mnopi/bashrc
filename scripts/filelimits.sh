@@ -3,7 +3,7 @@ export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 
 file=/Library/LaunchDaemons/limit.maxfiles.plist
-if sudo tee "${file}" >/dev/null <<EOT; then
+if sudo tee "${file}" >/dev/null <<EOT
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
         "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -26,6 +26,7 @@ if sudo tee "${file}" >/dev/null <<EOT; then
   </dict>
 </plist>
 EOT
+then
   sudo chown root:wheel "${file}"
   sudo launchctl load -w "${file}" > /dev/null 2>&1
   info.sh maxfiles "$(sudo launchctl limit maxfiles)"

@@ -7,6 +7,9 @@ debug.sh DARWIN KALI DEBIAN UBUNTU PASSWORD
 
 function darwin() {
   # "${1}" - to force
+    local starting
+    export starting="${FUNCNAME[0]}"; debug.sh starting
+
   install-brew.sh || return 1
   filelimits.sh || return 1
 #  sudo launchctl limit maxfiles 65536 524288
@@ -15,6 +18,8 @@ function darwin() {
 
 function kali() {
   # "${1}" - to force
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   dpkg-local.sh "$@" || return 1
   apt-kali.sh || return 1
   pam-sudo.sh "$@" || return 1

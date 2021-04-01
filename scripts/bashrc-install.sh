@@ -7,9 +7,10 @@ export starting="${BASH_SOURCE[0]}"; debug.sh starting
 function install_passwd() {
   # "${1}" - ACCOUNT PASSWORD
   # "${2}" - INTERNET PASSWORD
-  local PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL
+  local PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL starting
   test -n "${PASSWD_PATH}" || { error.sh PASSWD_PATH 'not defined'; return 1; }
   test -n "${GITHUB_USERNAME}" || { error.sh GITHUB_USERNAME 'not defined'; return 1; }
+  export starting="${FUNCNAME[0]}"; debug.sh starting
 
   if ! test -f "${PASSWD_PATH}"; then
     PASSWORD="${1}"

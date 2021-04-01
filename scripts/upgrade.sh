@@ -42,21 +42,21 @@ if [[ "${DARWIN-}" ]]; then
 fi
 export DARWIN prefix; debug.sh DARWIN prefix
 
-previous="$( /usr/local/bin/${name} v )"
+previous="$( /usr/local/bin/"${name}" v )"
 
 # shellcheck disable=SC2086
 if ! ${cmd} -m pip -q install ${prefix} --upgrade pip wheel setuptools ${url}; then
   /usr/local/bin/error.sh "${name}" install "${previous}"; exit 1
 fi
 
-new="$( /usr/local/bin/${name} v )"
+new="$( /usr/local/bin/"${name}" v )"
 if [[ ! "${once-}" ]] && [[ "${previous}" == "${new}" ]]; then
   unset once
   ${BASH_SOURCE[0]} "${name}" once
   exit
 fi
 
-new="$( /usr/local/bin/${name} v )"
+new="$( /usr/local/bin/"${name}" v )"
 
 if [[ "${previous}" == "${new}" ]]; then
   /usr/local/bin/warning.sh "${name}" upgrade "${previous} ${new}"

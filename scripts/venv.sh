@@ -36,6 +36,8 @@ rm -rf "${TMP}"
 
 function reqs() {
   local file error site
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   while read -r file; do
     export file; debug.sh file
     # shellcheck disable=SC2086
@@ -49,6 +51,8 @@ function reqs() {
 }
 
 function install() {
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   local error
      # shellcheck disable=SC2086
      if error="$( ${virtual}python3.9 -m pip install --upgrade pip wheel setuptools && \
@@ -62,6 +66,8 @@ function install() {
 
 function append() {
   local file
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   while read -r file; do
     grep -v '^-r ' "${file}" >> "${TMP}"
   done < <( find "${1}" -mindepth 1 -maxdepth 2 -type f -name "requirements*".txt)

@@ -7,6 +7,8 @@ test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
 
 function home_bashrc() {
   local bashrc_path
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
 #    echo '# shellcheck disable=SC1090' | sudo -u "${1}" tee "${2}" >/dev/null
     # shellcheck disable=SC2016
@@ -31,6 +33,8 @@ EOT
 }
 
 function home_hushlogin () {
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   if sudo -u "${1}" touch "${2}"; then
     info.sh homefiles "${2}"
   else
@@ -39,6 +43,8 @@ function home_hushlogin () {
 }
 
 function home_inputrc () {
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   if sudo -u "${1}" cp -f "$( command -v inputrc 2>&1 )" "${2}"; then
     info.sh homefiles "${2}"
   else
@@ -47,6 +53,8 @@ function home_inputrc () {
 }
 
 function home_profiles () {
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   if sudo -u "${1}" tee "${2}" >/dev/null <<EOT
 # shellcheck disable=SC1090
 PATH='/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:.'
@@ -63,6 +71,8 @@ EOT
 
 function home_file() {
   local user home file
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   for user in "${USERNAME}" root kali; do
     if home="$( home.sh "${user}" )"; then
       file="${home}/.bashrc"
@@ -81,6 +91,8 @@ function home_file() {
 
 function home_secrets() {
   local error
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   if ! test -d "${GITHUB_SECRETS_PATH}"; then
     if error="$( git clone "${GITHUB_SECRETS_URL}" "${GITHUB_SECRETS_PATH}" --quiet  2>&1 )"; then
       info.sh clone "${GITHUB_SECRETS_URL}" "empty dir"
@@ -113,6 +125,8 @@ function home_secrets() {
 
 function home_links() {
   local user home file
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   cd "${USERHOME}" > /dev/null 2>&1 || { error.sh "${USERHOME}" "invalid"; return 1; }
   for user in root kali; do
     if home="$( home.sh "${user}" )"; then

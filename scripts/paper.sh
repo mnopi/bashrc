@@ -2,6 +2,8 @@
 test -n "${DARWIN}" || exit
 
 function paperchoice() {
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   python -c "import random; import glob; print(random.choice(glob.glob('${FILES}/Wall Papers/*')))"
 }
 

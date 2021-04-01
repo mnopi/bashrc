@@ -1,3 +1,5 @@
+#!/usr/local/bin/env bash
+
 # wakatime for bash
 #
 # include this file in your "~/.bashrc" file with this command:

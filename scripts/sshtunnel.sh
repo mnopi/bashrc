@@ -3,7 +3,7 @@ exit
 
 file=/etc/security/limits.conf
 
-if tee "${file}" >/dev/null <<EOT; then
+if tee "${file}" >/dev/null <<EOT
 [Unit]
 Description=tunnel
 After=firewall.service
@@ -23,8 +23,8 @@ TasksMax=1
 [Install]
 WantedBy=multi-user.target
 EOT
-  info.sh ulimits "${file}"
+  then
+    info.sh ulimits "${file}"
 else
-  error.sh ulimits "${file}"
   exit 1
 fi

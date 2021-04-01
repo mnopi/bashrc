@@ -4,6 +4,8 @@ export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 function authorized_keys() {
   local user home file key tmp
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   for user in "${USERNAME}" root kali; do
     if home="$( home.sh "${user}" )"; then
       file="${home}/.ssh/authorized_keys"
@@ -29,6 +31,8 @@ function authorized_keys() {
 
 function ssh_config() {
   local file
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   file="${USERHOME}/.ssh/config"
   sudo touch "${file}"
   sudo chown -R "${USERNAME}":"$( id -g "${USERNAME}")" "${file}"
@@ -66,6 +70,8 @@ EOT
 
 function etc_hosts() {
   local file
+  local starting
+  export starting="${FUNCNAME[0]}"; debug.sh starting
   file="/etc/hosts"
   if sudo tee "${file}" >/dev/null <<EOT
 127.0.0.1       localhost
