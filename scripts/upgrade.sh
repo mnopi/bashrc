@@ -8,6 +8,8 @@ source deactivate > /dev/null 2>&1
 deactivate > /dev/null 2>&1
 export VIRTUAL_ENV PYTHONHOME; debug.sh VIRTUAL_ENV PYTHONHOME; unset VIRTUAL_ENV PYTHONHOME
 
+bashrc-install.sh --force  || exit 1
+
 if [[ "${1-}" ]]; then
   while (( "$#" )); do
     case "${1}" in
