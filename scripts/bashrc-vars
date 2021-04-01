@@ -16,16 +16,16 @@ export BASHRC="${USERHOME}/bashrc"
 export GITHUB_USERNAME="j5pu"
 export GITHUB_EMAIL="${GITHUB_USERNAME}@github.com"
 export GITHUB_URL="https://github.com/${GITHUB_USERNAME}"
-export GITHUB_ORGANIZATION="lumenbiomics"
-export GITHUB_ORGANIZATION_ID="org-4379404"
-export GITHUB_ORGANIZATION_CLONE_PREFIX_HTTP="https://github.com/${GITHUB_ORGANIZATION}"
-export GITHUB_ORGANIZATION_ID_CLONE_PREFIX_SSH="${GITHUB_ORGANIZATION_ID}@github.com:"
-export GITHUB_ORGANIZATION_CLONE_PREFIX_SSH="${GITHUB_ORGANIZATION_ID_CLONE_PREFIX_SSH}${GITHUB_ORGANIZATION}"
+#export GITHUB_ORGANIZATION="lumenbiomics"
+#export GITHUB_ORGANIZATION_ID="org-4379404"
+#export GITHUB_ORGANIZATION_CLONE_PREFIX_HTTP="https://github.com/${GITHUB_ORGANIZATION}"
+#export GITHUB_ORGANIZATION_ID_CLONE_PREFIX_SSH="${GITHUB_ORGANIZATION_ID}@github.com:"
+#export GITHUB_ORGANIZATION_CLONE_PREFIX_SSH="${GITHUB_ORGANIZATION_ID_CLONE_PREFIX_SSH}${GITHUB_ORGANIZATION}"
 export GITHUB_SECRETS_PATH="${USERHOME}/.ssh"
 export GIT_STORE="${GITHUB_SECRETS_PATH}/gitcredentials"
 export ATHENS_GONOSUM_PATTERNS="github.com/${GITHUB_ORGANIZATION}/*"
 #export GONOSUMDB="github.com/${GITHUB_ORGANIZATION}/*,github.com/secret/*"
-export NFERX_GITHUB_USERNAME="jose-nferx"
+#export NFERX_GITHUB_USERNAME="jose-nferx"
 export SECRETS_REPO="secrets"
 export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets"
 export ICLOUD_BASENAME="iCloud"
@@ -43,7 +43,7 @@ export REALNAME
 export ICLOUD="${USERHOME}/${ICLOUD_BASENAME}"
 export GOHOME="${USERHOME}/.go"
 export GOPATH="${GOHOME}/bin"
-export PEN_GIT="git+ssh://git@github.com/${GITHUB_ORGANIZATION}/pen.git"
+#export PEN_GIT="git+ssh://git@github.com/${GITHUB_ORGANIZATION}/pen.git"
 
 export AMARILLO="\[\033[1;33m\]"
 
@@ -59,7 +59,7 @@ export BASH_INSTALL=".bash_profile ${REBASH_BASENAME} ${BASH_D_BASENAME} .hushlo
 export CLICOLOR=1
 export CLT="/Library/Developer/CommandLineTools"
 
-export CONFLUENCE_SERVER_PASS='wjxsthIKDJYHYjnEl6Xr37B9'
+#export CONFLUENCE_SERVER_PASS='wjxsthIKDJYHYjnEl6Xr37B9'
 
 export DEFAULT_KALI_USER='kali'
 
@@ -91,7 +91,7 @@ export LIBRARY_NICK="l"
 
 export LSCOLORS=ExGxBxDxCxEgEdxbxgxcxd
 
-export LUMEN_BASENAME="lumen"
+#export LUMEN_BASENAME="lumen"
 
 export MACDEV_NICK="m"
 
@@ -100,11 +100,11 @@ export MACKUP_ENGINE="file_system" # dropbox, google_drive, icloud and file_syst
 export MACROOT="/System/Volumes/Data"
 export MORADO="\[\033[1;35m\]"
 
-export NFERX_DEFAULT_GROUP="DevOps"
-export NFERENCE="nference"
-export NFERX_EMAIL="jose@nference.net"
-export NFERX_SERVER="$([[ "$(id -gn)" == "${NFERX_DEFAULT_GROUP}" ]] && echo "yes" || echo "no")"
-export NFERX_SERVERS="nferx.com"
+#export NFERX_DEFAULT_GROUP="DevOps"
+#export NFERENCE="nference"
+#export NFERX_EMAIL="jose@nference.net"
+#export NFERX_SERVER="$([[ "$(id -gn)" == "${NFERX_DEFAULT_GROUP}" ]] && echo "yes" || echo "no")"
+#export NFERX_SERVERS="nferx.com"
 
 export PACKAGES_BASENAME="packages"
 
@@ -122,16 +122,16 @@ export PYTHONUNBUFFERED=1
 export PYTHONASYNCIODEBUG=0
 export PYTHONNOUSERSITE=0
 
-export REPO_DEFAULT_ADMIN_USERNAME="admin"
-export REPO_DEFAULT_ADMIN_PASSWORD="1Aragon$."
-export REPO_DEFAULT_USERNAME="upload"
-export REPO_DEFAULT_PASSWORD="${REPO_DEFAULT_USERNAME}"
-export REPO_DEFAULT_HOSTNAME="repo"
-export REPO_DEFAULT_SCHEME="https"
-export REPO_DEFAULT_API_VERSION="v1"
-export REPO_DEFAULT_HOST="${REPO_DEFAULT_HOSTNAME}.${NFERX_SERVERS}"
-export REPO_DEFAULT_URL="${REPO_DEFAULT_SCHEME}://${REPO_DEFAULT_HOST}"
-export REPO_DEFAULT_API_URL="${REPO_DEFAULT_URL}/service/rest/${REPO_DEFAULT_API_VERSION}"
+#export REPO_DEFAULT_ADMIN_USERNAME="admin"
+#export REPO_DEFAULT_ADMIN_PASSWORD="1Aragon$."
+#export REPO_DEFAULT_USERNAME="upload"
+#export REPO_DEFAULT_PASSWORD="${REPO_DEFAULT_USERNAME}"
+#export REPO_DEFAULT_HOSTNAME="repo"
+#export REPO_DEFAULT_SCHEME="https"
+#export REPO_DEFAULT_API_VERSION="v1"
+#export REPO_DEFAULT_HOST="${REPO_DEFAULT_HOSTNAME}.${NFERX_SERVERS}"
+#export REPO_DEFAULT_URL="${REPO_DEFAULT_SCHEME}://${REPO_DEFAULT_HOST}"
+#export REPO_DEFAULT_API_URL="${REPO_DEFAULT_URL}/service/rest/${REPO_DEFAULT_API_VERSION}"
 #export GOPROXY="${REPO_DEFAULT_URL}/Repository/go-all/,direct"
 
 export ROJO="\[\033[1;31m\]"

@@ -41,6 +41,8 @@ from .utils import *
 
 
 ModuleSpec = importlib._bootstrap.ModuleSpec
+REPO_VAR = varname(1, lower=False)
+PYPI_VAR = varname(1, lower=False)
 STACK = inspect.stack()
 
 
@@ -347,6 +349,10 @@ class info(_base):
         return self.__call__(index=self.index + i[4], s=self.stack) if (i := self.id) else None
 
     @property
+    def repo(self) -> Optional[str]:
+        return self.gittop.name or self.globs.get(REPO_VAR)
+
+    @property
     def spec(self) -> Optional[ModuleSpec]:
         return self.globs.get('__spec__')
 
@@ -377,6 +383,8 @@ class info(_base):
 # TODO: meter los asdict y las pydantic
 # TODO: cambiar las clases que hereden de base y poner el asdict en base.
 # TODO: lo de los paquetes de module_from_obj, import etc.
+# TODO: ver que hago con el nombre del paquete.
+# TODO: la variable de REPO_VAR y el usuario y el repo url meterlo en el _info.
 
 
 caller = info()

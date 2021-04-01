@@ -6,13 +6,13 @@ export starting="${BASH_SOURCE[0]}"; debug.sh starting
 test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
 
 function home_bashrc() {
-  local user home file bashrc_path
+  local bashrc_path
   if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
 #    echo '# shellcheck disable=SC1090' | sudo -u "${1}" tee "${2}" >/dev/null
     # shellcheck disable=SC2016
 #    echo 'test -n "${PS1}" || return' | sudo -u "${1}" tee -a "${2}" >/dev/null
 #    if sudo -u "${1}" tee -a "${2}" >/dev/null <<EOT; then
-    if sudo -u "${1}" tee "${2}" >/dev/null <<EOT; then
+    if sudo -u "${1}" tee "${2}" >/dev/null <<EOT
 # shellcheck disable=SC1090
 if test -f  "${bashrc_path}"; then
   source "${bashrc_path}"
@@ -20,9 +20,10 @@ else
   echo 'bashrc file not found'; return 1
 fi
 EOT
+    then
       info.sh homefiles "${2}" "${bashrc_path}"
     else
-      error.sh homefiles "${2}"; return 1
+        return 1
     fi
   else
     error.sh files "${2}" "${BASHRC_FILE} - command not found"; return 1
@@ -46,21 +47,22 @@ function home_inputrc () {
 }
 
 function home_profiles () {
-  if sudo -u "${1}" tee "${2}" >/dev/null <<EOT; then
+  if sudo -u "${1}" tee "${2}" >/dev/null <<EOT
 # shellcheck disable=SC1090
 PATH='/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:.'
 if [[ -f ~/.bashrc ]]; then
   . ~/.bashrc
 fi
 EOT
+ then
     info.sh homefiles "${2}"
   else
-    error.sh homefiles "${file}"; return 1
+    return 1
   fi
 }
 
 function home_file() {
-  local user home file bashrc_path
+  local user home file
   for user in "${USERNAME}" root kali; do
     if home="$( home.sh "${user}" )"; then
       file="${home}/.bashrc"
@@ -110,7 +112,7 @@ function home_secrets() {
 }
 
 function home_links() {
-  local error user home file
+  local user home file
   cd "${USERHOME}" > /dev/null 2>&1 || { error.sh "${USERHOME}" "invalid"; return 1; }
   for user in root kali; do
     if home="$( home.sh "${user}" )"; then

@@ -52,10 +52,6 @@ source "${PASSWD_PATH}" || exit 1
 sudoers.sh "$@" || exit 1
 essentials.sh "$@" || exit 1
 homefiles.sh || exit 1
-sshconfig.sh || exit 1
-gconfig.sh || exit 1
-manpaths.sh || exit 1
-
 ## BEGIN: SECRETS
 if test -f "${SECRETS_PATH}"; then
   source "${SECRETS_PATH}"
@@ -63,6 +59,9 @@ else
   error.sh install "${SECRETS_PATH}" "not found"; exit 1
 fi
 ## END: SECRETS
+sshconfig.sh || exit 1
+gconfig.sh || exit 1
+manpaths.sh || exit 1
 
 source "$( command -v bashrc-misc )" || exit 1
 

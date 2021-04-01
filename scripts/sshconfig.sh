@@ -32,7 +32,7 @@ function ssh_config() {
   file="${USERHOME}/.ssh/config"
   sudo touch "${file}"
   sudo chown -R "${USERNAME}":"$( id -g "${USERNAME}")" "${file}"
-  if tee "${file}" >/dev/null <<EOT; then
+  if tee "${file}" >/dev/null <<EOT
 Host *
   AddressFamily inet
   BatchMode yes
@@ -56,10 +56,10 @@ Host github.com.${GITHUB_USERNAME}
   User ${GITHUB_USERNAME}
   IdentityFile ~/.ssh/${GITHUB_USERNAME}
 EOT
+  then
     info.sh ssh "${file}"
     if secrets-push.sh; then return 0; else return 1; fi
   else
-    error.sh ssh "${file}"
     return 1
   fi
 }
@@ -67,16 +67,16 @@ EOT
 function etc_hosts() {
   local file
   file="/etc/hosts"
-  if sudo tee "${file}" >/dev/null <<EOT; then
+  if sudo tee "${file}" >/dev/null <<EOT
 127.0.0.1       localhost
 255.255.255.255 broadcasthost
 67.202.15.57 scan.com scan
 67.202.15.57 kali.com kali
 192.168.1.10 hp.com hp
 EOT
+  then
     info.sh ssh "${file}"
   else
-    error.sh ssh "${file}"
     return 1
   fi
 }
