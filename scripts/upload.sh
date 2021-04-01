@@ -91,10 +91,11 @@ if isuserdarwin.sh && [[ "${USERNAME}" == "${USER}" ]]; then
   deactivate > /dev/null 2>&1
   export VIRTUAL_ENV PYTHONHOME; debug.sh VIRTUAL_ENV PYTHONHOME; unset VIRTUAL_ENV PYTHONHOME
   /usr/local/bin/success.sh "${name}" tag "${old} $( /usr/local/bin/gtag.sh )"
-  /usr/local/bin/upgrade.sh "${name}"
 else
   /usr/local/bin/error.sh "${name}" "Can not be uploaded with root and user should be: ${USERNAME}"; exit 1
 fi
+
+/usr/local/bin/upgrade.sh "${name}"
 
 cd - > /dev/null || exit 1
 

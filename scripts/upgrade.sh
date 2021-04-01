@@ -42,7 +42,7 @@ export DARWIN prefix; debug.sh DARWIN prefix
 echo 42
 command="$( [[ "${name}" == "${BASHRC_FILE}" ]] && echo rc || echo "${name}" )"
 
-previous="$( /usr/local/bin/"${name}" v )"
+previous="$( /usr/local/bin/"${previous}" v 2>/dev/null)"
 echo 44
 
 # shellcheck disable=SC2086
@@ -50,7 +50,7 @@ if ! ${cmd} -m pip -q install ${prefix} --upgrade pip wheel setuptools ${url}; t
   /usr/local/bin/error.sh "${name}" install "${previous}"; exit 1
 fi
 
-new="$( /usr/local/bin/"${name}" v )"
+new="$( /usr/local/bin/"${command}" v 2>/dev/null)"
 if [[ ! "${once-}" ]] && [[ "${previous}" == "${new}" ]]; then
   unset once
   echo 54
@@ -59,7 +59,7 @@ if [[ ! "${once-}" ]] && [[ "${previous}" == "${new}" ]]; then
   exit
 fi
 
-new="$( /usr/local/bin/"${name}" v 2>)"
+new="$( /usr/local/bin/"${command}" v 2>/dev/null)"
 
 if [[ "${previous}" == "${new}" ]]; then
   /usr/local/bin/warning.sh "${name}" upgrade "${previous} ${new}"
