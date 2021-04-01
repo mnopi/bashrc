@@ -13,14 +13,15 @@ bashrc-install.sh --force  || exit 1
 if [[ "${1-}" ]]; then
   while (( "$#" )); do
     case "${1}" in
+      bashrc) name="${1}"; url="${name}" ;;
       bapy) name="${1}"; url="${name}" ;;
       pen) name="${1}"; url="${PEN_GIT}" ;;
       once) once="${1}" ;;
-      *) name="bapy"; url="${name}" ;;
+      *) name="${BASHRC_FILE}"; url="${name}" ;;
     esac; shift
   done
 else
-  name="bapy"; url="${name}"
+  name="${BASHRC_FILE}"; url="${name}"
 fi
 
 export BAPY PEN name url once; debug.sh BAPY PEN name url once

@@ -22,14 +22,14 @@ if [[ "${1-}" ]]; then
       pypi) twine="${1}" ;;
       merge) merge="${1}" ;;
       site) site="${1}"; export site ;;
-      bashrc)  name="${1}"; project_path="${HOME}/bashrc" ;;
+      "${BASHRC_FILE}")  name="${1}"; project_path="${BASHRC}" ;;
       bapy) name="${1}"; project_path="${BAPY}" ;;
       pen) name="${1}"; project_path="${PEN}"; git=yes ;;
       *) project_path="${PEN}"; name="$( basename "${project_path}" )"; git=yes ;;
     esac; shift
   done
 else
-  project_path="${BAPY}"; name="$( basename "${project_path}" )"
+  project_path="${BASHRC}"; name="$( basename "${project_path}" )"
 fi
 
 if [[ "${git-}" ]]; then
