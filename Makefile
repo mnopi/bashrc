@@ -4,10 +4,12 @@ all: upload
 SHELL := $(shell command -v bash)
 
 upload:
-	@#scripts/bashrc-upload.sh $(BUMP)
-	@scripts/upload.sh bashrc pypi
+	@scripts/upload.sh bashrc pypi $(BUMP)
+upgrade:
+	@scripts/upgrade.sh
+
 install:
-	@bashrc-install.sh "$${PASSWORD}" "$${INTERNET}"
+	@scripts/bashrc-install.sh "$${PASSWORD}" "$${INTERNET}"
 
 secrets-push:
 	@secrets-push.sh
@@ -15,7 +17,7 @@ secrets-pull:  ## other  not git source
 	@secrets-pull.sh
 
 venv:
-	@project-venv.sh
+	@venv.sh
 
 vars:
 	@echo $(BASHRC)

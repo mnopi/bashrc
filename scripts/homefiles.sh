@@ -117,10 +117,11 @@ function home_links() {
   for user in root kali; do
     if home="$( home.sh "${user}" )"; then
       sudo mkdir -p "${home}/.ssh"
-      sudo chmod go-rw "${home}/.ssh"
+      sudo chmod go-rwx "${home}/.ssh"
       sudo touch "${home}/.gitconfig"
-      for file in .ssh/config .ssh/gitcredentials .gitconfig \
-                  $( find .ssh -type f -exec grep -l "END OPENSSH PRIVATE KEY" "{}" \; ) .gitconfig; do
+      for file in .ssh/*; do
+#      for file in .ssh/config .ssh/gitcredentials .gitconfig \
+#                  $( find .ssh -type f -exec grep -l "END OPENSSH PRIVATE KEY" "{}" \; ) .gitconfig; do
         sudo cp -rf "${USERHOME}/${file}" "${home}/${file}" > /dev/null 2>&1
         sudo chmod -R go-rw "${home}/.ssh"
         sudo chown -R "${user}":"$( id -g "${user}" )" "${home}/.ssh"

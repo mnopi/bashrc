@@ -95,8 +95,8 @@ grep -slR "PRIVATE" ~/.ssh | xargs ssh-add >/dev/null 2>&1
 homefiles.sh || exit 1
 
 if [[ "${USER}" == "${USERNAME}" ]] && isuserdarwin.sh && test -n "${1}"; then
-  bashrc-upload.sh || exit 1
-  bashrc-upgrade.sh || exit 1
+  upload.sh "${BASHRC_FILE}" pypi|| exit 1
+  upgrade.sh || exit 1
 fi
 
 unset starting

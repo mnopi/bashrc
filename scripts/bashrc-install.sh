@@ -4,7 +4,7 @@
 # "${2}" - INTERNET PASSWORD
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-function install_paswwd() {
+function install_passwd() {
   # "${1}" - ACCOUNT PASSWORD
   # "${2}" - INTERNET PASSWORD
   local PASSWORD INTERNET GITHUB_PRIVATE_URL GITHUB_SECRETS_URL
@@ -46,7 +46,7 @@ source "$( command -v bashrc-paths )" || exit 1
 source "$( command -v bashrc-distro )" || exit 1
 source "$( command -v bashrc-dirs )" || exit 1
 
-install_paswwd "$@" || exit 1
+install_passwd "$@" || exit 1
 source "${PASSWD_PATH}" || exit 1
 
 sudoers.sh "$@" || exit 1

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="upload" type="MAKEFILE_TARGET_RUN_CONFIGURATION" factoryName="Makefile" singleton="false">
+  <configuration default="false" name="upload" type="MAKEFILE_TARGET_RUN_CONFIGURATION" factoryName="Makefile" folderName="Makefile" singleton="false">
     <makefile filename="$PROJECT_DIR$/Makefile" target="upload" workingDirectory="" arguments="">
       <envs />
     </makefile>

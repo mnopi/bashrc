@@ -56,9 +56,9 @@ fi
 new="$( /usr/local/bin/${name} v )"
 
 if [[ "${previous}" == "${new}" ]]; then
-  /usr/local/bin/warning.sh "${name}" install "${previous} ${new}"
+  /usr/local/bin/warning.sh "${name}" upgrade "${previous} ${new}"
 else
-  /usr/local/bin/success.sh "${name}" install "${previous} ${new}"
+  /usr/local/bin/success.sh "${name}" upgrade "${previous} ${new}"
 fi
 
 unset BAPY PEN starting error command url name error project_path DARWIN repeat prefix previous new pr opt once \
