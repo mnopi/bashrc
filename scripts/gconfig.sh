@@ -3,17 +3,17 @@ export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
 test -n "${GIT_STORE}" || { error.sh GIT_STORE 'not defined'; exit 1; }
 
-[[ ${1-} ]] && username="${1}" || username="${NFERX_GITHUB_USERNAME}"
+[[ ${1-} ]] && username="${1}" || username="${GITHUB_ORGANIZATION_USERNAME}"
 
 case "${username}" in
   "${GITHUB_USERNAME}")
     email="26859654+${username}@users.noreply.github.com"
     ;;
-  "${NFERX_GITHUB_USERNAME}")
-    email="${NFERX_EMAIL}"
+  "${GITHUB_ORGANIZATION_USERNAME}")
+    email="${GITHUB_ORGANIZATION_EMAIL}"
     ;;
   *)
-    error "username must be:" "${GITHUB_USERNAME} or ${NFERX_GITHUB_USERNAME}"
+    error "username must be:" "${GITHUB_USERNAME} or ${GITHUB_ORGANIZATION_USERNAME}"
     exit 1
     ;;
 esac
@@ -36,13 +36,17 @@ git config --global filter.lfs.smudge "git-lfs smudge -- %f" || exit 1
 git config --global filter.lfs.process "git-lfs filter-process" || exit 1
 git config --global filter.lfs.required "true" || exit 1
 
-git config --global credential.https://repo.nferx.com.helper "'store --file ${GIT_STORE}'" || exit 1
+git config --global \
+  "credential.https://${REPO_DEFAULT_HOSTNAME}.${SERVERS_HOST}.helper" "'store --file ${GIT_STORE}'" || exit 1
 
 git config --global http.postBuffer 15728640 || exit 1
 
 git config --global lfs.batch false || exit 1
-git config --global lfs.https://repo.nferx.com/repository/gitlfs-internal/info/lfs.locksverify true || exit 1
-git config --global lfs.https://repo.nferx.com/repository/gitlfs-internal/.locksverify true || exit 1
+git config --global \
+  "lfs.https://${REPO_DEFAULT_HOSTNAME}.${SERVERS_HOST}/repository/gitlfs-internal/info/lfs.locksverify" true \
+  || exit 1
+git config --global \
+  "lfs.https://${REPO_DEFAULT_HOSTNAME}.${SERVERS_HOST}/repository/gitlfs-internal/.locksverify" true || exit 1
 git config --global core.sshCommand /usr/bin/ssh || exit 1
 # https://www.lutro.me/posts/different-ssh-keys-per-github-organisation || exit 1
 # git config --global url.git@example.github.com:example.insteadOf = git@github.com:example || exit 1

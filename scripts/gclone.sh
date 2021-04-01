@@ -33,7 +33,7 @@ function gclone() {
     project_path="${parent}/${repo}${suffix}"
 
     if test -d "${project_path}" && grep "^${repo}$" "${REPOS}/HOME/"*.repos > /dev/null 2>&1; then
-      #  For project else pull for clones, mnopi and lumen
+      #  For project else pull for clones, mnopi and org
       cd "${project_path}" || true
       action="gpush"
       execute="${action} clone_function"
@@ -77,7 +77,7 @@ function gclone() {
           # shellcheck disable=SC2086
           gclone ${line} "${!PARENT}"
         done < <( grep -REv '^#|^$' "${REPOS}/${PARENT}" | sed 's/#//g' | grep -v "^ " | grep -v "^$" | sed "s|${REPOS}/${PARENT}/||g" | sed 's/.repos:/ /g' )
-        if [[ "${PARENT}" =~ ^CLONES$|^LUMEN ]]; then
+        if [[ "${PARENT}" =~ ^CLONES$|^ORG ]]; then
           gclonesrm "${!PARENT}" "${REPOS}/${PARENT}" "${suffix}"
         fi
       done < <( find "${REPOS}" -type d -mindepth 1 -maxdepth 1 -exec basename "{}" \; )

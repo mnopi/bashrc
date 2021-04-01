@@ -13,7 +13,7 @@ function gclonesrm() {
         if ! find "${2}" -type f -name "*.repos" -exec grep -v '#' "{}" \; | grep " ${repo}" | grep " ${suffix}"> /dev/null 2>&1; then
           # shellcheck disable=SC2034
           rm='true'
-          for file in "${2}/pagure.repos" "${2}/lumenbiomics.repos"; do
+          for file in "${2}/pagure.repos" "${2}/${GITHUB_ORGANIZATION}.repos"; do
             if test -f "${file}"; then
               if grep "^${repo}" "${file}" > /dev/null 2>&1; then
                  # shellcheck disable=SC2034

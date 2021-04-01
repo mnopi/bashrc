@@ -3,7 +3,7 @@
 # shellcheck disable=SC2034
 # ${1} - project_path
 # ${2} - bump: <major|minor>
-# ${3} - twine: <"${GITHUB_USERNAME}"|"${NFERX_GITHUB_USERNAME}"|pypi>
+# ${3} - twine: <"${GITHUB_USERNAME}"|"${GITHUB_ORGANIZATION_USERNAME}"|pypi>
 # ${4} - site (default use virtual environment if no defined)
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
@@ -18,12 +18,12 @@ if [[ "${1-}" ]]; then
       minor) bump="${1}" ;;
       patch) bump="${1}" ;;
       "${GITHUB_USERNAME}") twine="${1}" ;;
-      "${NFERX_GITHUB_USERNAME}") twine="${1}" ;;
+      "${GITHUB_ORGANIZATION_USERNAME}") twine="${1}" ;;
       pypi) twine="${1}" ;;
       merge) merge="${1}" ;;
       site) site="${1}"; export site ;;
       "${BASHRC_FILE}")  name="${1}"; project_path="${BASHRC}"; twine=pypi ;;
-      bapy) name="${1}"; project_path="${BAPY}"; twine="${NFERX_GITHUB_USERNAME}" ;;
+      bapy) name="${1}"; project_path="${BAPY}"; twine="${GITHUB_ORGANIZATION_USERNAME}" ;;
       pen) name="${1}"; project_path="${PEN}"; git=yes ;;
       *) project_path="${PEN}"; name="$( basename "${project_path}" )"; git=yes ;;
     esac; shift
@@ -35,14 +35,15 @@ fi
 if [[ "${git-}" ]]; then
   unset twine
 else
-  twine="${twine:-${NFERX_GITHUB_USERNAME}}"
+  twine="${twine:-${GITHUB_ORGANIZATION_USERNAME}}"
   test -n "${twine}" || { /usr/local/bin/error.sh "twine repository" "empty"; exit 1; }
 fi
 
 [[ "${project_path-}" ]] || { project_path="${BAPY}"; name="$( basename "${project_path}" )"; }
 bump="${bump:-patch}"
-export USERNAME USER GITHUB_USERNAME NFERX_GITHUB_USERNAME BAPY PEN bump twine project_path name site
-/usr/local/bin/debug.sh USERNAME USER GITHUB_USERNAME NFERX_GITHUB_USERNAME BAPY PEN bump twine project_path name site
+export USERNAME USER GITHUB_USERNAME GITHUB_ORGANIZATION_USERNAME BAPY PEN bump twine project_path name site
+/usr/local/bin/debug.sh USERNAME USER GITHUB_USERNAME GITHUB_ORGANIZATION_USERNAME BAPY PEN bump twine project_path \
+  name site
 
 cd "${project_path}" > /dev/null 2>&1 || { error.sh "${project_path}" "invalid"; exit 1; }
 

@@ -11,7 +11,7 @@ function authorized_keys() {
       sudo -u "${user}" mkdir -p "${home}/.ssh"
       sudo -u "${user}" chmod go-rw "${home}/.ssh"
       sudo -u "${user}" touch "${file}"
-      for key in "${GITHUB_USERNAME}" "${NFERX_GITHUB_USERNAME}"; do
+      for key in "${GITHUB_USERNAME}" "${GITHUB_ORGANIZATION_USERNAME}"; do
         if tmp="$( curl -sL https://github.com/"${key}".keys )"; then
           if ! grep "${tmp}" "${file}" > /dev/null 2>&1; then
             if echo "${tmp}" | sudo -u "${user}" tee -a "${file}" > /dev/null 2>&1; then

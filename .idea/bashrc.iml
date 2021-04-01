@@ -9,6 +9,7 @@
     <orderEntry type="module" module-name="tmp" />
     <orderEntry type="module" module-name="tmp" />
     <orderEntry type="module" module-name="tmp" />
+    <orderEntry type="module" module-name=".ssh" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="format" value="GOOGLE" />
