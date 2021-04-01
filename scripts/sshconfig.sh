@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-
 function authorized_keys() {
   local user home file key tmp
   local starting
@@ -62,7 +61,7 @@ Host github.com.${GITHUB_USERNAME}
 EOT
   then
     info.sh ssh "${file}"
-    if secrets-push.sh; then return 0; else return 1; fi
+    if secrets.sh; then return 0; else return 1; fi
   else
     return 1
   fi
@@ -98,11 +97,13 @@ fi
 
 grep -slR "PRIVATE" ~/.ssh | xargs ssh-add >/dev/null 2>&1
 
-homefiles.sh || exit 1
+#secrets.sh || exit 1
 
-if [[ "${USER}" == "${USERNAME}" ]] && isuserdarwin.sh && test -n "${1}"; then
-  upload.sh "${BASHRC_FILE}" pypi|| exit 1
-  upgrade.sh || exit 1
-fi
+#homefiles.sh || exit 1
+#
+#if [[ "${USER}" == "${USERNAME}" ]] && isuserdarwin.sh && test -n "${1}"; then
+#  upload.sh "${BASHRC_FILE}" pypi|| exit 1
+#  upgrade.sh || exit 1
+#fi
 
 unset starting

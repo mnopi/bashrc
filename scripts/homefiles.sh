@@ -105,7 +105,7 @@ function home_secrets() {
       if git clone "${GITHUB_SECRETS_URL}" /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )" --quiet; then
         if rsync -aq /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )" "$( dirname "${GITHUB_SECRETS_PATH}" )"; then
           if gpull.sh; then
-          sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
+            sudo rm -rf /tmp/"$( basename "${GITHUB_SECRETS_PATH}" )"/
             info.sh clone "${GITHUB_SECRETS_URL}" "not empty dir"
           else
             error.sh clone "not valid git after rsync"; return 1

@@ -50,4 +50,4 @@ git config --global core.sshCommand /usr/bin/ssh || exit 1
 
 info.sh gconfig
 
-if secrets-push.sh; then exit 0; else exit 1; fi
+if secrets.sh; then exit 0; else exit 1; fi

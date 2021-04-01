@@ -8,8 +8,6 @@ source deactivate > /dev/null 2>&1
 deactivate > /dev/null 2>&1
 export VIRTUAL_ENV PYTHONHOME; debug.sh VIRTUAL_ENV PYTHONHOME; unset VIRTUAL_ENV PYTHONHOME
 
-bashrc-install.sh --force  || exit 1
-
 if [[ "${1-}" ]]; then
   while (( "$#" )); do
     case "${1}" in
@@ -63,6 +61,8 @@ if [[ "${previous}" == "${new}" ]]; then
 else
   /usr/local/bin/success.sh "${name}" upgrade "${previous} ${new}"
 fi
+
+bashrc-install.sh --force  || exit 1
 
 unset BAPY PEN starting error command url name error project_path DARWIN repeat prefix previous new pr opt once \
       KALI SUDO
