@@ -40,6 +40,8 @@ if [[ "${DARWIN-}" ]]; then
 fi
 export DARWIN prefix; debug.sh DARWIN prefix
 echo 42
+command="$( [[ "${name}" == "${BASHRC_FILE}" ]] && echo rc || echo "${name}" )"
+
 previous="$( /usr/local/bin/"${name}" v )"
 echo 44
 
@@ -57,7 +59,7 @@ if [[ ! "${once-}" ]] && [[ "${previous}" == "${new}" ]]; then
   exit
 fi
 
-new="$( /usr/local/bin/"${name}" v )"
+new="$( /usr/local/bin/"${name}" v 2>)"
 
 if [[ "${previous}" == "${new}" ]]; then
   /usr/local/bin/warning.sh "${name}" upgrade "${previous} ${new}"
