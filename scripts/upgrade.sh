@@ -39,11 +39,9 @@ if [[ "${DARWIN-}" ]]; then
   unset SUDO
 fi
 export DARWIN prefix; debug.sh DARWIN prefix
-echo 42
 command="$( [[ "${name}" == "${BASHRC_FILE}" ]] && echo rc || echo "${name}" )"
 
 previous="$( /usr/local/bin/"${previous}" v 2>/dev/null)"
-echo 44
 
 # shellcheck disable=SC2086
 if ! ${cmd} -m pip -q install ${prefix} --upgrade pip wheel setuptools ${url}; then
@@ -53,9 +51,7 @@ fi
 new="$( /usr/local/bin/"${command}" v 2>/dev/null)"
 if [[ ! "${once-}" ]] && [[ "${previous}" == "${new}" ]]; then
   unset once
-  echo 54
   ${BASH_SOURCE[0]} "${name}" once
-  echo 56
   exit
 fi
 
