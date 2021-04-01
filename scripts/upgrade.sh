@@ -22,7 +22,7 @@ else
   name="${BASHRC_FILE}"; url="${name}"
 fi
 
-export BAPY PEN name url once; debug.sh BAPY PEN name url once
+export BAPY PEN BASHRC name url once; debug.sh BAPY PEN BASHRC name url once
 
 if [[ "${KALI-}" ]]; then
 #  sudo rm -rf /root/.cache/pip
