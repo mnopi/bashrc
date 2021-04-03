@@ -45,8 +45,8 @@ def test_cd(cwd):
 
 
 def test_gittop():
-    assert Path.cwd().gittop() == Path.gittop(Path(__file__).parent.name)
-    tmp = Path.gittop('/tmp')
+    assert Path.cwd().git() == Path.git(Path(__file__).parent.name)
+    tmp = Path.git('/tmp')
     assert all([tmp.name is None, tmp.origin is None, tmp.path is None])
 
 

@@ -5,21 +5,23 @@ __all__ = (
     'FILE_DEFAULT',
     'FUNCTION_MODULE',
     'MODULE_MAIN',
+    'STACK',
     'SUDO_DEFAULT',
 
-    'FindUp',
     'FrameType',
-    'GitTop',
+
     'InstallScriptPath',
     'Path',
+    'FindUp',
+    'GitTop',
     'PathUnion',
 )
 
 import importlib
+import inspect
 import os
 import pathlib
 import sys
-from collections import namedtuple
 from contextlib import contextmanager
 from contextlib import suppress
 from functools import cache
@@ -38,6 +40,7 @@ from tempfile import TemporaryDirectory
 from types import ModuleType
 from typing import Any
 from typing import Iterable
+from typing import NamedTuple
 from typing import Optional
 from typing import Union
 
@@ -56,11 +59,10 @@ BYTECODE_SUFFIXES = importlib._bootstrap_external.BYTECODE_SUFFIXES
 FILE_DEFAULT = True
 FUNCTION_MODULE = '<module>'
 MODULE_MAIN = '__main__'
+STACK = inspect.stack()
 SUDO_DEFAULT = True
 
-FindUp = namedtuple('FindUp', 'path previous', defaults=(None,) * 2)
 FrameType = type(sys._getframe())
-GitTop = namedtuple('GitTop', 'name origin path', defaults=(None,) * 3)
 
 
 class InstallScriptPath(setuptools.command.install.install):
@@ -137,7 +139,7 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
     def cd(self) -> Path:
         cwd = self.cwd()
         try:
-            self().chdir()
+            self.parent.chdir() if self.is_file() else self().chdir()
             yield cwd
         finally:
             cwd.chdir()
@@ -220,18 +222,17 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
             before = start
             start = start.parent
             if start == Path('/'):
-                # noinspection PyArgumentList
-                return FindUp()
+                return FindUp(None, None)
 
     @classmethod
-    def gittop(cls, path: Any = None) -> GitTop:
-        url = cls.gittopurl(path)
-        path = cls.gittoppath(path)
+    def git(cls, path: Any = None) -> GitTop:
+        url = cls.giturl(path)
+        path = cls.gitpath(path)
         return GitTop(str(url.path).rpartition('/')[2].split('.')[0] if url else path.name if path else None, url, path)
 
     # noinspection PyArgumentList
     @classmethod
-    def gittoppath(cls, path: Any = None) -> Optional[Path]:
+    def gitpath(cls, path: Any = None) -> Optional[Path]:
         rv = None
         if (path and ((path := cls(path).resolve()).exists() or (path := cls.cwd() / path).resolve().exists())) \
                 or (path := cls.cwd().resolve()):
@@ -241,7 +242,7 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
 
     # noinspection PyArgumentList
     @classmethod
-    def gittopurl(cls, path: Any = None) -> Optional[furl]:
+    def giturl(cls, path: Any = None) -> Optional[furl]:
         rv = None
         if (path and ((path := cls(path).resolve()).exists() or (path := cls.cwd() / path).resolve().exists())) \
                 or (path := cls.cwd().resolve()):
@@ -365,6 +366,24 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
                 module = module_from_spec(spec)
                 spec.loader.exec_module(module)
                 return module
+
+    @classmethod
+    def package(cls, index: FrameInfo = STACK[0]) -> Frame:
+        # noinspection PyArgumentList
+        file = cls(frame.filename)
+        init = file.find_up(name='__init__.py').path
+        path = init.parent if init else file.parent
+        globs = frame.frame.f_globals.copy()
+        root = path.parent
+        spec = globs.get('__spec__', ModuleSpec())
+        relative = file.relative_to(root)
+        _name = globs.get('__name__')
+        name = spec.name if spec else _name if _name and _name != MODULE_MAIN else file.to_name(relative)
+        package = globs.get('__package__') or (name.split('.')[0] if name else path.name if path else None)
+
+        return Frame(file=file, init=init,
+                     module=name.rpartition('.')[2] if name else getmodulename(file.text) if file else None,
+                     name=name, package=package, path=path, relative=relative, root=root, spec=spec)
 
     @property
     def parent_if_file(self) -> Path:
@@ -628,10 +647,16 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
         p.chown(group=group, u=u)
         return p
 
+    def to_name(self, relative: Path) -> str:
+        return '.'.join([i.removesuffix(self.suffix) for i in self.relative_to(relative).parts])
+
     @property
     def str(self) -> str:
         return self.text
 
+
+FindUp = NamedTuple('FindUp', path=Optional[Path], previous=Optional[Path])
+GitTop = NamedTuple('GitTop', name=str, origin=furl, path=Path)
 
 PathLike.register(Path)
 PathUnion = Union[Path, pathlib.Path, str]

@@ -8,6 +8,7 @@ __all__ = (
 import typer
 
 from ._project import project
+from ._project import TESTS
 
 
 @project.cli.command(name=project.clsname(True))
@@ -15,6 +16,12 @@ def project_cmd(ctx: typer.Context):
     """Project info."""
     print(ctx.command.name)
     # ic(dataasdict(project))
+
+
+@project.cli.command(name=TESTS)
+def tests_cmd(main: bool = False):
+    """Project info."""
+    print(project.main.file if main else project.init.file)
 
 
 @project.cli.command(name='version')

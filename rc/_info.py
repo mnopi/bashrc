@@ -2,19 +2,13 @@
 """Info Module."""
 from __future__ import annotations
 
-__all__ = (
-    'ModuleSpec',
-    'STACK',
-    'info',
-    'caller',
-)
-
 import importlib
 import inspect
 from asyncio import iscoroutine
 from asyncio import iscoroutinefunction
 from contextlib import suppress
-from dataclasses import InitVar
+from dataclasses import Field
+from functools import cache
 from inspect import getargvalues
 from inspect import getmodulename
 from inspect import isasyncgen
@@ -22,6 +16,7 @@ from inspect import isasyncgenfunction
 from inspect import isawaitable
 
 from dataclasses import fields
+from sysconfig import get_paths
 from typing import Callable
 
 from dataclasses import field
@@ -31,19 +26,38 @@ from inspect import FrameInfo
 from typing import Any
 from typing import Iterable
 from typing import List
+from typing import NamedTuple
 from typing import Optional
 from typing import Union
 
+from box import Box
 
 from ._path import *
 from .enums import *
 from .utils import *
 
+__all__ = (
+    'REPO_VAR',
+    'PYPI_VAR',
+    'SYS_PATHS',
 
-ModuleSpec = importlib._bootstrap.ModuleSpec
+    'ModuleSpec',
+
+    'Frame',
+
+    'info',
+    'caller',
+    'package',
+)
+
 REPO_VAR = varname(1, lower=False)
 PYPI_VAR = varname(1, lower=False)
-STACK = inspect.stack()
+SYS_PATHS = Box({key: Path(value) for key, value in get_paths().items()})
+
+ModuleSpec = importlib._bootstrap.ModuleSpec
+
+Frame = NamedTuple('Frame', file=Path, globs=dict, init=Path, locs=dict, module=str, name=str, package=str, path=Path,
+                   relative=Path, root=Path, spec=Optional[ModuleSpec])
 
 
 @dataclass
@@ -59,26 +73,17 @@ class info(_base):
     ignore: bool = False
     swith: str = '__'
 
-    bapy: Any = field(default=1, init=False)
-    context: int = field(default=1, init=False)
-    filtered: bool = field(default=False, init=False)
-    _frame: Optional[FrameType] = field(default=None, init=False)
-    index: int = field(default=2, init=False)
-    lower: bool = field(default=True, init=False)
-    prop: Optional[bool] = field(default=None, init=False)
-    stack: List[FrameInfo] = field(default=None, init=False)
+    context: Union[int, Field] = field(default=1, init=False)
+    filtered: Union[bool, Field] = field(default=False, init=False)
+    index: Union[int, Field] = field(default=2, init=False)
+    lower: Union[bool, Field] = field(default=True, init=False)
+    main: Frame = Path.package()
+    prop: Union[Optional[bool], Field] = field(default=None, init=False)
+    stack: Union[Optional[List[FrameInfo]], Field] = field(default=None, init=False)
 
-    init: InitVar[bool] = False
-
-    def __post_init__(self, init: bool):
-        if init and self.stack is None:
-            self.stack = STACK
-            self.bapy = self(index=0)
-            self()
-
-    def __call__(self, index: int = index, context: int = context, depth: Optional[int] = depth,
-                 filtered: bool = filtered, ignore: bool = ignore, lower: bool = lower,
-                 stack: Optional[List[FrameInfo]] = None, swith: str = swith) -> info:
+    def __call__(self, index: int = index.default, context: int = context.default, depth: Optional[int] = depth,
+                 filtered: bool = filtered.default, ignore: bool = ignore, lower: bool = lower.default,
+                 stack: Optional[List[FrameInfo]] = stack.default, swith: str = swith) -> info:
         """
         Caller var name.
 
@@ -110,6 +115,7 @@ class info(_base):
         Returns:
             Optional[str, info]:
         """
+        ic(index)
         self.index = index
         self.context = context
         self.depth = depth
@@ -117,12 +123,66 @@ class info(_base):
         self.ignore = ignore
         self.lower = lower
         self.swith = swith
-        if not self.stack or stack:
-            self.stack = stack or inspect.stack(self.context)
+
+        self.stack = stack or inspect.stack(self.context)
+
         if context := self.locs.get('stack_context'):
             self.context = context
             self.stack = inspect.stack(self.context)
         return self
+
+    def __call__1(self, index: int = index.default, context: int = context.default, depth: Optional[int] = depth,
+                 filtered: bool = filtered.default, ignore: bool = ignore, lower: bool = lower.default,
+                 stack: Optional[List[FrameInfo]] = stack.default, swith: str = swith) -> info:
+        """
+        Caller var name.
+
+        Examples:
+
+            .. code-block:: python
+                caller = info()
+
+                class A:
+
+                    def __init__(self):
+
+                        self.instance = varname()
+
+                a = A()
+
+                var = caller(1, name=True)
+
+        Args:
+            index: index.
+            context: stack context.
+            depth: depth.
+            filtered: filter globs and locs.
+            ignore: ignore.
+            lower: var name lower.
+            stack: stack for real caller.
+            swith: swith.
+
+        Returns:
+            Optional[str, info]:
+        """
+        ic(index)
+        self.index = index
+        self.context = context
+        self.depth = depth
+        self.filtered = filtered
+        self.ignore = ignore
+        self.lower = lower
+        self.swith = swith
+
+        self.stack = stack or inspect.stack(self.context)
+
+        if context := self.locs.get('stack_context'):
+            self.context = context
+            self.stack = inspect.stack(self.context)
+        return self
+
+    def __hash__(self):
+        return hash((self.index, self.context, self.depth, self.filtered, self.ignore, self.lower, self.swith, ))
 
     @property
     def args(self) -> Optional[dict]:
@@ -148,7 +208,7 @@ class info(_base):
     @property
     def code(self) -> list:
         try:
-            return self.frame.code_context
+            return self.frame().code_context
         except AttributeError:
             return list()
 
@@ -180,23 +240,14 @@ class info(_base):
             rv = self.data
         return rv
 
-    @property
-    def file(self) -> Optional[Path]:
-        try:
-            return Path(self.frame.filename).resolved
-        except AttributeError:
-            pass
-
-    @property
-    def frame(self) -> Optional[FrameInfo]:
+    @cache
+    def frame(self) -> Frame:
         if self.stack:
             try:
-                self._frame = self.stack[self.index]
+                return self.stack[self.index]
             except IndexError:
                 self.index -= 1
-                self._frame = self.stack[self.index]
-            self.data = self._frame.frame
-            return self._frame
+                return self.stack[self.index]
 
     @property
     def func(self) -> Optional[Union[Callable, property]]:
@@ -214,14 +265,14 @@ class info(_base):
     @property
     def function(self) -> Optional[str]:
         try:
-            return self.frame.function
+            return self.frame().function
         except AttributeError:
             pass
 
     @property
     def globs(self) -> dict:
         try:
-            return self.data.f_globals.copy()
+            return self.frame().frame.f_globals.copy()
         except AttributeError:
             return dict()
 
@@ -248,7 +299,7 @@ class info(_base):
     def gittop(self) -> Optional[GitTop]:
         file = self.file
         # noinspection PyArgumentList
-        return file.gittop if file else GitTop()
+        return file.git if file else GitTop()
 
     @property
     def id(self) -> Optional[CallerID]:
@@ -260,9 +311,73 @@ class info(_base):
         except (IndexError, TypeError):
             pass
 
-    @property
-    def imported(self) -> bool:
-        return self.index == 1
+    @classmethod
+    def init(cls):
+        index = 0
+        count = len(STACK)
+        ic(STACK[0].filename)
+        found = False
+        if count > 1:
+            index = 1
+            ic(index, len(STACK[index:]))
+            for frame in STACK[index:]:
+                index += 1
+                file_path = Path(frame.filename)
+                spec = frame.frame.f_globals.get('__spec__')
+                ic(file_path, index)
+                if all([getattr(spec, 'has_location', None),
+                        frame.index == 0,
+                        not file_path.is_relative_to(_main.path),
+                        not _main.path.is_relative_to(file_path.parent),  # setup.py
+                        frame.function == FUNCTION_MODULE,
+                        'PyCharm' not in file_path,
+                        not file_path.installedbin,
+                        file_path.suffix,
+                        not file_path.is_relative_to(SYS_PATHS.stdlib),
+                        not file_path.is_relative_to(SYS_PATHS.purelib),
+                        not file_path.is_relative_to(SYS_PATHS.include),
+                        not file_path.is_relative_to(SYS_PATHS.platinclude),
+                        not file_path.is_relative_to(SYS_PATHS.scripts),
+                        ]):
+                    found = True
+                    ic(file_path, found)
+                    break
+        ic(STACK[0 if count == 1 or not found else index], 0 if count == 1 or not found else index)
+        return cls()(index=0 if count == 1 or not found else index, stack=STACK)
+
+    @classmethod
+    def _init(cls, init: bool = True):
+        index = 0
+        count = len(STACK)
+        ic(STACK[0].filename)
+        found = False
+        if count > 1:
+            index = 1
+            ic(index, len(STACK[index:]))
+            for frame in STACK[index:]:
+                index += 1
+                file_path = Path(frame.filename)
+                spec = frame.frame.f_globals.get('__spec__')
+                ic(file_path, index)
+                if all([all([getattr(spec, 'has_location', None),
+                        frame.index == 0,
+                        not file_path.is_relative_to(_main.path),
+                        not _main.path.is_relative_to(file_path.parent),  # setup.py
+                        frame.function == FUNCTION_MODULE,
+                        'PyCharm' not in file_path]) if init else True,
+                        not file_path.installedbin,
+                        file_path.suffix,
+                        not file_path.is_relative_to(SYS_PATHS.stdlib),
+                        not file_path.is_relative_to(SYS_PATHS.purelib),
+                        not file_path.is_relative_to(SYS_PATHS.include),
+                        not file_path.is_relative_to(SYS_PATHS.platinclude),
+                        not file_path.is_relative_to(SYS_PATHS.scripts),
+                        ]):
+                    found = True
+                    ic(file_path, found)
+                    break
+        ic(STACK[0 if count == 1 or not found else index], 0 if count == 1 or not found else index)
+        return cls()(index=0 if count == 1 or not found else index, stack=STACK)
 
     @property
     def installed(self) -> Optional[Path]:
@@ -272,6 +387,10 @@ class info(_base):
 
     def instance(self, cls: Union[tuple, Any]) -> bool:
         return isinstance(self.data, cls)
+
+    @property
+    def instance_name(self,) -> str:
+        return varname()
 
     @property
     def iscoro(self) -> bool:
@@ -291,7 +410,7 @@ class info(_base):
     @property
     def lineno(self) -> Optional[int]:
         try:
-            return self.frame.lineno
+            return self.frame().lineno
         except AttributeError:
             return None
 
@@ -299,45 +418,9 @@ class info(_base):
     def list(self) -> bool:
         return self.instance(list)
 
-    @property
-    def locs(self) -> dict:
-        try:
-            return self.data.f_locals.copy()
-        except AttributeError:
-            return dict()
-
-    @property
-    def modname(self) -> Optional[GitTop]:
-        name = self.name
-        file = self.file
-        return name.rpartition('.')[2] if name else getmodulename(file.text) if file else None
-        pass
-
-    @property
-    def name(self) -> Optional[str]:
-        name = self.globs.get('__name__')
-        spec = self.spec
-        file = self.file
-        return spec.name if spec else name if name and name != MODULE_MAIN else \
-            '.'.join([i.removesuffix(file.suffix) for i in file.relative_to(self.path.parent).parts])
-
     def new(self, data: Any = None, /, **kwargs) -> info:
         return info(**{f.name: getattr(self, f.name) for f in fields(self)} | dict(
             data=self.data if data is None else data) | kwargs)
-
-    @property
-    def package(self) -> Optional[str]:
-        name = self.name
-        path = self.path
-        return self.globs.get('__package__') or (name.split('.')[0] if name else path.name if path else None)
-
-    @property
-    def path(self) -> Optional[Path]:
-        return rv.parent if (rv := self.file.find_up(name='__init__.py').path) else self.file.parent
-
-    @property
-    def prefix(self) -> Optional[str]:
-        return prefixed(self.package)
 
     @property
     def qual(self) -> Optional[str]:
@@ -350,17 +433,7 @@ class info(_base):
 
     @property
     def repo(self) -> Optional[str]:
-        return self.gittop.name or self.globs.get(REPO_VAR)
-
-    @property
-    def spec(self) -> Optional[ModuleSpec]:
-        return self.globs.get('__spec__')
-
-    @property
-    def spec_origin(self) -> Optional[Path]:
-        spec = self.spec
-        file = self.file
-        return spec.origin if spec else file.parent if file else None
+        return self.gittop.name or self.repo_var
 
     @property
     def sync(self) -> Optional[bool]:
@@ -386,5 +459,6 @@ class info(_base):
 # TODO: ver que hago con el nombre del paquete.
 # TODO: la variable de REPO_VAR y el usuario y el repo url meterlo en el _info.
 
-
 caller = info()
+_main = info.main()
+package = info.init()

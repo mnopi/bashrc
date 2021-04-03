@@ -1,5 +1,4 @@
+async_property
 datamodel-code-generator
-hypothesis
-sqlalchemy
 orjson
 ujson

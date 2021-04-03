@@ -3,6 +3,7 @@ devtools
 furl
 gitpython
 icecream
+intervaltree
 pip
 psutil
 pydantic
