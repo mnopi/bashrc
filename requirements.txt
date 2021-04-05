@@ -1,4 +1,5 @@
 bump2version
+config-path
 devtools
 furl
 gitpython

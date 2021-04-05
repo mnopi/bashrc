@@ -7,6 +7,7 @@ from tests.data.frame import A
 from tests.data.frame import context
 from tests.data.frame import thread
 from tests.data.frame import thread2
+from tests.data.frame import *
 
 
 def test_data_c():
@@ -22,7 +23,6 @@ def test_data_c():
     assert A.c_1[0].function.cls == A.__name__
     assert classmethod.__name__ in A.c_1[0].function.decorators
     assert A.c_1[0].function.module is False
-    icc(A.c_1[0].function.qual)
     assert A.c_1[0].function.qual == A.c.__qualname__
     assert A.c_1[0].function.sync is True
     assert A.c_1[0].function.name == A.c.__name__
@@ -36,11 +36,22 @@ def test_data_c():
 
 
 def test_data_asyncgen():
+    assert context.no_sync.caller == context.no_sync.stack[CALL_INDEX]
+    assert context.no_sync.stack[0].file.INCLUDE is True
+    assert context.no_sync.stack[0].function.decorators == list()
+    assert context.no_sync.stack[0].function.name == asynccontext_call_async.__name__
+    assert context.no_sync.stack[0].info.real == 0
+    assert context.no_sync.stack[0].info.ASYNC is True
+    assert context.no_sync.stack[0].line.ASYNC is True
+    assert context.no_sync.stack[CALL_INDEX].file.INCLUDE is True
+    assert context.no_sync.stack[CALL_INDEX].function.name == asynccontext.__name__
+    assert context.no_sync.stack[CALL_INDEX].info.real == 0
+    assert context.no_sync.stack[CALL_INDEX].info.ASYNC is True
     icc(context)
-    print()
-    icc(thread)
-    print()
-    icc(thread2)
+    # print()
+    # icc(thread)
+    # print()
+    # icc(thread2)
 
 
 test_data_c()

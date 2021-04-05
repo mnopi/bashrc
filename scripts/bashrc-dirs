@@ -24,7 +24,7 @@ export KEYNOTE="${MOBILE}/com~apple~Keynote/Documents"
 export NUMBERS="${MOBILE}/com~apple~Numbers/Documents"
 export PAGES="${MOBILE}/com~apple~Pages/Documents"
 
-export JETBRAINS="${SUPPORT}/JetBrains"
+export JETBRAINS="${SUPPORT}/${JETBRAINS_NAME}"
 export PYCHARM="${JETBRAINS}/PyCharm${PYCHARM_VERSION}"
 export PYCHARM_OPTIONS="${PYCHARM}/options"
 

@@ -11,14 +11,15 @@ UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
 export USERNAME="jose"
 USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
 export PASSWD_PATH="${USERHOME}/.passwd"
-export BASHRC_FILE="bashrc"
+export BASHRC_FILE="${BASH_RC_NAME}"
 export BASHRC="${USERHOME}/bashrc"
 export GITHUB_USERNAME="j5pu"
-export GITHUB_EMAIL="${GITHUB_USERNAME}@github.com"
-export GITHUB_URL="https://github.com/${GITHUB_USERNAME}"
+export GITHUB_DOMAIN="github.com"
+export GITHUB_EMAIL="${GITHUB_USERNAME}@${GITHUB_DOMAIN}"
+export GITHUB_URL="https://${GITHUB_DOMAIN}/${GITHUB_USERNAME}"
 export GITHUB_SECRETS_PATH="${USERHOME}/.ssh"
 export GIT_STORE="${GITHUB_SECRETS_PATH}/gitcredentials"
-export ATHENS_GONOSUM_PATTERNS="github.com/${GITHUB_ORGANIZATION}/*"
+export ATHENS_GONOSUM_PATTERNS="${GITHUB_DOMAIN}/${GITHUB_ORGANIZATION}/*"
 export SECRETS_REPO="secrets"
 export SECRETS_PATH="${GITHUB_SECRETS_PATH}/secrets"
 export ICLOUD_BASENAME="iCloud"
@@ -28,6 +29,9 @@ if test -n "${DARWIN}"; then
 #             | sed "s|~|${USERHOME}|" )"
   MACDEV="${HOME}/${MACDEV_BASENAME}"; export MACDEV
   REALNAME="$( dscl . -read /Users/"${USERNAME}" RealName RealName | sed -n 's/^ //g;2p' )"
+  export PYCHARM_NAME='PyCharm'
+
+  export PYCHARM_VERSION="2020.3"
 else
   REALNAME="$( id -nu )"
 
@@ -58,9 +62,8 @@ export EDITOR=vi
 
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
-export GITHUB_DOMAIN="github.com"
 export GIT_COMMAND="git"
-export GIT_PREFIX="git@${GITHUB_DOMAIN}.com:"
+export GIT_PREFIX="${GIT_COMMAND}@${GITHUB_DOMAIN}.com:"
 export GITHUB_DESKTOP_PROCESS="GitHub Desktop"
 export GITHUB_DESKTOP="/Applications/${GITHUB_DESKTOP_PROCESS}.app"
 
@@ -75,6 +78,9 @@ export ICLOUD_NICK="i"
 export INTERNET_HASH="$(! command -v openssl >/dev/null 2>&1 || openssl passwd -1 -salt xyz "${INTERNET}")"
 
 export INVERSO="\[\033[00m\]"
+
+export JETBRAINS_NAME='JetBrains'
+
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LIBRARY_NICK="l"
@@ -97,7 +103,7 @@ export PROMPT_COMMAND='history -a;history -r'
 export PS1_SSH_THE_SAME="yes"
 export PS4="$(tty -s && tput setaf 5)+\$(echo \${BASH_SOURCE[0]}:\${LINENO}) $(tty -s && tput setaf 3)\$(echo \${LINENO} | sed 's/\$/@/g')\$(echo \${BASH_LINENO[*]} | awk '{\$NF=\"\"; print \$0}' | sed 's/ \$//g'| sed 's/ /@/g')$(tty -s && tput sgr0):$(tty -s && tput setaf 5)\$(echo \${FUNCNAME[*]} | sed 's/ /\//g')$(tty -s && tput sgr0)$ "
 
-export PYCHARM_VERSION="2020.3"
+
 
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONUNBUFFERED=1

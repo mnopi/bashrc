@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+BASH_RC_NAME="$( basename "${BASH_SOURCE[0]}" )"; export BASH_RC_NAME
+echo "BASH_RC_NAME: ${BASH_RC_NAME}"
+
+_dir="$( dirname "${BASH_SOURCE[0]}" )"
+cd "${_dir}" || exit 1
+BASH_RC_DIR="$( pwd )"; export BASH_RC_DIR
+echo "BASH_RC_DIR: ${BASH_RC_DIR}"
+cd - 1>/dev/null || exit 1
+
+BASH_RC_PATH="${BASH_RC_DIR}/${BASH_RC_NAME}"; export BASH_RC_PATH
+echo "BASH_RC_PATH: ${BASH_RC_PATH}"
+
+BASH_RC_FILES_PREFIX_PATH="${BASH_RC_PATH}/${BASH_RC_NAME}"; export BASH_RC_FILES_PREFIX_PATH
+echo "BASH_RC_FILES_PREFIX_PATH: ${BASH_RC_FILES_PREFIX_PATH}"
+
+unset unset _dir

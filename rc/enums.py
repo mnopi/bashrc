@@ -12,6 +12,11 @@ __all__ = (
 
 import collections
 import enum
+from asyncio import get_running_loop
+from concurrent.futures.process import ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor
+from functools import partial
+from typing import Any
 from typing import NamedTuple
 from typing import Optional
 from typing import Union
@@ -33,6 +38,39 @@ class ChainRV(enum.Enum):
     ALL = enum.auto()
     FIRST = enum.auto()
     UNIQUE = enum.auto()
+
+
+class Executor(enum.Enum):
+    PROCESS = ProcessPoolExecutor
+    THREAD = ThreadPoolExecutor
+    NONE = None
+
+    async def run(self, func: Any, *args: Any, **kwargs: Any) -> Any:
+        """
+        Run in :lib:func:`loop.run_in_executor` with :class:`concurrent.futures.ThreadPoolExecutor`,
+            :class:`concurrent.futures.ProcessPoolExecutor` or
+            :lib:func:`asyncio.get_running_loop().loop.run_in_executor` or not poll.
+
+        Args:
+            func: func
+            *args: args
+            **kwargs: kwargs
+
+        Raises:
+            ValueError: ValueError
+
+        Returns:
+            Awaitable:
+        """
+        loop = get_running_loop()
+        call = partial(func, *args, **kwargs)
+        if not func:
+            raise ValueError
+
+        if self.value:
+            with self.value() as p:
+                return await loop.run_in_executor(p, call)
+        return await loop.run_in_executor(self.value, call)
 
 
 _FrameID = NamedTuple('_FrameID', code=str, decorator=Union[list, str], function=str, parts=Union[list, str],

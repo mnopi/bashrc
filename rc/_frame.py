@@ -3,7 +3,9 @@ from __future__ import annotations
 import ast
 import inspect
 import sys
+import sysconfig
 from functools import cache
+from typing import Any
 from typing import Iterable
 from typing import NamedTuple
 from typing import Optional
@@ -17,12 +19,22 @@ from .exceptions import *
 from .utils import *
 
 __all__ = (
+    'CALL_INDEX',
+    'FRAME_SYS_INIT',
+    'FrameSysType',
+    'SYS_PATHS',
+    'SYS_PATHS_EXCLUDE',
+
     'Frame',
     'Stack',
 )
 
-SYS_FRAME_INIT = sys._getframe(0)
-SysFrameType = type(SYS_FRAME_INIT)
+CALL_INDEX = 1
+FRAME_SYS_INIT = sys._getframe(0)
+FrameSysType = type(FRAME_SYS_INIT)
+SCRATCHES_INCLUDE_DEFAULT = False
+SYS_PATHS = {key: Path(value) for key, value in sysconfig.get_paths().items()}
+SYS_PATHS_EXCLUDE = [SYS_PATHS[item] for item in ['stdlib', 'purelib', 'include', 'platinclude', 'scripts']]
 
 # TODO: Probar lo de func_code que esta en scratch_4.py
 #   añadir los casos de llamada de async que había mirado
@@ -32,10 +44,10 @@ SysFrameType = type(SYS_FRAME_INIT)
 #   que hago con asyncio.run en modulo o con las funciones si son de main!!!
 
 
-File = NamedTuple('File', include=bool, exists=int, path=Path)
-Function = NamedTuple('Function', cls=str, decorators=list, module=bool, name=str, qual=str, sync=bool)
-Info = NamedTuple('Info', module=bool, real=Optional[int], sync=bool)
-Line = NamedTuple('Line', code=list[str], lineno=int, sync=bool)
+File = NamedTuple('File', INCLUDE=bool, exists=int, path=Path)
+Function = NamedTuple('Function', ASYNC=bool, cls=str, decorators=list, module=bool, name=str, qual=str)
+Info = NamedTuple('Info', ASYNC=bool, module=bool, real=Optional[int])
+Line = NamedTuple('Line', ASYNC=bool, code=list[str], lineno=int)
 Var = NamedTuple('Var', args=dict, globals=dict, locals=dict)
 
 IntervalBase = NamedTuple('IntervalBase', begin=int, end=int, data=ast.AST)
@@ -48,8 +60,8 @@ class Frame:
     def __hash__(self):
         return hash((self.frame, self.module))
 
-    def __init__(self, frame: SysFrameType):
-        self.frame: SysFrameType = frame
+    def __init__(self, frame: FrameSysType):
+        self.frame: FrameSysType = frame
         self.functions: IntervalTree[IntervalType, ...] = IntervalTree()
         self.lines: dict[int, set[ast.AST, ...]] = dict()
         self.module: bool = self.frame.f_code.co_name == FUNCTION_MODULE
@@ -73,6 +85,17 @@ class Frame:
     def file(self) -> File:
         p = Path(inspect.getsourcefile(self.frame) or inspect.getfile(self.frame))
         return File(exists=p.resolved.exists(), include=file_include(p.text), path=p)
+
+    @classmethod
+    def file_include(cls, file: Path, scratches: bool = False) -> bool:
+        if not file.resolved.exists():
+            return False
+        if scratches and 'scratches' in file:
+            return True
+        for f in SYS_PATHS_EXCLUDE:
+            if file.is_relative_to(f):
+                return False
+        return True
 
     @property
     @cache
@@ -104,6 +127,10 @@ class Frame:
         for i in FrameID:
             if i.value.function == self.frame.f_code.co_name and i.value.parts in self.file.path:
                 return i
+
+    @classmethod
+    def include_file(cls):
+        pass
 
     @classmethod
     def interval(cls, node: ast.AST) -> tuple[int, int]:
@@ -161,7 +188,7 @@ class Frame:
                 break
         return Info(module=self.module,
                     real=rv.value.real if rv else int() if self.file.include else None,
-                    sync=rv.value.sync if rv else self.line.sync or self.function.sync)
+                    sync=rv.value.ASYNC if rv else self.line.sync or self.function.sync)
 
     @property
     @cache
@@ -177,13 +204,13 @@ class Stack(tuple[Frame]):
 
     def __new__(cls, init: bool = False):
         fs = list()
-        frame = SYS_FRAME_INIT if init else sys._getframe(1)
+        frame = FRAME_SYS_INIT if init else sys._getframe(1)
         while frame:
             fs.append(Frame(frame))
             frame = frame.f_back
         return tuple.__new__(Stack, fs)
 
-    def __call__(self, index: int = 2) -> Frame:
+    def __call__(self, index: int = CALL_INDEX) -> Frame:
         return self[index]
 
     def __repr__(self):

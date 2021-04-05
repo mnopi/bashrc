@@ -41,8 +41,6 @@ __all__ = (
     'PYTHON_SITE',
     'SUDO_USER',
     'SUDO',
-    'SYS_PATHS',
-    'SYS_PATHS_EXCLUDE',
 
     'debug',
     'fm',
@@ -76,9 +74,6 @@ PYTHON_SYS = sys.executable
 PYTHON_SITE = str(pathlib.Path(PYTHON_SYS).resolve())
 SUDO_USER = getenv('SUDO_USER')
 SUDO = bool(SUDO_USER)
-SYS_PATHS = get_paths()
-SYS_PATHS_EXCLUDE = (SYS_PATHS['stdlib'], SYS_PATHS['purelib'], SYS_PATHS['include'], SYS_PATHS['platinclude'],
-                     SYS_PATHS['scripts'])
 
 debug = Debug(highlight=True)
 fm = pformat
@@ -232,16 +227,6 @@ def dict_sort(data: dict, ordered: bool = False, reverse: bool = False) -> Union
     return rv.copy()
 
 
-def file_include(file: Any, scratches: bool = False) -> bool:
-    file = str(file)
-    if not pathlib.Path(file).resolve().exists():
-        return False
-    if scratches and 'scratches' in file:
-        return True
-    for f in SYS_PATHS_EXCLUDE:
-        if f in file:
-            return False
-    return True
 
 
 def join_new(data: list) -> str:

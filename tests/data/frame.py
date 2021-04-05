@@ -4,11 +4,25 @@ from asyncio import as_completed
 from asyncio import create_task
 from asyncio import to_thread
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from typing import Optional
 
 from async_property import async_property
 
 from rc import *
+from rc.enums import Executor
+
+
+@dataclass
+class CallerStack:
+    caller: Frame
+    stack: Stack
+
+
+@dataclass
+class NoSyncSync:
+    no_sync: CallerStack
+    sync: CallerStack
 
 
 class A:
@@ -68,20 +82,23 @@ def func():
 
 async def asynccontext_call_async():
     s = Stack()
-    return s
+    rv = CallerStack(caller=s(), stack=s)
+    return rv
 
 
 def asynccontext_call_sync():
     s = Stack()
-    return s
+    rv = CallerStack(caller=s(), stack=s)
+    return rv
 
 
 @asynccontextmanager
 async def asynccontext():
     no_sync = await asynccontext_call_async()
-    sync = await to_thread(asynccontext_call_sync)
+    sync = await Executor.NONE.run(asynccontext_call_sync)
+    rv = NoSyncSync(no_sync=no_sync, sync=sync)
     try:
-        yield no_sync, sync
+        yield rv
     finally:
         pass
 
