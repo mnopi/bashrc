@@ -3,7 +3,7 @@
 # shellcheck disable=SC2034
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-test -n "${BASH_RC_FILE}" || { error.bash BASH_RC_FILE 'not defined'; exit 1; }
+test -n "${BASH_RC_FILE}" || { error.sh BASH_RC_FILE 'not defined'; exit 1; }
 
 function home_bashrc() {
   local starting
