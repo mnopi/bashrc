@@ -50,6 +50,6 @@ setup(
     # setup_requires=[],
     # tests_require=[],
     # url=f'{GITHUB_URL}/',
-    version='0.31.83',
+    version='0.31.84',
     zip_safe=False,
 )
