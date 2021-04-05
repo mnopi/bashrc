@@ -17,7 +17,7 @@ function home_bashrc() {
 if test -f  "${BASH_RC_PATH}"; then
   source "${BASH_RC_PATH}"
 else
-  echo '${BASH_RC_NAME} file not found'; return 1
+  echo 'BASH_RC_PATH: ${BASH_RC_PATH} file not found'; return 1
 fi
 EOT
   then

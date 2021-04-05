@@ -14,7 +14,7 @@ function source_files() {
     if test -f "${_script}"; then
       source "${_script}"
     else
-      error.sh "${_script}" "not found"; return 1
+      error.sh "$1 ${_script}" "not found"; return 1
     fi
     shift
   done
