@@ -32,7 +32,6 @@ __all__ = (
 CALL_INDEX = 1
 FRAME_SYS_INIT = sys._getframe(0)
 FrameSysType = type(FRAME_SYS_INIT)
-SCRATCHES_INCLUDE_DEFAULT = False
 SYS_PATHS = {key: Path(value) for key, value in sysconfig.get_paths().items()}
 SYS_PATHS_EXCLUDE = [SYS_PATHS[item] for item in ['stdlib', 'purelib', 'include', 'platinclude', 'scripts']]
 

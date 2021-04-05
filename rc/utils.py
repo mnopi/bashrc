@@ -18,7 +18,6 @@ from os import getenv
 from pprint import pformat
 from reprlib import recursive_repr
 from subprocess import CompletedProcess
-from sysconfig import get_paths
 from types import SimpleNamespace as Simple
 from typing import Any
 from typing import Callable
@@ -57,7 +56,6 @@ __all__ = (
     'current_task_name',
     'del_key',
     'dict_sort',
-    'file_include',
     'join_new',
     'prefixed',
     'repr_format',
@@ -225,8 +223,6 @@ def dict_sort(data: dict, ordered: bool = False, reverse: bool = False) -> Union
     if ordered:
         return OrderedDict(rv)
     return rv.copy()
-
-
 
 
 def join_new(data: list) -> str:

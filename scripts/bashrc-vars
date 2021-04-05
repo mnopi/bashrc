@@ -105,6 +105,7 @@ export PYTHONNOUSERSITE=0
 
 export ROJO="\[\033[1;31m\]"
 
+export SCRATCHES_NAME='scratches'
 export SCRIPTS_BASENAME="scripts"
 export SCHEME="https"
 

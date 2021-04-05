@@ -147,10 +147,10 @@ function home_links() {
       ln -s "${USERHOME}/Library/Mobile Documents/com~apple~CloudDocs" "${ICLOUD}"
     fi
 
-    mkdir -p "${PYCHARM}/scratches/"
+    mkdir -p "${PYCHARM_SCRATCHES}/"
     ! test -e "${SCRATCHES}" || rm "${SCRATCHES}"
-    if test -d "${PYCHARM}/scratches/" && ! test -d "${SCRATCHES}" && ! test -L "${SCRATCHES}"; then
-      ln -s "${PYCHARM}/scratches/" "${SCRATCHES}"
+    if test -d "${PYCHARM_SCRATCHES}/" && ! test -d "${SCRATCHES}" && ! test -L "${SCRATCHES}"; then
+      ln -s "${PYCHARM_SCRATCHES}/" "${SCRATCHES}"
     fi
   fi
 }
