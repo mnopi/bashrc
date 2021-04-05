@@ -3,33 +3,28 @@
 # shellcheck disable=SC2034
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-test -n "${BASHRC_FILE}" || { error.bash BASHRC_FILE 'not defined'; return 1; }
+test -n "${BASH_RC_FILE}" || { error.bash BASH_RC_FILE 'not defined'; exit 1; }
 
 function home_bashrc() {
-  local bashrc_path
   local starting
   export starting="${FUNCNAME[0]}"; debug.sh starting
-  if bashrc_path="$( command -v "${BASHRC_FILE}" 2>&1 )"; then
 #    echo '# shellcheck disable=SC1090' | sudo -u "${1}" tee "${2}" >/dev/null
     # shellcheck disable=SC2016
 #    echo 'test -n "${PS1}" || return' | sudo -u "${1}" tee -a "${2}" >/dev/null
 #    if sudo -u "${1}" tee -a "${2}" >/dev/null <<EOT; then
     if sudo -u "${1}" tee "${2}" >/dev/null <<EOT
 # shellcheck disable=SC1090
-if test -f  "${bashrc_path}"; then
-  source "${bashrc_path}"
+if test -f  "${BASH_RC_FILE}"; then
+  source "${BASH_RC_FILE}"
 else
   echo 'bashrc file not found'; return 1
 fi
 EOT
     then
-      info.sh homefiles "${2}" "${bashrc_path}"
+      info.sh homefiles "${2}" "${BASH_RC_FILE}"
     else
         return 1
     fi
-  else
-    error.sh files "${2}" "${BASHRC_FILE} - command not found"; return 1
-  fi
 }
 
 function home_hushlogin () {
@@ -58,8 +53,8 @@ function home_profiles () {
   if sudo -u "${1}" tee "${2}" >/dev/null <<EOT
 # shellcheck disable=SC1090
 PATH='/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:.'
-if [[ -f ~/.bashrc ]]; then
-  . ~/.bashrc
+if [[ -f ~/.${BASH_RC_NAME} ]]; then
+  . ~/.${BASH_RC_NAME}
 fi
 EOT
  then
