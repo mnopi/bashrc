@@ -1,24 +1,27 @@
+from __future__ import annotations
+
+import ast
+import inspect
 import sys
-from inspect import findsource
-from inspect import FrameInfo
-from inspect import getargs
-from inspect import getfile
-from inspect import getsourcefile
-from inspect import isframe
-from inspect import istraceback
-from textwrap import dedent
+from functools import cache
+from typing import Iterable
+from typing import NamedTuple
 from typing import Optional
 
+from intervaltree import Interval
+from intervaltree import IntervalTree
+
 from ._path import *
+from .enums import *
+from .exceptions import *
 from .utils import *
 
 __all__ = (
-    'SYS_FRAME_INIT',
-    'SysFrameType',
+    'Frame',
+    'Stack',
 )
 
-SYS_FRAME_INIT = sys._getframe(1)
-
+SYS_FRAME_INIT = sys._getframe(0)
 SysFrameType = type(SYS_FRAME_INIT)
 
 # TODO: Probar lo de func_code que esta en scratch_4.py
@@ -29,45 +32,160 @@ SysFrameType = type(SYS_FRAME_INIT)
 #   que hago con asyncio.run en modulo o con las funciones si son de main!!!
 
 
+File = NamedTuple('File', include=bool, exists=int, path=Path)
+Function = NamedTuple('Function', cls=str, decorators=list, module=bool, name=str, qual=str, sync=bool)
+Info = NamedTuple('Info', module=bool, real=Optional[int], sync=bool)
+Line = NamedTuple('Line', code=list[str], lineno=int, sync=bool)
+Var = NamedTuple('Var', args=dict, globals=dict, locals=dict)
 
-class Frame(slots):
+IntervalBase = NamedTuple('IntervalBase', begin=int, end=int, data=ast.AST)
+IntervalType = Interval[IntervalBase]
 
-    __slots__ = ('args', 'argsc', 'code', 'code_context', 'context', 'file', 'frame', 'function', 'globs', 'include_file', 'index', 'lineno', 'locs', )
 
-    def __init__(self, context: int, frame: SysFrameType):
-        self.context: int = context
+class Frame:
+    __slots__ = ('frame', 'functions', 'lines', 'module')
+
+    def __hash__(self):
+        return hash((self.frame, self.module))
+
+    def __init__(self, frame: SysFrameType):
         self.frame: SysFrameType = frame
-        self.file: Path = Path(getsourcefile(self.frame) or getfile(self.frame))
-        self.function: str = self.frame.f_code.co_name
-        self.globs: dict = self.frame.f_globals.copy()
-        self.lineno: int = self.frame.f_lineno
-        self.locs: dict = self.frame.f_locals.copy()
-        self.include_file: bool = include_file(Path.text)
+        self.functions: IntervalTree[IntervalType, ...] = IntervalTree()
+        self.lines: dict[int, set[ast.AST, ...]] = dict()
+        self.module: bool = self.frame.f_code.co_name == FUNCTION_MODULE
 
-        start = self.lineno - 1 - context // 2
-        try:
-            lines, _ = findsource(self.frame)
-        except OSError:
-            self.code_context = self.index = None
-        else:
-            start = max(0, min(start, len(lines) - context))
-            self.code_context: list[str] = lines[start:start + context]
-            self.index: int = self.lineno - 1 - start
-            self.code: str = '\n'.join((map(dedent, self.code_context)))
+    def __repr__(self):
+        return repr_format(self, 'file function info line', newline=True)
 
-        args, varargs, varkw = getargs(frame.f_code)
+    @property
+    @cache
+    def code(self) -> Optional[list[str]]:
+        if self.line:
+            return
 
-        if self.instance(FrameType):
-            # argvalues = getargvalues(self.data)
-            self.args = {name: self.locs[name] for name in args} | (
-                {args.varargs: val} if (val := self.locs.get(args.varargs)) else dict()) | (
-                       kw if (kw := self.locs.get(args.keywords)) else dict())
-            return self.new(args).del_key()
+    @classmethod
+    def distance(cls, lineno: int, value: Iterable[IntervalType, ...]) -> Interval:
+        distance = {lineno - item.begin: item.data for item in value}
+        return Interval(min(distance.keys()), max(distance.keys()), distance)
 
-def frames(context: int = 1, init: bool = False) -> list[Frame]:
-    fs = list()
-    frame = SYS_FRAME_INIT if init else sys._getframe(1)
-    while frame:
-        fs.append(Frame(context, frame))
-        frame = frame.f_back
-    return fs
+    @property
+    @cache
+    def file(self) -> File:
+        p = Path(inspect.getsourcefile(self.frame) or inspect.getfile(self.frame))
+        return File(exists=p.resolved.exists(), include=file_include(p.text), path=p)
+
+    @property
+    @cache
+    def function(self) -> Function:
+        lineno = self.frame.f_lineno
+        function = self.frame.f_code.co_name
+        if self.module:
+            return Function(cls=str(), decorators=[], module=self.module, name=function,
+                            qual=function, sync=True)
+        if self.source:
+            if not (routines := self.functions[lineno]):
+                raise MatchError(file=self.file, lineno=lineno, function=function)
+            distance = self.distance(lineno, routines)
+            distance_min = distance.data[distance.begin]
+            if distance_min.name != function:
+                raise MatchError(file=self.file, lineno=lineno, name=distance_min.name,
+                                 function=function)
+            return Function(cls=distance.data[distance.end].name,
+                            decorators=[item.id for item in distance_min.decorator_list],
+                            module=self.module,
+                            name=function,
+                            qual='.'.join([distance.data[item].name for item in sorted(distance.data, reverse=True)]),
+                            sync=not isinstance(distance_min, ast.AsyncFunctionDef))
+        return Function(str(), [], module=self.module, name=str(), qual=str(), sync=True)
+
+    @property
+    @cache
+    def id(self) -> Optional[FrameID]:
+        for i in FrameID:
+            if i.value.function == self.frame.f_code.co_name and i.value.parts in self.file.path:
+                return i
+
+    @classmethod
+    def interval(cls, node: ast.AST) -> tuple[int, int]:
+        if hasattr(node, 'lineno'):
+            min_lineno = node.lineno
+            max_lineno = node.lineno
+            for node in ast.walk(node):
+                if hasattr(node, 'lineno'):
+                    min_lineno = min(min_lineno, node.lineno)
+                    max_lineno = max(max_lineno, node.lineno)
+            return min_lineno, max_lineno + 1
+
+    @property
+    @cache
+    def line(self) -> Line:
+        lineno = self.frame.f_lineno
+        sync = True
+        if self.source:
+            if not (line := self.lines[lineno]):
+                raise MatchError(file=self.file, lineno=lineno)
+            for node in line:
+                if isinstance(node, (ast.AsyncFor, ast.AsyncWith, ast.Await, )):
+                    sync = False
+                    break
+            return Line(
+                code=str(max({ast.get_source_segment(self.source, node) for node in line}, key=len)).split('\n'),
+                lineno=lineno,
+                sync=sync,
+            )
+        return Line(list(), lineno, sync)
+
+    @property
+    @cache
+    def source(self) -> Optional[str]:
+        if self.file.exists:
+            source = self.file.path.read_text_tokenize
+            for node in ast.walk(ast.parse(source, filename=self.file.path.text)):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    start, end = self.interval(node)
+                    self.functions[start:end] = node
+                elif hasattr(node, 'lineno'):
+                    if node.lineno not in self.lines:
+                        self.lines |= {node.lineno: set()}
+                    self.lines[node.lineno].add(node)
+                self.lines = dict_sort(self.lines)
+            return source
+
+    @property
+    @cache
+    def info(self) -> Info:
+        rv = None
+        for i in FrameID:
+            if i.value.function == self.frame.f_code.co_name and i.value.parts in self.file.path:
+                rv = i
+                break
+        return Info(module=self.module,
+                    real=rv.value.real if rv else int() if self.file.include else None,
+                    sync=rv.value.sync if rv else self.line.sync or self.function.sync)
+
+    @property
+    @cache
+    def var(self) -> Var:
+        locs = self.frame.f_locals.copy()
+        arg, varargs, keywords = inspect.getargs(self.frame.f_code)
+        return Var(args=del_key({name: locs[name] for name in arg} | ({varargs: val} if (
+            val := locs.get(varargs)) else dict()) | (kw if (kw := locs.get(keywords)) else dict())),
+                    globals=self.frame.f_globals.copy(), locals=locs)
+
+
+class Stack(tuple[Frame]):
+
+    def __new__(cls, init: bool = False):
+        fs = list()
+        frame = SYS_FRAME_INIT if init else sys._getframe(1)
+        while frame:
+            fs.append(Frame(frame))
+            frame = frame.f_back
+        return tuple.__new__(Stack, fs)
+
+    def __call__(self, index: int = 2) -> Frame:
+        return self[index]
+
+    def __repr__(self):
+        msg = f',{NEWLINE}'.join([f'[{self.index(item)}]: {self[self.index(item)]}' for item in self])
+        return f'{self.__class__.__name__}({NEWLINE}{msg}{NEWLINE})'

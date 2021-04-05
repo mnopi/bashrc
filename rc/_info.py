@@ -46,8 +46,8 @@ __all__ = (
     'Frame',
 
     'info',
-    'caller',
-    'package',
+    # 'caller',
+    # 'package',
 )
 
 REPO_VAR = varname(1, lower=False)
@@ -77,7 +77,7 @@ class info(_base):
     filtered: Union[bool, Field] = field(default=False, init=False)
     index: Union[int, Field] = field(default=2, init=False)
     lower: Union[bool, Field] = field(default=True, init=False)
-    main: Frame = Path.package()
+    # main: Frame = Path.package()
     prop: Union[Optional[bool], Field] = field(default=None, init=False)
     stack: Union[Optional[List[FrameInfo]], Field] = field(default=None, init=False)
 
@@ -226,19 +226,8 @@ class info(_base):
         return iscoroutinefunction(self.data)
 
     def del_key(self, key: Iterable = ('self', 'cls', )) -> Union[dict, list]:
-        rv = self.data
-        key = self.new(key).iter
-        if self.dict:
-            rv = self.data.copy()
-            for item in key:
-                with suppress(KeyError):
-                    del rv[item]
-        elif self.list:
-            for item in key:
-                with suppress(ValueError):
-                    self.data.remove(item)
-            rv = self.data
-        return rv
+        return del_key(self.data, key)
+
 
     @cache
     def frame(self) -> Frame:
@@ -300,16 +289,6 @@ class info(_base):
         file = self.file
         # noinspection PyArgumentList
         return file.git if file else GitTop()
-
-    @property
-    def id(self) -> Optional[CallerID]:
-        try:
-            for i in CallerID:
-                if all([i.value[0] in self.line, i.value[1] == self.function, i.value[2] in str(self.file),
-                        i.value[3] in str(self.file)]):
-                    return i
-        except (IndexError, TypeError):
-            pass
 
     @classmethod
     def init(cls):
@@ -427,11 +406,6 @@ class info(_base):
         return getattr(self.func, f'__qualname__', None)
 
     @property
-    def real(self) -> info:
-        # noinspection PyArgumentList
-        return self.__call__(index=self.index + i[4], s=self.stack) if (i := self.id) else None
-
-    @property
     def repo(self) -> Optional[str]:
         return self.gittop.name or self.repo_var
 
@@ -459,6 +433,6 @@ class info(_base):
 # TODO: ver que hago con el nombre del paquete.
 # TODO: la variable de REPO_VAR y el usuario y el repo url meterlo en el _info.
 
-caller = info()
-_main = info.main()
-package = info.init()
+# caller = info()
+# _main = info.main()
+# package = info.init()

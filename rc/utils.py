@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 """Utils Module."""
-import ast
 import dataclasses
 import pathlib
 import re
 import subprocess
 import sys
 import textwrap
-import tokenize
 from asyncio import current_task
 from asyncio import get_running_loop
 from asyncio.events import _RunningLoop
+from collections import OrderedDict
 from contextlib import suppress
 from functools import cache
-from inspect import findsource
 from inspect import getmro
 from inspect import stack
 from os import getenv
@@ -21,25 +19,23 @@ from pprint import pformat
 from reprlib import recursive_repr
 from subprocess import CompletedProcess
 from sysconfig import get_paths
-from types import FrameType
 from types import SimpleNamespace as Simple
 from typing import Any
 from typing import Callable
 from typing import Iterable
-from typing import NamedTuple
 from typing import Optional
 from typing import Union
 
 from devtools import Debug
 from icecream import IceCreamDebugger
-from intervaltree import Interval
-from intervaltree import IntervalTree
+
 from pydantic import BaseModel
 
 from .exceptions import *
 
 __all__ = (
     'Simple',
+    'NEWLINE',
     'POST_INIT_NAME',
     'PYTHON_SYS',
     'PYTHON_SITE',
@@ -48,7 +44,7 @@ __all__ = (
     'SYS_PATHS',
     'SYS_PATHS_EXCLUDE',
 
-    'ddebug',
+    'debug',
     'fm',
     'fmic',
     'fmicc',
@@ -61,15 +57,20 @@ __all__ = (
     'cmd',
     'cmdname',
     'current_task_name',
-    'include_file',
+    'del_key',
+    'dict_sort',
+    'file_include',
+    'join_new',
     'prefixed',
-    'split_sep',
+    'repr_format',
     'slots',
+    'split_sep',
     'sudo',
     'to_iter',
     'varname',
 )
 
+NEWLINE = '\n'
 POST_INIT_NAME = dataclasses._POST_INIT_NAME
 PYTHON_SYS = sys.executable
 PYTHON_SITE = str(pathlib.Path(PYTHON_SYS).resolve())
@@ -79,7 +80,7 @@ SYS_PATHS = get_paths()
 SYS_PATHS_EXCLUDE = (SYS_PATHS['stdlib'], SYS_PATHS['purelib'], SYS_PATHS['include'], SYS_PATHS['platinclude'],
                      SYS_PATHS['scripts'])
 
-ddebug = Debug(highlight=True)
+debug = Debug(highlight=True)
 fm = pformat
 fmic = IceCreamDebugger(prefix=str()).format
 fmicc = IceCreamDebugger(prefix=str(), includeContext=True).format
@@ -106,7 +107,7 @@ class _base:
         return cls.__qualname__.lower() if lower else cls.__qualname__
 
     def debug(self):
-        ddebug(self)
+        debug(self)
 
     def fmic(self):
         fmic(self)
@@ -197,62 +198,54 @@ def current_task_name() -> str:
     return current_task().get_name() if aioloop() else str()
 
 
-def _file_to_tree_compute_interval(node):
-    min_lineno = node.lineno
-    max_lineno = node.lineno
-    for node in ast.walk(node):
-        if hasattr(node, "lineno"):
-            min_lineno = min(min_lineno, node.lineno)
-            max_lineno = max(max_lineno, node.lineno)
-    return min_lineno, max_lineno + 1
+def del_key(data: Union[dict, list], key: Iterable = ('self', 'cls', )) -> Union[dict, list]:
+    rv = data
+    key = to_iter(key)
+    if isinstance(data, dict):
+        rv = data.copy()
+        for item in key:
+            with suppress(KeyError):
+                del rv[item]
+    elif isinstance(data, list):
+        for item in key:
+            with suppress(ValueError):
+                data.remove(item)
+        rv = data
+    return rv
 
 
-def file_to_tree(filename) -> IntervalTree[Interval, ...]:
-    with tokenize.open(filename) as f:
-        parsed = ast.parse(f.read(), filename=filename)
-    tree = IntervalTree()
-    for node in ast.walk(parsed):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            start, end = _file_to_tree_compute_interval(node)
-            tree[start:end] = node
-    return tree
+def dict_sort(data: dict, ordered: bool = False, reverse: bool = False) -> Union[dict, OrderedDict]:
+    """
+    Order a dict based on keys.
+
+    Args:
+        data: dict to be ordered.
+        ordered: OrderedDict.
+        reverse: reverse.
+
+    Returns:
+        Union[dict, collections.OrderedDict]:
+    """
+    rv = {key: data[key] for key in sorted(data.keys(), reverse=reverse)}
+    if ordered:
+        return OrderedDict(rv)
+    return rv.copy()
 
 
-FuncCodeSync = NamedTuple('FuncCodeSync', code=list, file=str, func=str, name=str, sync=bool)
-
-
-def func_code(frame: FrameType, file: Any, func: str = None) -> FuncCodeSync:
-    search = ('await', 'asyncio.run', 'async', 'as_completed', 'create_task', )
-    lines, start = findsource(frame)
-    tree = file_to_tree(file)
-    names = list()
-    for item in tree:
-        names.append(item.data.name)
-        if item.begin == frame.f_code.co_firstlineno:
-            code = lines[start:item.end]
-            if isinstance(item.data, ast.AsyncFunctionDef):
-                sync = False
-                rv = FuncCodeSync(code=code, file=file, func=func, name=item.data.name, sync=sync)
-                icc(rv)
-                return rv
-            elif isinstance(item.data, ast.FunctionDef):
-                sync = not any([item in line for line in code for item in search])
-                rv = FuncCodeSync(code=code, file=file, func=func, name=item.data.name, sync=sync)
-                icc(rv)
-                return rv
-
-    raise RuntimeError(f'Did not find a math in: {file}, for: {frame.f_code.co_firstlineno=}, in: {tree}, '
-                       f'{names=}, {func=}')
-
-
-def include_file(file: Any, scratches: bool = False) -> Optional[bool]:
+def file_include(file: Any, scratches: bool = False) -> bool:
     file = str(file)
+    if not pathlib.Path(file).resolve().exists():
+        return False
     if scratches and 'scratches' in file:
         return True
     for f in SYS_PATHS_EXCLUDE:
-        if file in f:
-            return
+        if f in file:
+            return False
     return True
+
+
+def join_new(data: list) -> str:
+    return NEWLINE.join(data)
 
 
 def prefixed(name: str) -> str:
@@ -262,16 +255,34 @@ def prefixed(name: str) -> str:
         pass
 
 
+def repr_format(obj: Any, attrs: Iterable, clear: bool = True, newline: bool = False):
+    cls = obj.__class__
+    if clear:
+        for item in dir(cls):
+            if (attr := getattr(cls, item, None)) and (c := getattr(attr, 'cache_clear', None)):
+                # noinspection PyUnboundLocalVariable
+                c()
+    new = NEWLINE if newline else str()
+    msg = f',{new if newline else " "}'.join([f"{arg}: {repr(getattr(obj, arg))}" for arg in to_iter(attrs)])
+    return f'{cls.__name__}({new}{msg}{new})'
+
+
 class slots:
     """
     Slots Repr Helper Class
     """
-    __slots__ = ()
+    __slots__ = ('_slots', )
+
+    def __init__(self):
+        self._slots = sorted({attr for item in getmro(self.__class__) for attr in getattr(item, "__slots__", list())
+                              if attr != slots.__slots__[0]})
+        for attr in self._slots:
+            self.__setattr__(attr, None)
 
     @recursive_repr()
     def __repr__(self):
-        attrs = sorted({attr for item in getmro(self.__class__) for attr in getattr(item, "__slots__", list())})
-        return f'{self.__class__.__name__}{", ".join(map(repr, map(self.__getattribute__,  attrs)))})'
+        values = {name: getattr(self, name) for name in self._slots}
+        return f'{self.__class__.__name__}({", ".join([slot + ":" + repr(value) for slot, value in values.items()])})'
 
 
 def split_sep(sep: str = '_') -> dict:

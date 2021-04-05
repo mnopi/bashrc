@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 """Exceptions Module."""
 __all__ = (
-    'RcError',
+    'Error',
     'AioCmdError',
     'CmdError',
+    'MatchError',
 )
 
 from subprocess import CompletedProcess
 
 
-class RcError(Exception):
+class Error(Exception):
     """Base class for all package exceptions."""
 
 
-class CmdError(RcError):
+class CmdError(Error):
     """Thrown if execution of cmd command fails with non-zero status code."""
 
     def __init__(self, rv: CompletedProcess):
@@ -29,3 +30,8 @@ class AioCmdError(CmdError):
 
     def __init__(self, rv: CompletedProcess):
         super(AioCmdError, self).__init__(rv)
+
+
+class MatchError(Error):
+    def __init__(self, *args, **kwargs):
+        super(Error, self).__init__('No match', *[f'{key}: {value}' for key, value in kwargs.items()], *args)

@@ -22,6 +22,7 @@ import inspect
 import os
 import pathlib
 import sys
+import tokenize
 from contextlib import contextmanager
 from contextlib import suppress
 from functools import cache
@@ -94,8 +95,8 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
         # noinspection PyArgumentList
         return (self.touch if file else self.mkdir)(name=name, group=group, mode=mode, su=su, u=u)
 
-    def __contains__(self, name: str) -> bool:
-        return name in self.text
+    def __contains__(self, value: Iterable[str]) -> bool:
+        return all([i in self.resolved.parts for i in to_iter(value)])
 
     def __eq__(self, other: Union[Path, tuple[str]]):
         if not isinstance(other, self.__class__):
@@ -251,7 +252,7 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
         return rv
 
     def has(self, value: Iterable[str]) -> bool:
-        return all([i in self for i in to_iter(value)])
+        return value in self
 
     @staticmethod
     def home(name: str = None, file: bool = not FILE_DEFAULT) -> Path:
@@ -368,7 +369,7 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
                 return module
 
     @classmethod
-    def package(cls, index: FrameInfo = STACK[0]) -> Frame:
+    def package(cls, index: FrameInfo = STACK[0]):
         # noinspection PyArgumentList
         file = cls(frame.filename)
         init = file.find_up(name='__init__.py').path
@@ -392,6 +393,11 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
     @property
     def pwd(self) -> Path:
         return self.cwd().resolved
+
+    @property
+    def read_text_tokenize(self) -> text:
+        with tokenize.open(self.text) as f:
+            return f.read()
 
     def relative(self, p: Any) -> Path:
         p = Path(p).resolved

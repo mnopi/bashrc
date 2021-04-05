@@ -2,9 +2,8 @@
 """Enums Module."""
 __all__ = (
     'Bump',
-    'CallerID',
-    'ChainRV',
     'PathIs',
+    'FrameID',
     'PathMode',
     'PathOption',
     'PathOutput',
@@ -13,6 +12,9 @@ __all__ = (
 
 import collections
 import enum
+from typing import NamedTuple
+from typing import Optional
+from typing import Union
 
 import box
 
@@ -27,16 +29,24 @@ class Bump(str, enum.Enum):
     BUILD = 'build'
 
 
-class CallerID(enum.Enum):
-    TO_THREAD = ('result = self.fn', 'run', 'futures', 'thread', 4)  # No real.
-    RUN = ('self._context.run', '_run', 'asyncio', 'events', 4)
-    FUNCDISPATCH = ('return funcs[Call().sync]', 'wrapper', 'bapy', 'core', 1)
-
-
 class ChainRV(enum.Enum):
     ALL = enum.auto()
     FIRST = enum.auto()
     UNIQUE = enum.auto()
+
+
+_FrameID = NamedTuple('_FrameID', code=str, decorator=Union[list, str], function=str, parts=Union[list, str],
+                      real=Optional[int], sync=bool)
+
+
+class FrameID(enum.Enum):
+    ASYNCCONTEXTMANAGER = _FrameID(code=str(), decorator=str(),
+                                   function='__aenter__', parts='contextlib.py', real=1, sync=False)
+    RUN = _FrameID(code=str(), decorator=str(),
+                   function='_run', parts='asyncio events.py', real=5, sync=False)
+    TO_THREAD = _FrameID(code=str(), decorator=str(),
+                         function='run', parts='concurrent futures thread.py', real=None, sync=True)
+    # FUNCDISPATCH = ('return funcs[Call().sync]', 'wrapper bapy', 'core', 1)
 
 
 class PathIs(Enum):
