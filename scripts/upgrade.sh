@@ -15,14 +15,14 @@ if [[ "${1-}" ]]; then
       bapy) name="${1}"; url="${name}" ;;
       pen) name="${1}"; url="${PEN_GIT}" ;;
       once) once="${1}" ;;
-      *) name="${BASHRC_FILE}"; url="${name}" ;;
+      *) name="${BASH_RC_NAME}"; url="${name}" ;;
     esac; shift
   done
 else
-  name="${BASHRC_FILE}"; url="${name}"
+  name="${BASH_RC_NAME}"; url="${name}"
 fi
 
-export BAPY PEN BASHRC name url once; debug.sh BAPY PEN BASHRC name url once
+export BAPY PEN BASH_RC_NAME BASH_RC_PATH name url once; debug.sh BAPY PEN BASH_RC_PATH BASH_RC_NAME name url once
 
 if [[ "${KALI-}" ]]; then
 #  sudo rm -rf /root/.cache/pip
@@ -39,7 +39,7 @@ if [[ "${DARWIN-}" ]]; then
   unset SUDO
 fi
 export DARWIN prefix; debug.sh DARWIN prefix
-command="$( [[ "${name}" == "${BASHRC_FILE}" ]] && echo rc || echo "${name}" )"
+command="$( [[ "${name}" == "${BASH_RC_NAME}" ]] && echo rc || echo "${name}" )"
 
 previous="$( /usr/local/bin/"${previous}" v 2>/dev/null)"
 

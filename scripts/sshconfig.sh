@@ -97,13 +97,4 @@ fi
 
 grep -slR "PRIVATE" ~/.ssh | xargs ssh-add >/dev/null 2>&1
 
-#secrets.sh || exit 1
-
-#homefiles.sh || exit 1
-#
-#if [[ "${USER}" == "${USERNAME}" ]] && isuserdarwin.sh && test -n "${1}"; then
-#  upload.sh "${BASHRC_FILE}" pypi|| exit 1
-#  upgrade.sh || exit 1
-#fi
-
 unset starting

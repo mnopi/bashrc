@@ -11,7 +11,7 @@ fi
 for dir in /Library/Developer/CommandLineTools/usr/bin \
             /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin \
             /usr/local/opt/ruby/bin \
-            /Applications/PyCharm.app/Contents/MacOS \
+            /Applications/"${PYCHARM_NAME}".app/Contents/MacOS \
             "${PYTHON39_HOME}/bin"; do
   ! test -d "${dir}" || PATH="${dir}:${PATH}"
 done

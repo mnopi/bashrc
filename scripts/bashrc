@@ -2,30 +2,15 @@
 # shellcheck disable=SC1090
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 
-#BASH_RC_NAME="$( basename "${BASH_SOURCE[0]}" )"; export BASH_RC_NAME
-#_dir="$( dirname "${BASH_SOURCE[0]}" )"
-#cd "${_dir}" || exit 1
-#BASH_RC_DIR="$( pwd )"; export BASH_RC_DIR
-#cd - 1>/dev/null || exit 1
-#BASH_RC_PATH="${BASH_RC_DIR}/${BASH_RC_NAME}"; export BASH_RC_PATH
-#BASH_RC_FILES_PREFIX_PATH="${BASH_RC_DIR}/${BASH_RC_NAME}"; export BASH_RC_FILES_PREFIX_PATH
-#unset _dir
 BASH_RC_DIR=$( cwd="$(pwd)"; cd "${BASH_SOURCE[0]%/*}" || exit; pwd; cd "${cwd}" || exit; ); export BASH_RC_DIR
 BASH_RC_NAME="${BASH_SOURCE[0]##*/}"; export BASH_RC_NAME
-BASH_RC_FILE="${BASH_RC_DIR}/${BASH_RC_NAME}"; export BASH_RC_FILE
-echo "BASH_RC_DIR: ${BASH_RC_DIR}"
-echo "BASH_RC_NAME: ${BASH_RC_NAME}"
-echo "BASH_RC_FILE: ${BASH_RC_PATH}"
-#echo "${a##*/}"
-#a=./bashrc
-#echo "${a%/*}"
-#script_real_path="$( cwd="$(pwd)"; cd "${a%/*}" || exit; pwd; cd "${cwd}" || exit; )"
+BASH_RC_PATH="${BASH_RC_DIR}/${BASH_RC_NAME}"; export BASH_RC_PATH
+
 
 function source_files() {
   local _script
   while (( "$#" )); do
-    _script="${BASH_RC_FILE}-${1}"
-    echo "${_script}"
+    _script="${BASH_RC_PATH}-${1}"
     if test -f "${_script}"; then
       source "${_script}"
     else
@@ -37,29 +22,14 @@ function source_files() {
 
 source_files vars dirs paths distro
 
-#for source_name in vars dirs paths distro; do
-#  echo "${source_name}"
-#  _script="${BASH_RC_FILES_PREFIX_PATH}-${source_name}"
-#  if test -f "${_script}"; then
-#    source "${_script}"
-#  else
-#    error.sh "${_script}" "not found"; return 1
-#fi
-#  if source_path="$( command -v "${p}" )"; then
-#    source "${source_path}"
-#  else
-#    echo "${source_name}"
-#    error.sh "${source_name}" "not found"; return 1
-#  fi
-#done
 
 ! test -e "${PASSWD_PATH}" || source "${PASSWD_PATH}"
 echo "${PASSWORD}" | sudo -S true > /dev/null 2>&1
 ! test -e "${SECRETS_PATH}" || source "${SECRETS_PATH}"
 
-for var in USERNAME USERHOME PASSWD_PATH BASHRC GITHUB_USERNAME GITHUB_ORGANIZATION_USERNAME \
+for var in USERNAME USERHOME PASSWD_PATH BASH_RC_PROJECT GITHUB_USERNAME GITHUB_ORGANIZATION_USERNAME \
            SECRETS_REPO GITHUB_SECRETS_PATH SECRETS_PATH PASSWORD INTERNET GITHUB_PRIVATE_URL \
-           GITHUB_SECRETS_URL GITHUB_ORGANIZATION_PASSWORD BASH_RC_DIR BASH_RC_NAME BASH_RC_FILES_PREFIX_PATH; do
+           GITHUB_SECRETS_URL GITHUB_ORGANIZATION_PASSWORD BASH_RC_DIR BASH_RC_NAME BASH_RC_PATH; do
   debug.sh "${var}"
 done
 
@@ -75,13 +45,6 @@ fi
 test -n "${PS1}" || return
 
 source_files aliases functions completions iterm2 misc
-#for source_name in aliases functions completions iterm2 misc; do
-#  p="${BASH_RC_FILES_PREFIX_PATH}-${source_name}"
-#  if source_path="$( command -v "${p}" )"; then
-#    source "${source_path}"
-#  else
-#    error.sh "${source_path}" "not found"; return 1
-#  fi
-#done
+
 
 unset starting source_name source_path var

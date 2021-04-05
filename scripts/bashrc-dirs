@@ -11,6 +11,7 @@ export MNOPI="${USERHOME}/mnopi"
 export PEN="${USERHOME}/pen"
 export SCRATCHES="${USERHOME}/scratches"
 export SERVERS="${USERHOME}/servers"
+export BASH_RC_PROJECT="${USERHOME}/${BASH_RC_NAME}"
 
 export VISUAL="/Applications/Visual Studio Code - Insiders.app/Contents/MacOS/Electron"
 
@@ -25,7 +26,7 @@ export NUMBERS="${MOBILE}/com~apple~Numbers/Documents"
 export PAGES="${MOBILE}/com~apple~Pages/Documents"
 
 export JETBRAINS="${SUPPORT}/${JETBRAINS_NAME}"
-export PYCHARM="${JETBRAINS}/PyCharm${PYCHARM_VERSION}"
+export PYCHARM="${JETBRAINS}/${PYCHARM_NAME}${PYCHARM_VERSION}"
 export PYCHARM_OPTIONS="${PYCHARM}/options"
 
 export LOG_BASENAME="${USERNAME}"
@@ -35,7 +36,6 @@ sudo chown -R "${USERNAME}":"$( id -g "${USERNAME}" )" "${LOG}" >/dev/null 2>&1
 sudo /bin/chmod -R g+s "${LOG}"
 
 export APPLICATIONS="${MACDEV}/applications"
-export BASH_D="${MACDEV}/${BASH_D_BASENAME}"
 export PACKAGES="${MACDEV}/packages"
 export REPOS="${MACDEV}/repos"
 export SCRIPTS="${MACDEV}/scripts"

@@ -11,12 +11,12 @@ if [[ "${1-}" ]]; then
     case "${1}" in
       bapy) name="${1}"; project_path="${BAPY}" ;;
       pen) name="${1}"; project_path="${PEN}" ;;
-      "${BASHRC_FILE}")  name="${1}"; project_path="${BASHRC}"; twine=pypi ;;
+      "${BASH_RC_NAME}")  name="${1}"; project_path="${BASH_RC_PROJECT}"; twine=pypi ;;
       *) project_path="${PEN}"; name="$( basename "${project_path}" )" ;;
     esac; shift
   done
 else
-  project_path="${BASHRC}"; name="$( basename "${project_path}" )"; twine=pypi
+  project_path="${BASH_RC_NAME}"; name="$( basename "${BASH_RC_PROJECT}" )"; twine=pypi
 fi
 
 [[ "${project_path-}" ]] || { project_path="${BAPY}"; name="$( basename "${project_path}" )"; }

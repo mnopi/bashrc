@@ -16,15 +16,16 @@ if [[ "${1-}" ]]; then
       bapy) name="${1}"; project_path="${BAPY}" ;;
       pen) name="${1}"; project_path="${PEN}" ;;
       site) site="${1}" ;;
+      "${BASH_RC_NAME}") project_path="${BASH_RC_PROJECT}"; name="${BASH_RC_NAME}" ;;
       *) project_path="${PEN}"; name="$( basename "${project_path}" )" ;;
     esac; shift
   done
 else
-  project_path="${BAPY}"; name="$( basename "${project_path}" )"
+  project_path="${BASH_RC_PROJECT}"; name="${BASH_RC_NAME}"
 fi
 
-[[ "${project_path-}" ]] || { project_path="${BAPY}"; name="$( basename "${project_path}" )"; }
-export BAPY PEN project_path name; debug.sh BAPY PEN project_path name
+[[ "${project_path-}" ]] || { project_path="${BASH_RC_PROJECT}"; name="${BASH_RC_NAME}"; }
+export BASH_RC_PROJECT BASH_RC_NAME BAPY PEN project_path name; debug.sh BAPY PEN project_path name
 
 cd "${project_path}" > /dev/null 2>&1 || { error.sh "${project_path}" "invalid"; exit 1; }
 
@@ -99,7 +100,7 @@ if isuserdarwin.sh && [[ "${USERNAME}" == "${USER}" ]]; then
 #  fi
 #  reqs "${project_path}" "${name}"
 else
-  error.sh "${BASHRC}" "Can not be uploaded with root and user should be: ${USERNAME}"; exit 1
+  error.sh "${BASH_RC_NAME}" "Can not be uploaded with root and user should be: ${USERNAME}"; exit 1
 fi
 
 cd - > /dev/null || exit 1

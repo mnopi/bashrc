@@ -43,14 +43,8 @@ function install_passwd() {
 }
 
 for file in vars paths distro dirs; do
-  source "${0%-*}-${file}"
+  source "${0%-*}-${file}" || exit 1
 done
-
-#source "$( command -v bashrc-vars )" || exit 1
-#source "$( command -v bashrc-vars )" || exit 1
-#source "$( command -v bashrc-paths )" || exit 1
-#source "$( command -v bashrc-distro )" || exit 1
-#source "$( command -v bashrc-dirs )" || exit 1
 
 install_passwd "$@" || exit 1
 source "${PASSWD_PATH}" || exit 1
@@ -69,7 +63,6 @@ sshconfig.sh || exit 1
 gconfig.sh || exit 1
 manpaths.sh || exit 1
 
-source "${0%-*}-misc"
-#source "$( command -v bashrc-misc )" || exit 1
+source "${0%-*}-misc" || exit 1
 
 unset starting

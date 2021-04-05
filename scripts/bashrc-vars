@@ -11,7 +11,6 @@ UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
 export USERNAME="jose"
 USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
 export PASSWD_PATH="${USERHOME}/.passwd"
-export BASH_RC_PROJECT="${USERHOME}/bashrc"
 export GITHUB_USERNAME="j5pu"
 export GITHUB_DOMAIN="github.com"
 export GITHUB_EMAIL="${GITHUB_USERNAME}@${GITHUB_DOMAIN}"
@@ -29,8 +28,9 @@ if test -n "${DARWIN}"; then
   MACDEV="${HOME}/${MACDEV_BASENAME}"; export MACDEV
   REALNAME="$( dscl . -read /Users/"${USERNAME}" RealName RealName | sed -n 's/^ //g;2p' )"
   export PYCHARM_NAME='PyCharm'
-
-  export PYCHARM_VERSION="2020.3"
+  _v="$( defaults read /Applications/${PYCHARM_NAME}.app/Contents/Info.plist CFBundleShortVersionString )"
+  export PYCHARM_VERSION="${_v%.*}"
+  unset _v
 else
   REALNAME="$( id -nu )"
 
@@ -45,10 +45,6 @@ export ANSIBLE_SUDO_PASSWORD="${INTERNET}"
 
 export AZUL="\[\033[1;34m\]"
 export AZULCLARO="\[\033[1;36m\]"
-
-export BASH_D_BASENAME=".bashrc.d"
-export REBASH_BASENAME=".bashrc"
-export BASH_INSTALL=".bash_profile ${REBASH_BASENAME} ${BASH_D_BASENAME} .hushlogin .inputrc .profile"
 
 export CLICOLOR=1
 export CLT="/Library/Developer/CommandLineTools"
@@ -101,8 +97,6 @@ export PROMPT_COMMAND='history -a;history -r'
 
 export PS1_SSH_THE_SAME="yes"
 export PS4="$(tty -s && tput setaf 5)+\$(echo \${BASH_SOURCE[0]}:\${LINENO}) $(tty -s && tput setaf 3)\$(echo \${LINENO} | sed 's/\$/@/g')\$(echo \${BASH_LINENO[*]} | awk '{\$NF=\"\"; print \$0}' | sed 's/ \$//g'| sed 's/ /@/g')$(tty -s && tput sgr0):$(tty -s && tput setaf 5)\$(echo \${FUNCNAME[*]} | sed 's/ /\//g')$(tty -s && tput sgr0)$ "
-
-
 
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONUNBUFFERED=1
