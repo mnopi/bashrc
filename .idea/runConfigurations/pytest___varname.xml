@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="varname" type="tests" factoryName="py.test" folderName="pytest" singleton="false">
+  <configuration default="false" name="pytest | varname" type="tests" factoryName="py.test" folderName="pytest" singleton="false">
     <module name="bashrc" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />

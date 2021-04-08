@@ -12,6 +12,7 @@ __all__ = (
 
 import collections
 import enum
+import importlib
 from asyncio import get_running_loop
 from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -74,17 +75,20 @@ class Executor(enum.Enum):
 
 
 _FrameID = NamedTuple('_FrameID', code=str, decorator=Union[list, str], function=str, parts=Union[list, str],
-                      real=Optional[int], sync=bool)
+                      real=Optional[int], ASYNC=bool)
 
 
 class FrameID(enum.Enum):
     ASYNCCONTEXTMANAGER = _FrameID(code=str(), decorator=str(),
-                                   function='__aenter__', parts='contextlib.py', real=1, sync=False)
+                                   function='__aenter__', parts='contextlib.py', real=1, ASYNC=True)
+    IMPORTLIB = _FrameID(code=str(), decorator=str(),
+                         function='_call_with_frames_removed', parts=f'<frozen {importlib._bootstrap.__name__}>',
+                         real=5, ASYNC=False)
     RUN = _FrameID(code=str(), decorator=str(),
-                   function='_run', parts='asyncio events.py', real=5, sync=False)
+                   function='_run', parts='asyncio events.py', real=5, ASYNC=True)
     TO_THREAD = _FrameID(code=str(), decorator=str(),
-                         function='run', parts='concurrent futures thread.py', real=None, sync=True)
-    # FUNCDISPATCH = ('return funcs[Call().sync]', 'wrapper bapy', 'core', 1)
+                         function='run', parts='concurrent futures thread.py', real=None, ASYNC=False)
+    # FUNCDISPATCH = ('return funcs[Call().ASYNC]', 'wrapper bapy', 'core', 1)
 
 
 class PathIs(Enum):

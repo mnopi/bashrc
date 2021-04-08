@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Exceptions Module."""
 __all__ = (
+    'CompletedProcess',
     'Error',
     'AioCmdError',
     'CmdError',

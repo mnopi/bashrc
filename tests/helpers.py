@@ -1,9 +1,7 @@
 import inspect
 from collections import namedtuple
 
-from rc import CLI
-from rc import Path
-from rc import project
+from rc import *
 
 PathTest = namedtuple('PathTest', 'file git modname name package path prefix relative')
 

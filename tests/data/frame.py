@@ -1,11 +1,12 @@
 import asyncio
-import inspect
 from asyncio import as_completed
 from asyncio import create_task
 from asyncio import to_thread
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from typing import AsyncIterable
 from typing import Optional
+from typing import Union
 
 from async_property import async_property
 
@@ -36,24 +37,22 @@ class A:
         pass
 
     # noinspection PyMethodMayBeStatic
-    def m(self):
-        return 'm'
+    def m(self) -> Stack:
+        return Stack()
 
     @property
     def p(self):
         return 'p'
 
     @staticmethod
-    def s():
+    def s() -> Stack:
         rv = Stack()
         return rv
 
     @async_property
-    async def a(self):
-        # noinspection PyUnusedLocal
+    async def a(self) -> Stack:
         b = await to_thread(self.m)
-        await to_thread(self.m)
-        return await to_thread(self.m)
+        return b
 
     # noinspection PyPropertyDefinition
     @property
@@ -65,8 +64,9 @@ class A:
         pass
 
     @staticmethod
-    async def d():
-        pass
+    async def d() -> Stack:
+        s = Stack()
+        return s
 
     @classmethod
     async def e(cls):
@@ -80,20 +80,20 @@ def func():
     pass
 
 
-async def asynccontext_call_async():
+async def asynccontext_call_async() -> CallerStack:
     s = Stack()
     rv = CallerStack(caller=s(), stack=s)
     return rv
 
 
-def asynccontext_call_sync():
+def asynccontext_call_sync() -> CallerStack:
     s = Stack()
     rv = CallerStack(caller=s(), stack=s)
     return rv
 
 
 @asynccontextmanager
-async def asynccontext():
+async def asynccontext() -> NoSyncSync:
     no_sync = await asynccontext_call_async()
     sync = await Executor.NONE.run(asynccontext_call_sync)
     rv = NoSyncSync(no_sync=no_sync, sync=sync)
@@ -103,70 +103,68 @@ async def asynccontext():
         pass
 
 
-async def asyncyield():
-    a = [1, 2]
+async def rv_async() -> Stack:
+    return Stack()
+
+
+async def asyncyield() -> AsyncIterable:
+    a = 1
     while a:
-        yield a.pop()
+        a -= 1
+        yield rv_async
 
 
-async def asyncdef2():
-    a = [1, 2]
-    while a:
-        return a.pop()
-
-
-async def asyncdef(ctx: bool = False, thrd1: bool = False, thrd2: bool = False):
-    result = list()
+async def asyncdef(ctx: bool = False, thrd: bool = False,
+                   cmp: bool = False, fyld: bool = False, pth: bool = False, tsk: bool = False,
+                   ens: bool = False, gth: bool = False) -> Union[NoSyncSync, Stack]:
     if ctx:
         async with \
                 asynccontext() as rv:
             return rv
 
-    if thrd1:
-        rv = await \
-            to_thread(A.s)
-        return rv
-
-    if thrd2:
+    if thrd:
         return \
-            await \
-            to_thread(A.s)
+            await to_thread(A.s)
 
-    for coro in as_completed([A.d(),
-                              A.d()]):
-        r = await coro
-        result.append(r)
+    if cmp:
+        result = list()
+        for coro in as_completed([A.d(),
+                                  A.d()]):
+            r = await coro
+            result.append(r)
+        return result[0]
 
-    # noinspection PyUnusedLocal
-    async for a in asyncyield():
-        pass
-    # noinspection PyUnusedLocal
-    async for a in \
-            asyncyield():
-        pass
-    # noinspection PyUnusedLocal
-    a = await A().a
-    # No se puede crear tarea si es asyncyield
-    # noinspection PyUnusedLocal
-    task = create_task(
-        asyncdef2()
-    )
+    if fyld:
+        async for a in \
+                asyncyield():
+            return await a()
 
-    task1 = create_task(
-        asyncdef2()
-    )
+    if pth:
+        return await A().a
 
-    await task1
+    if tsk:
+        # No se puede crear tarea si es asyncyield
+        t = create_task(
+            rv_async()
+        )
+        return await t
 
-    await asyncio.ensure_future(
-        asyncdef2()
-    )
-    await asyncio.gather(
-        asyncdef2()
-    )
+    if ens:
+        return await asyncio.ensure_future(
+            rv_async()
+        )
+
+    if gth:
+        results = await asyncio.gather(rv_async())
+        return results[0]
+
 
 A.c()
 
 context = asyncio.run(asyncdef(ctx=True), debug=False)
-thread = asyncio.run(asyncdef(thrd1=True), debug=False)
-thread2 = asyncio.run(asyncdef(thrd2=True), debug=False)
+thread = asyncio.run(asyncdef(thrd=True), debug=False)
+completed = asyncio.run(asyncdef(cmp=True), debug=False)
+foryield = asyncio.run(asyncdef(fyld=True), debug=False)
+prop_to_thread = asyncio.run(asyncdef(pth=True), debug=False)
+task = asyncio.run(asyncdef(tsk=True), debug=False)
+ensure = asyncio.run(asyncdef(ens=True), debug=False)

@@ -1,15 +1,7 @@
 from __future__ import annotations
 
 __all__ = (
-    'BYTECODE_SUFFIXES',
-    'FILE_DEFAULT',
-    'FUNCTION_MODULE',
-    'MODULE_MAIN',
-    'STACK',
-    'SUDO_DEFAULT',
-
-    'FrameType',
-
+    # 'BYTECODE_SUFFIXES',
     'InstallScriptPath',
     'Path',
     'FindUp',
@@ -17,53 +9,18 @@ __all__ = (
     'PathUnion',
 )
 
-import importlib
-import inspect
-import os
-import pathlib
-import sys
-import tokenize
-from contextlib import contextmanager
-from contextlib import suppress
-from functools import cache
-from importlib.util import module_from_spec
-from importlib.util import spec_from_file_location
-from inspect import FrameInfo
-from inspect import getmodulename
-from inspect import stack
-from os import chdir
-from os import PathLike
-from shlex import quote
-from shutil import rmtree
-from site import getsitepackages
-from site import USER_SITE
-from tempfile import TemporaryDirectory
-from types import ModuleType
 from typing import Any
 from typing import Iterable
 from typing import NamedTuple
 from typing import Optional
 from typing import Union
 
-import setuptools
 import setuptools.command.install
-from box import Box
-from furl import furl
-from jinja2 import Template
-from setuptools import find_packages
 
 from ._user import user
 from .enums import *
 from .utils import *
-
-BYTECODE_SUFFIXES = importlib._bootstrap_external.BYTECODE_SUFFIXES
-FILE_DEFAULT = True
-FUNCTION_MODULE = '<module>'
-MODULE_MAIN = '__main__'
-STACK = inspect.stack()
-SUDO_DEFAULT = True
-
-FrameType = type(sys._getframe())
+from .vars import *
 
 
 class InstallScriptPath(setuptools.command.install.install):
@@ -251,8 +208,16 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
                 rv = furl(stdout[0]) if (stdout := cmd('git config --get remote.origin.url').stdout) else None
         return rv
 
-    def has(self, value: Iterable[str]) -> bool:
-        return value in self
+    def has(self, value: str) -> bool:
+        """
+        Only checks text and not resolved as __contains__
+        Args:
+            value:
+
+        Returns:
+            bool
+        """
+        return all([item in self.text for item in to_iter(value)])
 
     @staticmethod
     def home(name: str = None, file: bool = not FILE_DEFAULT) -> Path:
@@ -272,7 +237,7 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
     @classmethod
     @cache
     def importer(cls, modname: str, s: list[FrameInfo] = None) -> tuple[Any, FrameType]:
-        for frame in s or stack():
+        for frame in s or inspect.stack():
             if all([frame.function == FUNCTION_MODULE, frame.index == 0, 'PyCharm' not in frame.filename,
                     cls(frame.filename).suffix,
                     False if 'setup.py' in frame.filename and setuptools.__name__ in frame.frame.f_globals else True,
@@ -280,9 +245,6 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
                      c[0].startswith(f'import {modname}'))
                     if (c := frame.code_context) else False, not cls(frame.filename).installedbin]):
                 return cls(frame.filename), frame.frame
-
-    def initpy(self) -> Path:
-        return rv.path.resolved if (rv := self.find_up(name='__init__.py')) else None
 
     @property
     def installed(self) -> Path:
@@ -325,7 +287,7 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
                 return None
 
     def j2(self, dest: Any = None, stream: bool = True, variables: dict = None) -> Union[list, dict]:
-        f = stack()[1]
+        f = inspect.stack()[1]
         variables = variables if variables else f.frame.f_globals.copy() | f.frame.f_locals.copy()
         return [v(variables).dump(Path(dest / k).text) for k, v in self.templates(stream=stream).items()] \
             if dest and stream else {k: v(variables) for k, v in self.templates(stream=stream).items()}
@@ -368,23 +330,10 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
                 spec.loader.exec_module(module)
                 return module
 
-    @classmethod
-    def package(cls, index: FrameInfo = STACK[0]):
-        # noinspection PyArgumentList
-        file = cls(frame.filename)
-        init = file.find_up(name='__init__.py').path
-        path = init.parent if init else file.parent
-        globs = frame.frame.f_globals.copy()
-        root = path.parent
-        spec = globs.get('__spec__', ModuleSpec())
-        relative = file.relative_to(root)
-        _name = globs.get('__name__')
-        name = spec.name if spec else _name if _name and _name != MODULE_MAIN else file.to_name(relative)
-        package = globs.get('__package__') or (name.split('.')[0] if name else path.name if path else None)
-
-        return Frame(file=file, init=init,
-                     module=name.rpartition('.')[2] if name else getmodulename(file.text) if file else None,
-                     name=name, package=package, path=path, relative=relative, root=root, spec=spec)
+    @property
+    def path(self) -> Path:
+        return rv.parent if (rv := self.find_up(name='__init__.py').path) else rv.parent \
+            if ((rv := self.find_up(PathIs.DIR, PathSuffix.GIT).path) and (rv / 'HEAD').exists()) else self.parent
 
     @property
     def parent_if_file(self) -> Path:

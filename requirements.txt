@@ -5,10 +5,12 @@ furl
 gitpython
 icecream
 intervaltree
+more-itertools
 pip
 psutil
 pydantic
 python-box[all]
+rich
 semver
 setuptools
 shell_proc

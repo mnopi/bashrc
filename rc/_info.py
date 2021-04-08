@@ -2,46 +2,27 @@
 """Info Module."""
 from __future__ import annotations
 
-import importlib
-import inspect
-from asyncio import iscoroutine
-from asyncio import iscoroutinefunction
-from contextlib import suppress
 from dataclasses import Field
-from functools import cache
-from inspect import getargvalues
-from inspect import getmodulename
-from inspect import isasyncgen
-from inspect import isasyncgenfunction
-from inspect import isawaitable
-
-from dataclasses import fields
-from sysconfig import get_paths
-from typing import Callable
-
-from dataclasses import field
-
 from dataclasses import dataclass
-from inspect import FrameInfo
+from dataclasses import field
+from dataclasses import fields
+
 from typing import Any
+from typing import Callable
 from typing import Iterable
 from typing import List
 from typing import NamedTuple
 from typing import Optional
 from typing import Union
 
-from box import Box
 
 from ._path import *
 from .enums import *
 from .utils import *
+from .vars import *
 
 __all__ = (
-    'REPO_VAR',
-    'PYPI_VAR',
     'SYS_PATHS',
-
-    'ModuleSpec',
 
     'Frame',
 
@@ -50,11 +31,9 @@ __all__ = (
     # 'package',
 )
 
-REPO_VAR = varname(1, lower=False)
-PYPI_VAR = varname(1, lower=False)
+
 SYS_PATHS = Box({key: Path(value) for key, value in get_paths().items()})
 
-ModuleSpec = importlib._bootstrap.ModuleSpec
 
 Frame = NamedTuple('Frame', file=Path, globs=dict, init=Path, locs=dict, module=str, name=str, package=str, path=Path,
                    relative=Path, root=Path, spec=Optional[ModuleSpec])

@@ -1,16 +1,6 @@
 # -*- coding: utf-8 -*-
 """User Module."""
 __all__ = (
-    'AUTHORIZED_KEYS',
-    'GITCONFIG',
-    'ID_RSA',
-    'ID_RSA_PUB',
-
-
-    'SSH_CONFIG',
-    'SSH_CONFIG_TEXT',
-    'SSH_DIR',
-
     'UserActual',
     'UserProcess',
     'User',
@@ -18,29 +8,15 @@ __all__ = (
 )
 
 import dataclasses
-import os
-import pathlib
 # noinspection PyCompatibility
 import grp
 # noinspection PyCompatibility
 import pwd
 
-from git import GitConfigParser
 from psutil import MACOS
 
 from .echo import red
-from .utils import *
-
-
-AUTHORIZED_KEYS = varname(1, sep=str())
-GITCONFIG = '.gitconfig'
-ID_RSA = varname(1, sep=str())
-ID_RSA_PUB = 'id_rsa.pub'
-SSH_CONFIG = dict(AddressFamily='inet', BatchMode='yes', CheckHostIP='no', ControlMaster='auto',
-                  ControlPath='/tmp/ssh-%h-%r-%p', ControlPersist='20m', IdentitiesOnly='yes', LogLevel='QUIET',
-                  StrictHostKeyChecking='no', UserKnownHostsFile='/dev/null')
-SSH_CONFIG_TEXT = ' '.join([f'-o {key}={value}' for key, value in SSH_CONFIG.items()])
-SSH_DIR = '.ssh'
+from .vars import *
 
 
 @dataclasses.dataclass

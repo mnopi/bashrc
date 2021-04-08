@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="scripts" pattern="file[bashrc]:scripts//*" />
+</component>

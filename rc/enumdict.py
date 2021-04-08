@@ -1,15 +1,13 @@
 """Enumdict Module."""
 __all__ = (
-    'Alias',
     'Enum',
     'EnumType',
 )
 
 import enum
 import inspect
-import typing
 
-Alias = typing._alias
+from .vars import Alias
 
 
 class Enum(enum.Enum):

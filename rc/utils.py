@@ -1,54 +1,9 @@
 # -*- coding: utf-8 -*-
 """Utils Module."""
-import dataclasses
-import pathlib
-import re
-import subprocess
-import sys
-import textwrap
-from asyncio import current_task
-from asyncio import get_running_loop
-from asyncio.events import _RunningLoop
-from collections import OrderedDict
-from contextlib import suppress
-from functools import cache
-from inspect import getmro
-from inspect import stack
-from os import getenv
-from pprint import pformat
-from reprlib import recursive_repr
-from subprocess import CompletedProcess
-from types import SimpleNamespace as Simple
-from typing import Any
-from typing import Callable
-from typing import Iterable
-from typing import Optional
-from typing import Union
-
-from devtools import Debug
-from icecream import IceCreamDebugger
-
-from pydantic import BaseModel
-
-from .exceptions import *
-
 __all__ = (
-    'Simple',
-    'NEWLINE',
-    'POST_INIT_NAME',
-    'PYTHON_SYS',
-    'PYTHON_SITE',
-    'SUDO_USER',
-    'SUDO',
-
-    'debug',
-    'fm',
-    'fmic',
-    'fmicc',
-    'ic',
-    'icc',
-
+    'Annotation',
     'aioloop',
+    'annotations',
     '_base',
     'basemodel',
     'cmd',
@@ -57,28 +12,32 @@ __all__ = (
     'del_key',
     'dict_sort',
     'join_new',
+    'namedinit',
     'prefixed',
     'repr_format',
     'slots',
-    'split_sep',
     'sudo',
-    'to_iter',
-    'varname',
+    'to_iter'
 )
 
-NEWLINE = '\n'
-POST_INIT_NAME = dataclasses._POST_INIT_NAME
-PYTHON_SYS = sys.executable
-PYTHON_SITE = str(pathlib.Path(PYTHON_SYS).resolve())
-SUDO_USER = getenv('SUDO_USER')
-SUDO = bool(SUDO_USER)
+from asyncio.events import _RunningLoop
+from collections import OrderedDict
+from typing import Any
+from typing import Callable
+from typing import get_args
+from typing import get_origin
+from typing import get_type_hints
+from typing import Iterable
+from typing import Literal
+from typing import NamedTuple
+from typing import Optional
+from typing import Type
+from typing import Union
 
-debug = Debug(highlight=True)
-fm = pformat
-fmic = IceCreamDebugger(prefix=str()).format
-fmicc = IceCreamDebugger(prefix=str(), includeContext=True).format
-ic = IceCreamDebugger(prefix=str())
-icc = IceCreamDebugger(prefix=str(), includeContext=True)
+from .exceptions import *
+from .vars import *
+
+Annotation = NamedTuple('Annotation', args=list[Type, ...], cls=Type, hints=dict, key=str, origin=Type)
 
 
 def aioloop() -> Optional[_RunningLoop]:
@@ -86,6 +45,14 @@ def aioloop() -> Optional[_RunningLoop]:
         return get_running_loop()
     except RuntimeError:
         return None
+
+
+def annotations(obj: Any) -> Optional[dict[str, Annotation]]:
+    frame = inspect.stack()[1].frame
+    with suppress(TypeError):
+        a = get_type_hints(obj, globalns=frame.f_globals, localns=frame.f_locals)
+        return {name: Annotation(list(get_args(a[name])), cls, a, name, get_origin(a[name]), )
+                for name, cls in a.items()}
 
 
 class _base:
@@ -126,12 +93,13 @@ def cmd(command: Iterable, exc: bool = False, lines: bool = True, shell: bool = 
 
     Examples:
         >>> cmd('ls a')
-        Cmd(stdout=[], stderr=['ls: a: No such file or directory'], rc=1)
-        >>> assert 'Requirement already satisfied' in cmd('pip install pip', py=True)[0][0]
+        CompletedProcess(args='ls a', returncode=1, stdout=[], stderr=['ls: a: No such file or directory'])
+        >>> assert 'Requirement already satisfied' in cmd('pip install pip', py=True).stdout[0]
         >>> cmd('ls a', shell=False, lines=False)  # Extra '\' added to avoid docstring error.
-        Cmd(stdout='', stderr='ls: a: No such file or directory\\n', rc=1)
+        CompletedProcess(args=['ls', 'a'], returncode=1, stdout='', stderr='ls: a: No such file or directory\\n')
         >>> cmd('echo a', lines=False)  # Extra '\' added to avoid docstring error.
-        Cmd(stdout='a\\n', stderr='', rc=0)
+        CompletedProcess(args='echo a', returncode=0, stdout='a\\n', stderr='')
+
 
     Args:
         command: command.
@@ -191,7 +159,7 @@ def current_task_name() -> str:
     return current_task().get_name() if aioloop() else str()
 
 
-def del_key(data: Union[dict, list], key: Iterable = ('self', 'cls', )) -> Union[dict, list]:
+def del_key(data: Union[dict, list], key: Iterable = ('self', 'cls',)) -> Union[dict, list]:
     rv = data
     key = to_iter(key)
     if isinstance(data, dict):
@@ -225,8 +193,59 @@ def dict_sort(data: dict, ordered: bool = False, reverse: bool = False) -> Union
     return rv.copy()
 
 
+class fromkeys(Box):
+    def __init__(self, keys: Iterable, lower: bool = False):
+        super().__init__({item: item.lower() if lower else item for item in to_iter(keys)})
+
+
 def join_new(data: list) -> str:
     return NEWLINE.join(data)
+
+
+def namedinit(cls: Type[NamedTuple], optional: bool = True, **kwargs):
+    """
+    Init with defaults a NamedTuple.
+
+    Args:
+        cls: cls.
+        optional: True to use args[0] instead of None as default for Optional fallback to None if exception.
+        **kwargs:
+
+    Examples:
+        >>> from pathlib import Path
+        >>> from typing import NamedTuple
+        >>>
+        >>> from rc import namedinit
+        >>>
+        >>> NoInitValue = NamedTuple('NoInitValue', var=str)
+
+        >>> A = NamedTuple('A', module=str, path=Optional[Path], test=Optional[NoInitValue])
+        >>> namedinit(A, optional=False)
+        {'module': '', 'path': None, 'test': None}
+        >>> namedinit(A)
+        {'module': '', 'path': PosixPath('.'), 'test': None}
+        >>> namedinit(A, test=NoInitValue('test'))
+        {'module': '', 'path': PosixPath('.'), 'test': NoInitValue(var='test')}
+        >>> namedinit(A, optional=False, test=NoInitValue('test'))
+        {'module': '', 'path': None, 'test': NoInitValue(var='test')}
+
+    Returns:
+        cls:
+    """
+    rv = dict()
+    for name, a in annotations(cls).items():
+        value = None
+        if v := kwargs.get(name):
+            value = v
+        elif a.origin == Literal:
+            value = a.args[0]
+        elif a.origin == Union and not optional:
+            pass
+        else:
+            with suppress(Exception):
+                value = (a.cls if a.origin is None else a.args[1] if a.args[0] is None else a.args[0])()
+        rv[name] = value
+    return rv
 
 
 def prefixed(name: str) -> str:
@@ -252,10 +271,11 @@ class slots:
     """
     Slots Repr Helper Class
     """
-    __slots__ = ('_slots', )
+    __slots__ = ('_slots',)
 
     def __init__(self):
-        self._slots = sorted({attr for item in getmro(self.__class__) for attr in getattr(item, "__slots__", list())
+        self._slots = sorted({attr for item in inspect.getmro(self.__class__)
+                              for attr in getattr(item, "__slots__", list())
                               if attr != slots.__slots__[0]})
         for attr in self._slots:
             self.__setattr__(attr, None)
@@ -264,10 +284,6 @@ class slots:
     def __repr__(self):
         values = {name: getattr(self, name) for name in self._slots}
         return f'{self.__class__.__name__}({", ".join([slot + ":" + repr(value) for slot, value in values.items()])})'
-
-
-def split_sep(sep: str = '_') -> dict:
-    return dict(sep=sep) if sep else dict()
 
 
 def sudo(command: str, su: bool = False) -> str:
@@ -281,38 +297,3 @@ def to_iter(data: Any) -> Iterable:
         return data
     else:
         return [data]
-
-
-def varname(index: int = 2, lower: bool = True, sep: str = '_') -> Optional[str]:
-    """
-    Caller var name.
-
-    Examples:
-
-        .. code-block:: python
-
-            class A:
-
-                def __init__(self):
-
-                    self.instance = varname()
-
-            a = A()
-
-            var = varname(1)
-
-    Args:
-        index: index.
-        lower: lower.
-        sep: split.
-
-    Returns:
-        Optional[str]:
-    """
-    with suppress(IndexError, KeyError):
-        _stack = stack()
-        func = _stack[index - 1].function
-        index = index + 1 if func == POST_INIT_NAME else index
-        if line := textwrap.dedent(_stack[index].code_context[0]):
-            if var := re.sub(f'(.| ){func}.*', str(), line.split(' = ')[0].replace('assert ', str()).split(' ')[0]):
-                return (var.lower() if lower else var).split(**split_sep(sep))[0]
