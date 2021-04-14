@@ -8,10 +8,18 @@
 from dataclasses import dataclass
 from dataclasses import field
 from dataclasses import Field
+from enum import Enum
 from typing import Union
 
 from typer import Typer
 
+
+class Bump(str, Enum):
+    MAJOR = 'major'
+    MINOR = 'minor'
+    PATCH = 'patch'
+    PRERELEASE = 'prerelease'
+    BUILD = 'build'
 # from ._info import package
 # from ._info import _main
 # from ._info import info

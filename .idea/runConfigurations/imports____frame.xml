@@ -22,7 +22,7 @@
         <ENTRY IS_ENABLED="true" PARSER="runconfig" />
       </ENTRIES>
     </EXTENSION>
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rc/vars.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rc/vars1.py" />
     <option name="PARAMETERS" value="$PROJECT_DIR$/rc/_frame.py" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="true" />

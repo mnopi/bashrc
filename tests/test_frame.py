@@ -4,25 +4,26 @@ from tests.data.frame import *
 
 def test_data_c():
     assert Stack(init=True) != A.init
-    assert (A.init[0].file.EXISTS and A.init[0].file.INCLUDE) is True
-    assert (A.init[1].file.EXISTS and A.init[1].file.INCLUDE) is False
-    assert (Stack(init=True)[1].file.EXISTS and Stack(init=True)[1].file.INCLUDE) is False
+    assert (A.init[0].file.exists and A.init[0].file.include) is True
+    assert A.init[0].info.external and A.init[1].info.external is False
+    assert (A.init[1].file.exists and A.init[1].file.include) is False
+    assert (Stack(init=True)[1].file.exists and Stack(init=True)[1].file.include) is False
 
     assert len(A.c_1) > 2
     assert A.c_1[0].file.path == Path(tests.data.frame.__file__)
-    assert A.c_1[0].file.EXISTS is True
-    assert A.c_1[0].file.INCLUDE is True
+    assert A.c_1[0].file.exists is True
+    assert A.c_1[0].file.include is True
     assert A.c_1[0].function.cls == A.__name__
     assert classmethod.__name__ in A.c_1[0].function.decorators
-    assert A.c_1[0].function.MODULE is False
+    assert A.c_1[0].function.module is False
     assert A.c_1[0].function.qual == A.c.__qualname__
     assert A.c_1[0].function.ASYNC is False
     assert A.c_1[0].function.name == A.c.__name__
     assert A.c_1[0].var.args == dict()
 
     assert A.c_1[1].file.path == Path(tests.data.frame.__file__)
-    assert A.c_1[1].file.EXISTS is True
-    assert A.c_1[1].file.INCLUDE is True
+    assert A.c_1[1].file.exists is True
+    assert A.c_1[1].file.include is True
     assert A.c_1[1].function.name == FUNCTION_MODULE
     assert A.c_1[1].var.args == dict()
 

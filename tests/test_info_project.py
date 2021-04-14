@@ -10,7 +10,7 @@ from rc import Path
 from rc import project
 from rc import TESTS
 from rc.cli import tests_cmd as _command
-from rc._info import __file__ as __file_info__
+from rc._info1 import __file__ as __file_info__
 from tests.helpers import get_console_script
 from tests.helpers import get_path
 

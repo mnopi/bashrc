@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="imports | utils" type="PythonConfigurationType" factoryName="Python" folderName="imports" singleton="false">
+  <configuration default="false" name="imports | _slots" type="PythonConfigurationType" factoryName="Python" folderName="imports" singleton="false">
     <module name="bashrc" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -23,7 +23,7 @@
       </ENTRIES>
     </EXTENSION>
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rc/vars1.py" />
-    <option name="PARAMETERS" value="$PROJECT_DIR$/rc/utils.py" />
+    <option name="PARAMETERS" value="$PROJECT_DIR$/rc/_slots.py" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="true" />
     <option name="MODULE_MODE" value="false" />
