@@ -48,9 +48,9 @@ class FrameId(Enum):
     RUN: _I
     TO_THREAD: _I
 class Frame(Base, NodeVisitor):
-    __file: Path
-    __path: Path
-    __package: str
+    __file: Path = ...
+    __path: Path = ...
+    __package: str = ...
     __slots__ = tuple[str]
     __hash_exclude__: tuple[str]
     exists: bool

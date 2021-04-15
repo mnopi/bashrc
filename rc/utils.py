@@ -1,6 +1,19 @@
 # -*- coding: utf-8 -*-
 """Utils Module."""
 __all__ = (
+    'AST',
+    'AsyncFor',
+    'AsyncFunctionDef',
+    'AsyncWith',
+    'Await',
+    'ClassDef',
+    'FunctionDef',
+    'get_source_segment',
+    'Import',
+    'ImportFrom',
+    'NodeVisitor',
+    'walk',
+    'POST_INIT_NAME',
     'PathLib',
 
     'NEWLINE',
@@ -14,15 +27,22 @@ __all__ = (
     'fmicc',
     'ic',
     'icc',
+    'POST_INIT_NAME',
     'pp',
     'print_exception',
+    'RunningLoop',
 
+    'pproperty',
+
+    'Annotation',
     'AnnotationsType',
     'AsDictClassMethodType',
     'AsDictMethodType',
     'AsDictPropertyType',
     'AsDictStaticMethodType',
+    'Attr',
     'Base',
+    'Base1',
     'BoxKeys',
     'ChainRV',
     'Chain',
@@ -31,9 +51,10 @@ __all__ = (
     'DataType',
     'DictType',
     'EnumDict',
+    'EnumDictType',
+    'Es',
     'Executor',
     'GetType',
-    'Key',
     'Name',
     'NamedType',
     'NamedAnnotationsType',
@@ -41,7 +62,7 @@ __all__ = (
 
     'aioloop',
     'annotations',
-    'Base',
+    'Base1',
     'BoxKeys',
     'cmd',
     'cmdname',
@@ -84,9 +105,22 @@ import subprocess
 import sys
 import textwrap
 from abc import ABCMeta
+from ast import AST
+from ast import AsyncFor
+from ast import AsyncFunctionDef
+from ast import AsyncWith
+from ast import Await
+from ast import ClassDef
+from ast import FunctionDef
+from ast import get_source_segment
+from ast import Import
+from ast import ImportFrom
+from ast import NodeVisitor
+from ast import walk
 from asyncio import current_task
 from asyncio import get_running_loop
 from asyncio import iscoroutine
+from asyncio.events import _RunningLoop
 from collections import ChainMap
 from collections import defaultdict
 from collections import namedtuple
@@ -110,12 +144,18 @@ from inspect import isawaitable
 from inspect import iscoroutinefunction
 from inspect import isgetsetdescriptor
 from inspect import stack
+from io import BytesIO
+from io import StringIO
 from operator import attrgetter
 from pathlib import Path as PathLib
 from subprocess import CompletedProcess
+from types import BuiltinFunctionType
+from types import CodeType
 from types import FrameType
+from types import FunctionType
+from types import LambdaType
+from types import ModuleType
 from typing import _alias
-from typing import Callable
 from typing import Generator
 from typing import get_args
 from typing import get_origin
@@ -138,7 +178,6 @@ from jsonpickle.util import has_reduce
 from jsonpickle.util import importable_name
 from jsonpickle.util import is_collections
 from jsonpickle.util import is_installed
-from jsonpickle.util import is_module
 from jsonpickle.util import is_module_function
 from jsonpickle.util import is_noncomplex
 from jsonpickle.util import is_object
@@ -150,6 +189,7 @@ from jsonpickle.util import is_sequence
 from jsonpickle.util import is_sequence_subclass
 from jsonpickle.util import is_unicode
 from more_itertools import always_iterable
+from more_itertools import bucket
 from more_itertools import map_reduce
 from rich import pretty
 from rich.console import Console
@@ -166,10 +206,41 @@ fmic = IceCreamDebugger(prefix=str()).format
 fmicc = IceCreamDebugger(prefix=str(), includeContext=True).format
 ic = IceCreamDebugger(prefix=str())
 icc = IceCreamDebugger(prefix=str(), includeContext=True)
+POST_INIT_NAME = _POST_INIT_NAME
 pp = console.print
 print_exception = console.print_exception
 pretty.install(console=console, expand_all=True)
 # rich.traceback.install(console=console, extra_lines=5, show_locals=True)
+RunningLoop = _RunningLoop
+
+
+class pproperty(property):
+    """
+    Print property.
+
+    Examples:
+        >>> from functools import cache
+        >>> from rich import pretty
+        >>> from rc import pproperty
+        >>>
+        >>> pretty.install()
+        >>> class Test:
+        ...     _pp = 0
+        ...     @pproperty
+        ...     @cache
+        ...     def pp(self):
+        ...         self._pp += 1
+        ...         prop = isinstance(self.__class__.__dict__['pp'], property)
+        ...         pprop = isinstance(self.__class__.__dict__['pp'], pproperty)
+        ...         return self._pp, prop, pprop
+        >>> test = Test()
+        >>> test.pp
+        (1, True, True)
+        >>> test.pp
+        (1, True, True)
+    """
+    def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+        super().__init__(fget=fget, fset=fset, fdel=fdel, doc=doc)
 
 
 Annotation = namedtuple('Annotation', 'args cls hints key origin')
@@ -186,14 +257,14 @@ class AnnotationsType(metaclass=ABCMeta):
         >>> named = namedtuple('named', 'a', defaults=('a', ))
         >>> Named = NamedTuple('Named', a=str)
         >>>
-        >>> issubclass(named, AnnotationsType)
+        >>> Es(named).annotationstype
         False
-        >>> isinstance(named(), AnnotationsType)
+        >>> Es(named()).annotationstype
         False
         >>>
-        >>> issubclass(Named, AnnotationsType)
+        >>> Es(Named).annotationstype
         True
-        >>> isinstance(Named(a='a'), AnnotationsType)
+        >>> Es(Named(a='a')).annotationstype
         True
     """
     __subclasshook__ = classmethod(lambda cls, C: cls is AnnotationsType and '__annotations__' in C.__dict__)
@@ -205,6 +276,8 @@ class AsDictClassMethodType(metaclass=ABCMeta):
 
     Examples:
         >>> from rc import AsDictClassMethodType
+        >>> from rc import info
+        >>>
         >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
         >>> class AsDictMethod: asdict = lambda self, *args, **kwargs: dict()
         >>> class AsDictProperty: asdict = property(lambda self: dict())
@@ -215,59 +288,283 @@ class AsDictClassMethodType(metaclass=ABCMeta):
         >>> p = AsDictProperty()
         >>> s = AsDictStatic()
         >>>
-        >>> issubclass(AsDictClass, AsDictClassMethodType)
+        >>> Es(AsDictClass).asdict_classmethodtype_sub
         True
-        >>> isinstance(c, AsDictClassMethodType)
+        >>> Es(c).asdict_classmethodtype
         True
         >>>
-        >>> issubclass(AsDictMethod, AsDictClassMethodType)
+        >>> Es(AsDictMethod).asdict_classmethodtype_sub
         False
-        >>> isinstance(m, AsDictClassMethodType)
-        False
-        >>>
-        >>> issubclass(AsDictProperty, AsDictClassMethodType)
-        False
-        >>> isinstance(p, AsDictClassMethodType)
+        >>> Es(m).asdict_classmethodtype
         False
         >>>
-        >>> issubclass(AsDictStatic, AsDictClassMethodType)
+        >>> Es(AsDictProperty).asdict_classmethodtype_sub
         False
-        >>> isinstance(s, AsDictClassMethodType)
+        >>> Es(p).asdict_classmethodtype
+        False
+        >>>
+        >>> Es(AsDictStatic).asdict_classmethodtype_sub
+        False
+        >>> Es(s).asdict_classmethodtype
         False
         """
     __subclasshook__ = classmethod(
         lambda cls, C:
-        cls is AsDictClassMethodType and 'asdict' in C.__dict__ and info(C.__dict__['asdict']).is_classmethod)
+        cls is AsDictClassMethodType and 'asdict' in C.__dict__ and Es(C.__dict__['asdict']).classmethod)
     asdict = classmethod(lambda cls, *args, **kwargs: dict())
 
 
 class AsDictMethodType(metaclass=ABCMeta):
-    """AsDict Method Type."""
+    """
+    AsDict Method Type.
+
+    Examples:
+        >>> from rc import AsDictMethodType
+        >>> from rc import info
+        >>>
+        >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
+        >>> class AsDictMethod: asdict = lambda self, *args, **kwargs: dict()
+        >>> class AsDictProperty: asdict = property(lambda self: dict())
+        >>> class AsDictStatic: asdict = staticmethod(lambda cls, *args, **kwargs: dict())
+        >>>
+        >>> c = AsDictClass()
+        >>> m = AsDictMethod()
+        >>> p = AsDictProperty()
+        >>> s = AsDictStatic()
+        >>>
+        >>> Es(AsDictClass).asdict_methodtype_sub
+        False
+        >>> Es(c).asdict_methodtype
+        False
+        >>>
+        >>> Es(AsDictMethod).asdict_methodtype_sub
+        True
+        >>> Es(m).asdict_methodtype
+        True
+        >>>
+        >>> Es(AsDictProperty).asdict_methodtype_sub
+        False
+        >>> Es(p).asdict_methodtype
+        False
+        >>>
+        >>> Es(AsDictStatic).asdict_methodtype_sub
+        False
+        >>> Es(s).asdict_methodtype
+        False
+    """
     __subclasshook__ = classmethod(
-        lambda cls, C: cls is AsDictMethodType and 'asdict' in C.__dict__ and info(C.__dict__['asdict']).is_method)
+        lambda cls, C: cls is AsDictMethodType and 'asdict' in C.__dict__ and Es(C.__dict__['asdict']).method)
     asdict = lambda self, *args, **kwargs: dict()
 
 
 class AsDictPropertyType(metaclass=ABCMeta):
-    """AsDict Property Type."""
+    """
+    AsDict Property Type.
+
+    Examples:
+        >>> from rc import AsDictPropertyType
+        >>> from rc import info
+        >>>
+        >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
+        >>> class AsDictMethod: asdict = lambda self, *args, **kwargs: dict()
+        >>> class AsDictProperty: asdict = property(lambda self: dict())
+        >>> class AsDictStatic: asdict = staticmethod(lambda cls, *args, **kwargs: dict())
+        >>>
+        >>> c = AsDictClass()
+        >>> m = AsDictMethod()
+        >>> p = AsDictProperty()
+        >>> s = AsDictStatic()
+        >>>
+        >>> Es(AsDictClass).asdict_propertytype_sub
+        False
+        >>> Es(c).asdict_propertytype
+        False
+        >>>
+        >>> Es(AsDictMethod).asdict_propertytype_sub
+        False
+        >>> Es(m).asdict_propertytype
+        False
+        >>>
+        >>> Es(AsDictProperty).asdict_propertytype_sub
+        True
+        >>> Es(p).asdict_propertytype
+        True
+        >>>
+        >>> Es(AsDictStatic).asdict_propertytype_sub
+        False
+        >>> Es(s).asdict_propertytype
+        False
+    """
     __subclasshook__ = classmethod(
-        lambda cls, C: cls is AsDictPropertyType and 'asdict' in C.__dict__ and info(C.__dict__['asdict']).is_property)
+        lambda cls, C: cls is AsDictPropertyType and 'asdict' in C.__dict__ and Es(C.__dict__['asdict']).prop)
     asdict = property(lambda self: dict())
 
 
 class AsDictStaticMethodType(metaclass=ABCMeta):
-    """AsDict Static Method Type."""
+    """
+    AsDict Static Method Type.
+
+    Examples:
+        >>> from rc import AsDictStaticMethodType
+        >>> from rc import info
+        >>>
+        >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
+        >>> class AsDictMethod: asdict = lambda self, *args, **kwargs: dict()
+        >>> class AsDictProperty: asdict = property(lambda self: dict())
+        >>> class AsDictStatic: asdict = staticmethod(lambda cls, *args, **kwargs: dict())
+        >>>
+        >>> c = AsDictClass()
+        >>> m = AsDictMethod()
+        >>> p = AsDictProperty()
+        >>> s = AsDictStatic()
+        >>>
+        >>> Es(AsDictClass).asdict_staticmethodtype_sub
+        False
+        >>> Es(c).asdict_staticmethodtype
+        False
+        >>>
+        >>> Es(AsDictMethod).asdict_staticmethodtype_sub
+        False
+        >>> Es(m).asdict_staticmethodtype
+        False
+        >>>
+        >>> Es(AsDictProperty).asdict_staticmethodtype_sub
+        False
+        >>> Es(p).asdict_staticmethodtype
+        False
+        >>>
+        >>> Es(AsDictStatic).asdict_staticmethodtype_sub
+        True
+        >>> Es(s).asdict_staticmethodtype
+        True
+
+    """
     __subclasshook__ = classmethod(
         lambda cls, C:
-        cls is AsDictStaticMethodType and 'asdict' in C.__dict__ and info(C.__dict__['asdict']).is_staticmethod)
+        cls is AsDictStaticMethodType and 'asdict' in C.__dict__ and Es(C.__dict__['asdict']).staticmethod)
     asdict = staticmethod(lambda *args, **kwargs: dict())
+
+
+class Attr(Enum):
+    """
+    Include Attr.
+
+    Attributes:
+    -----------
+    ALL:
+        include all public, private '_' and builtin '__'
+    PRIVATE:
+        include private '_' and public vars
+    PUBLIC:
+        include only public: no '_' and not '__'
+
+    Methods:
+    --------
+        include(string)
+            Include Attr.
+    """
+    ALL = auto()
+    PRIVATE = '__'
+    PUBLIC = '_'
+
+    def include(self, obj) -> bool:
+        """
+        Include Key.
+
+        Examples:
+            >>> Attr.PUBLIC.include('_hello')
+            False
+            >>> Attr.PRIVATE.include('_hello')
+            True
+            >>> Attr.ALL.include('__hello')
+            True
+
+        Args:
+            obj: string
+
+        Returns:
+            True if key to be included.
+        """
+        if self is Attr.ALL:
+            return True
+        return not obj.startswith(self.value)
 
 
 class Base:
     """
     Base Helper Class.
 
-    Properties added with :meth:`rc.utils.Base.get_propnew` must be added to :attr:`rc.utils.Base.__slots__` with "_".
+    Attributes:
+    -----------
+    __slots__: tuple
+        slots
+
+    Methods:
+    --------
+    __getattribute__(item, default=None)
+        :class:`function`:  Sets ``None`` as default value is attr is not defined.
+    get(cls, name, default=None)
+        :class:`function`: Get attribute value.
+
+    Examples:
+    ---------
+        >>> from rc import Base
+        >>>
+        >>> class Test(Base):
+        ...     __slots__ = ('_hash', '_prop', '_repr', '_slot', )
+        ...     __hash_exclude__ = ('_slot', )
+        ...     __repr_exclude__ = ('_repr', )
+        ...     prop = Base1.get_propnew('prop')
+        >>>
+        >>> test = Test()
+        >>> test.cls_name
+        'Test'
+        >>> assert Test.get_mroattr(Test) == set(Test.__slots__) == test.get_mroslots()
+
+        >>> assert Test.get_mroattr(Test, '__hash_exclude__') == set(Test.__hash_exclude__)
+        >>> assert Test.__hash_exclude__ not in Test.get_mrohash()
+
+        >>> assert Test.get_mroattr(Test, '__repr_exclude__') == set(Test.__repr_exclude__)
+        >>> assert Test.__repr_exclude__[0] not in Test.get_mrorepr()
+        >>> assert Test.__repr_exclude__[0] not in repr(test)
+        >>> assert Test.__hash_exclude__[0] in repr(test)
+        >>> assert test.cls_name in repr(test)
+
+        >>> assert test.prop is None
+        >>> test.prop = 2
+        >>> test.prop
+        2
+        >>> del test.prop
+        >>> assert test.prop is None
+    """
+    __slots__ = ()
+
+    def __getattribute__(self, name, default=None):
+        """
+        Sets attribute with default if it does not exists.
+
+        Args:
+            name: attr name.
+            default: default value (default: None)
+
+        Returns:
+            Attribute value or sets with partial callable or sets default value
+        """
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            object.__setattr__(self, name, default)
+            return object.__getattribute__(self, name)
+
+    def get(self, name, default=None):
+        return self.__getattribute__(name, default=default)
+
+
+class Base1:
+    """
+    Base1 Helper Class.
+
+    Properties added with :meth:`rc.utils.Base1.get_propnew` must be added to :attr:`rc.utils.Base1.__slots__` with "_".
 
     Attributes:
     -----------
@@ -294,22 +591,21 @@ class Base:
         :class:`classmethod`: All values of atribute `cls.__slots__` in ``cls.__mro__``.
     get_propnew(n, d=None)
         :class:`staticmethod`: Get a new :class:`property` with f'_{n}' as attribute name.
-        It should be included in :attr:`rc.utils.Base.__slots__`.
+        It should be included in :attr:`rc.utils.Base1.__slots__`.
         If default is a partial instance, the returned value will be used. It is similar to a cache property:
 
     Examples:
     ---------
-        >>> from rc import Base
+        >>> from rc import Base1
         >>>
-        >>> class Test(Base):
-        >>>     __slots__ = ('_cache', '_hash', '_prop', '_repr', '_slot', )
-        >>>     __hash_exclude__ = ('_slot', )
-        >>>     __repr_exclude__ = ('_repr', )
-        >>>     prop = Base.get_propnew('prop')
-        >>>     cache =
+        >>> class Test(Base1):
+        ...     __slots__ = ('_hash', '_prop', '_repr', '_slot', )
+        ...     __hash_exclude__ = ('_slot', )
+        ...     __repr_exclude__ = ('_repr', )
+        ...     prop = Base1.get_propnew('prop')
         >>>
         >>> test = Test()
-        >>> test.get_clsname
+        >>> test.cls_name
         'Test'
         >>> assert Test.get_mroattr(Test) == set(Test.__slots__) == test.get_mroslots()
 
@@ -320,7 +616,7 @@ class Base:
         >>> assert Test.__repr_exclude__[0] not in Test.get_mrorepr()
         >>> assert Test.__repr_exclude__[0] not in repr(test)
         >>> assert Test.__hash_exclude__[0] in repr(test)
-        >>> assert test.get_clsname in repr(test)
+        >>> assert test.cls_name in repr(test)
 
         >>> assert test.prop is None
         >>> test.prop = 2
@@ -339,15 +635,6 @@ class Base:
         Sets attribute with default if it does not exists.
         If default is a partial instance th returned value will be used. It is similar to a cache property:
 
-        >>> from time import time
-        >>> # noinspection PyAttributeOutsideInit
-        >>> class A:
-        >>>     @property
-        >>>     def a(self):
-        >>>         if hasattr(self, '_a'):
-        >>>             return self._a
-        >>>         self._a = time()
-
         Args:
             name: attr name.
             default: default value (default: None)
@@ -360,11 +647,20 @@ class Base:
         except AttributeError:
             object.__setattr__(self, name, default() if isinstance(default, partial) else default)
             return object.__getattribute__(self, name)
-    __hash__ = lambda self: hash(tuple(map(lambda x: self.__getattribute__(x), self.get_mrohash())))
-    __repr__ = lambda self: \
-        f'{self.get_clsname}({", ".join([f"{s}: {repr(getattr(self, s))}" for s in self.get_mrorepr()])})'
-    get = lambda self, name, default=None: self.__getattribute__(name, default=default)
-    get_clsname = property(lambda self: self.__class__.__name__)
+
+    def __hash__(self):
+        return hash(tuple(map(lambda x: self.__getattribute__(x), self.get_mrohash())))
+
+    def __repr__(self):
+        return f'{self.cls_name}({", ".join([f"{s}: {repr(getattr(self, s))}" for s in self.get_mrorepr()])})'
+
+    def get(self, name, default=None):
+        return self.__getattribute__(name, default=default)
+
+    @property
+    def cls_name(self):
+        return self.__class__.__name__
+
     get_mroattr = staticmethod(lambda cls, n='__slots__': {a for i in cls.__mro__ for a in getattr(i, n, tuple())})
     get_mrohash = classmethod(lambda cls: cls.get_mroslots().difference(cls.get_mroattr(cls, n='__hash_exclude__')))
     get_mrorepr = classmethod(lambda cls:
@@ -425,7 +721,7 @@ class Chain(ChainMap):
     def __getitem__(self, key):
         rv = []
         for mapping in self.maps:
-            if info(mapping).is_named_type:
+            if Es(mapping).namedtype:
                 mapping = mapping._asdict()
             elif hasattr(mapping, 'asdict'):
                 to_dict = getattr(mapping.__class__, 'asdict')
@@ -526,88 +822,6 @@ class CmdAioError(CmdError):
         super().__init__(rv)
 
 
-class EnumDict(Enum):
-    @classmethod
-    def asdict(cls):
-        return {key: value._value_ for key, value in cls.__members__.items()}
-
-    @classmethod
-    def attrs(cls):
-        return list(cls.__members__)
-
-    @classmethod
-    def default(cls):
-        return cls._member_map_[cls._member_names_[0]]
-
-    @classmethod
-    def default_attr(cls):
-        return cls.attrs()[0]
-
-    @classmethod
-    def default_dict(cls):
-        return {cls.default_attr(): cls.default_value()}
-
-    @classmethod
-    def default_value(cls):
-        return cls[cls.default_attr()]
-
-    @property
-    def describe(self):
-        """
-        Returns:
-            tuple:
-        """
-        # self is the member here
-        return self.name, self.value
-
-    @property
-    def lower(self):
-        return self.name.lower()
-
-    def prefix(self, prefix):
-        return f'{prefix}_{self.name}'
-
-    @classmethod
-    def values(cls):
-        return list(cls.asdict().values())
-
-
-EnumDictType = Alias(EnumDict, 1, name=EnumDict.__name__)
-
-
-class Executor(Enum):
-    PROCESS = ProcessPoolExecutor
-    THREAD = ThreadPoolExecutor
-    NONE = None
-
-    async def run(self, func, *args, **kwargs):
-        """
-        Run in :lib:func:`loop.run_in_executor` with :class:`concurrent.futures.ThreadPoolExecutor`,
-            :class:`concurrent.futures.ProcessPoolExecutor` or
-            :lib:func:`asyncio.get_running_loop().loop.run_in_executor` or not poll.
-
-        Args:
-            func: func
-            *args: args
-            **kwargs: kwargs
-
-        Raises:
-            ValueError: ValueError
-
-        Returns:
-            Awaitable:
-        """
-        loop = get_running_loop()
-        call = partial(func, *args, **kwargs)
-        if not func:
-            raise ValueError
-
-        if self.value:
-            with self.value() as p:
-                return await loop.run_in_executor(p, call)
-        return await loop.run_in_executor(self.value, call)
-
-
 class DataType(metaclass=ABCMeta):
     """
     Data Type.
@@ -662,6 +876,209 @@ class DictType(metaclass=ABCMeta):
     __subclasshook__ = classmethod(lambda cls, C: cls is DictType and '__dict__' in C.__dict__)
 
 
+class EnumDict(Enum):
+    @classmethod
+    def asdict(cls):
+        return {key: value._value_ for key, value in cls.__members__.items()}
+
+    @classmethod
+    def attrs(cls):
+        return list(cls.__members__)
+
+    @classmethod
+    def default(cls):
+        return cls._member_map_[cls._member_names_[0]]
+
+    @classmethod
+    def default_attr(cls):
+        return cls.attrs()[0]
+
+    @classmethod
+    def default_dict(cls):
+        return {cls.default_attr(): cls.default_value()}
+
+    @classmethod
+    def default_value(cls):
+        return cls[cls.default_attr()]
+
+    @property
+    def describe(self):
+        """
+        Returns:
+            tuple:
+        """
+        # self is the member here
+        return self.name, self.value
+
+    @property
+    def lower(self):
+        return self.name.lower()
+
+    def prefix(self, prefix):
+        return f'{prefix}_{self.name}'
+
+    @classmethod
+    def values(cls):
+        return list(cls.asdict().values())
+
+
+EnumDictType = Alias(EnumDict, 1, name=EnumDict.__name__)
+
+
+class Es:
+    """
+    Is Instance, Subclass, etc. Helper Class
+
+    Examples:
+        >>> from rc import Es
+        >>> es = Es(2)
+        >>> es.int
+        True
+        >>> es.bool
+        False
+        >>> es.instance(dict, tuple)
+        False
+        >>> es(dict, tuple)
+        False
+
+    Attributes:
+    -----------
+    data: Any
+        object to provide information (default: None)
+    """
+    __slots__ = ('data', )
+    def __init__(self, data=None): self.data = data
+    def __call__(self, *args): return self.instance(*args)
+    asyncfor = property(lambda self: isinstance(self.data, AsyncFor))
+    asyncfunctiondef = property(lambda self: isinstance(self.data, AsyncFunctionDef))
+    asyncwith = property(lambda self: isinstance(self.data, AsyncWith))
+    annotationstype = property(lambda self: isinstance(self.data, AnnotationsType))
+    annotationstype_sub = property(lambda self: issubclass(self.data, AnnotationsType))
+    asdict_classmethodtype = property(lambda self: isinstance(self.data, AsDictClassMethodType))
+    asdict_classmethodtype_sub = property(lambda self: issubclass(self.data, AsDictClassMethodType))
+    asdict_methodtype = property(lambda self: isinstance(self.data, AsDictMethodType))
+    asdict_methodtype_sub = property(lambda self: issubclass(self.data, AsDictMethodType))
+    asdict_propertytype = property(lambda self: isinstance(self.data, AsDictPropertyType))
+    asdict_propertytype_sub = property(lambda self: issubclass(self.data, AsDictPropertyType))
+    asdict_staticmethodtype = property(lambda self: isinstance(self.data, AsDictStaticMethodType))
+    asdict_staticmethodtype_sub = property(lambda self: issubclass(self.data, AsDictStaticMethodType))
+    ast = property(lambda self: isinstance(self.data, AST))
+    asyncgen = property(lambda self: isasyncgen(self.data))
+    asyncgenfunc = property(lambda self: isasyncgenfunction(self.data))
+    attr = lambda self, name: name in self.get_dir
+    await_ast = property(lambda self: isinstance(self.data, Await))
+    awaitable = property(lambda self: isawaitable(self.data))
+    bool = property(lambda self: isinstance(self.data, int) and isinstance(self.data, bool))
+    builtinfunctiontype = property(lambda self: isinstance(self.data, BuiltinFunctionType))
+    bytesio = property(lambda self: isinstance(self.data, BytesIO))
+    chain = property(lambda self: isinstance(self.data, Chain))
+    chainmap = property(lambda self: isinstance(self.data, ChainMap))
+    classdef = property(lambda self: isinstance(self.data, ClassDef))
+    classmethod = property(lambda self: isinstance(self.data, classmethod))
+    codetype = property(lambda self: isinstance(self.data, CodeType))
+    collections = property(lambda self: is_collections(self.data))
+    coro = property(
+        lambda self: any([self.asyncgen, self.asyncgenfunc, self.awaitable, self.coroutine, self.coroutinefunc]))
+    coroutine = property(lambda self: iscoroutine(self.data))
+    coroutinefunc = property(lambda self: iscoroutinefunction(self.data))
+    datatype = property(lambda self: isinstance(self.data, DataType))
+    datatype_sub = property(lambda self: issubclass(self.data, DataType))
+    defaultdict = property(lambda self: isinstance(self.data, defaultdict))
+    dict = property(lambda self: isinstance(self.data, dict))
+    dicttype = property(lambda self: isinstance(self.data, DictType))
+    dicttype_sub = property(lambda self: issubclass(self.data, DictType))
+    directory: property(lambda self: None)
+    dlst = property(lambda self: isinstance(self.data, (dict, list, set, tuple)))
+    enum = property(lambda self: isinstance(self.data, Enum))
+    enum_sub = property(lambda self: issubclass(self.data, Enum))
+    enumdict = property(lambda self: isinstance(self.data, EnumDict))
+    enumdict_sub = property(lambda self: issubclass(self.data, EnumDict))
+    even: property(lambda self: not self.data % 2)
+    file: property(lambda self: None)
+    float = property(lambda self: isinstance(self.data, float))
+    frameinfo = lambda self, *args: isinstance(self.data, FrameInfo)
+    frametype = lambda self, *args: isinstance(self.data, FrameType)
+    functiondef = property(lambda self: isinstance(self.data, FunctionDef))
+    functiontype = property(lambda self: isinstance(self.data, FunctionType))
+    generator = property(lambda self: isinstance(self.data, Generator))
+    gettype = property(lambda self: isinstance(self.data, GetType))
+    gettype_sub = property(lambda self: issubclass(self.data, GetType))
+    getsetdescriptor = lambda self, n: isgetsetdescriptor(self.cls_attr_value(n)) if n else self.data
+    hashable = property(lambda self: bool(noexception(TypeError, hash, self.data)))
+    import_ast = property(lambda self: isinstance(self.data, Import))
+    importfrom = property(lambda self: isinstance(self.data, ImportFrom))
+    installed = property(lambda self: is_installed(self.data))
+    instance = lambda self, *args: isinstance(self.data, args)
+    int = property(lambda self: isinstance(self.data, int))
+    iterable = property(lambda self: isinstance(self.data, Iterable))
+    iterator = property(lambda self: isinstance(self.data, Iterator))
+    lambdatype = property(lambda self: isinstance(self.data, LambdaType))
+    list = property(lambda self: isinstance(self.data, list))
+    lst = property(lambda self: isinstance(self.data, (list, set, tuple)))
+    method = property(
+        lambda self: callable(self.data) and not type(self)(self.data).instance(classmethod, property, property,
+                                                                                staticmethod))
+    mlst = property(lambda self: isinstance(self.data, (MutableMapping, list, set, tuple)))
+    moduletype = property(lambda self: isinstance(self.data, ModuleType))
+    module_function = property(lambda self: is_module_function(self.data))
+    noncomplex = property(lambda self: is_noncomplex(self.data))
+    namedtype = property(lambda self: isinstance(self.data, NamedType))
+    namedtype_sub = property(lambda self: issubclass(self.data, NamedType))
+    named_annotationstype = property(lambda self: isinstance(self.data, NamedAnnotationsType))
+    named_annotationstype_sub = property(lambda self: issubclass(self.data, NamedAnnotationsType))
+    object = property(lambda self: is_object(self.data))
+    pathlib = property(lambda self: isinstance(self.data, PathLib))
+    picklable = lambda self, name: is_picklable(name, self.data)
+    primitive = property(lambda self: is_primitive(self.data))
+    prop = property(lambda self: isinstance(self.data, property))
+    pproperty = property(lambda self: isinstance(self.data, pproperty))
+    reducible = property(lambda self: is_reducible(self.data))
+    reducible_sequence_subclass = property(lambda self: is_reducible_sequence_subclass(self.data))
+    sequence = property(lambda self: is_sequence(self.data))
+    sequence_subclass = property(lambda self: is_sequence_subclass(self.data))
+    slotstype = property(lambda self: isinstance(self.data, SlotsType))
+    slotstype_sub = property(lambda self: issubclass(self.data, SlotsType))
+    staticmethod = property(lambda self: isinstance(self.data, staticmethod))
+    stringio = property(lambda self: isinstance(self.data, StringIO))
+    source: property(lambda self: None)
+    tuple = property(lambda self: isinstance(self.data, tuple))
+    type = property(lambda self: isinstance(self.data, type))
+    unicode = property(lambda self: is_unicode(self.data))
+
+
+class Executor(Enum):
+    PROCESS = ProcessPoolExecutor
+    THREAD = ThreadPoolExecutor
+    NONE = None
+
+    async def run(self, func, *args, **kwargs):
+        """
+        Run in :lib:func:`loop.run_in_executor` with :class:`concurrent.futures.ThreadPoolExecutor`,
+            :class:`concurrent.futures.ProcessPoolExecutor` or
+            :lib:func:`asyncio.get_running_loop().loop.run_in_executor` or not poll.
+
+        Args:
+            func: func
+            *args: args
+            **kwargs: kwargs
+
+        Raises:
+            ValueError: ValueError
+
+        Returns:
+            Awaitable:
+        """
+        loop = get_running_loop()
+        call = partial(func, *args, **kwargs)
+        if not func:
+            raise ValueError
+
+        if self.value:
+            with self.value() as p:
+                return await loop.run_in_executor(p, call)
+        return await loop.run_in_executor(self.value, call)
+
+
 class GetType(metaclass=ABCMeta):
     """
     Dict Type.
@@ -698,51 +1115,6 @@ class GetType(metaclass=ABCMeta):
     get = lambda self, name, default: getattr(self, name, default)
     __subclasshook__ = classmethod(
         lambda cls, C: cls is GetType and 'get' in C.__dict__ and callable(C.__dict__['get']))
-
-
-class Key(Enum):
-    """
-    Include Key.
-
-    Attributes:
-    -----------
-    ALL:
-        include all public, private '_' and builtin '__'
-    PRIVATE:
-        include private '_' and public vars
-    PUBLIC:
-        include only public: no '_' and not '__'
-
-    Methods:
-    --------
-        include(string)
-            Include Key.
-    """
-    ALL = auto()
-    PRIVATE = '__'
-    PUBLIC = '_'
-
-    def include(self, obj) -> bool:
-        """
-        Include Key.
-
-        Examples:
-            >>> Key.PUBLIC.include('_hello')
-            False
-            >>> Key.PRIVATE.include('_hello')
-            True
-            >>> Key.ALL.include('__hello')
-            True
-
-        Args:
-            obj: string
-
-        Returns:
-            True if key to be included.
-        """
-        if self is Key.ALL:
-            return True
-        return not obj.startswith(self.value)
 
 
 class Name(Enum):
@@ -1108,10 +1480,10 @@ def dict_sort(data, ordered=False, reverse=False):
     return rv.copy()
 
 
-def get(obj, name, d=None): return obj.get(name, d) if info(obj).is_get_type else getattr(obj, name, d)
+def get(obj, name, d=None): return obj.get(name, d) if Es(obj).gettype else getattr(obj, name, d)
 
 
-class info(Base):
+class info:
     """
     Is Instance, etc. Helper Class
 
@@ -1119,122 +1491,179 @@ class info(Base):
     -----------
     data: Any
         object to provide information (default: None)
+    depth: Optional[int]
+        recursion depth (default: None)
+    ignore: bool
+        ignore properties (default: False)
     key: :class:`rc.Key`
         keys to include (default: :attr:`rc.Key.PRIVATE`)
 
     Examples:
+        >>> from rc.utils import Base
         >>> from rc.utils import info
         >>>
+        >>> base = info(Base)
+        >>> assert 'cls_name' in base.cls_properties
+        >>> i = info(info)
+        >>> assert not set(info.__slots__).difference(i.cls_data)
+        >>> assert len(base.cls_classmethods) == 3
+        >>> assert len(base.cls_methods) == 1
+        >>> assert len(base.cls_staticmethods) == 2
+        >>> Base.get.__name__
+        '<lambda>'
+        >>> assert len(base.cls_methods) == 1
+        >>> assert len(base.cls_dir()) == len(base.cls_classmethods) + len(base.cls_methods) + \
+        len(base.cls_staticmethods)
+        >>> base_all = info(Base1, Attr.ALL)
+        >>> assert len(base_all.cls_methods) == 19
+        >>> base.get_importable_name
+        'rc.utils.Base'
+        >>> base.cls_module_var
+        'rc.utils'
+        >>> base.cls_qual_var
+        'Base'
+        >>> i.cls_attr_value('key')
+        <member 'key' of 'info' objects>
+        >>> i.get_module
+        <module 'rc.utils' from '/Users/jose/bashrc/rc/utils.py'>
+        # >>> i.get_source
+
     """
-    __slots__ = ('_data', '_key', )
+    __slots__ = ('data', 'es', 'key', )
 
-    def __init__(self, data=None, key=Key.PRIVATE): self.data = data; self.key = key
-    def __call__(self, data=None, key=None): self.data = data or self.data; self.key = key or self.key; return self
-    data = Base.get_propnew('data')
-    key = Base.get_propnew('key')
+    def __init__(self, data=None, key=Attr.PRIVATE):
+        self.data = data
+        self.es = Es(self.data)
+        self.key = key
 
-    get_callables = property(lambda self: {
-        i.name: i for i in self.get_inspect() if isinstance(i.object, Callable) and self.key.include(i.name)})
-    get_classmethods = property(lambda self: {
-        i.name: i for i in self.get_inspect() if 'class' in i.kind and self.key.include(i.name)})
-    get_cls = property(lambda self: self.data if self.is_type else type(self.data))
-    get_clsattr = lambda self, name, default=None: getattr(self.get_cls, name, default)
-    get_clsmodule = property(lambda self: getattr(self.get_cls, '__module__', str()))
-    get_clsname = property(lambda self: self.get_cls.__name__)
-    get_properties = property(lambda self: {
-        i.name: i for i in self.get_inspect() if 'property' in i.kind and self.key.include(i.name)})
-    get_clsqual = property(lambda self: self.get_cls.__qualname__)
-    get_dir = property(lambda self: list({self.get_dircls + self.get_dirinstance}))
-    get_dircls = property(lambda self: [i for i in self.get_cls.__dir__() if self.key.include(i.name)])
-    get_dirinstance = property(lambda self: [i for i in self.__dir__() if self.key.include(i.name)])
-    get_inspect = property(lambda self: classify_class_attrs(self.cls))
-    get_importable_name = property(lambda self: importable_name(self.get_cls))
-    get_methods = property(lambda self: {
-        i.name: i for i in self.get_inspect() if 'method' == i.kind and self.key.include(i.name)})
+    def __call__(self, data=None, key=None):
+        self.data = data or self.data
+        self.es = Es(self.data)
+        self.key = key or self.key
+        return self
+
+    @property
+    def cls(self):
+        return self.data if self.es.type else type(self.data)
+
+    @cache
+    def cls_attr_value(self, name, default=None):
+        return getattr(self.cls, name, default)
+
+    @property
+    @cache
+    def cls_by_kind(self):
+        return bucket(self.cls_classified, key=lambda x: x.kind if self.key.include(x.name) else 'e')
+
+    @property
+    @cache
+    def cls_by_name(self):
+        return {i.name: i for i in self.cls_classified if self.key.include(i.name)}
+
+    @property
+    @cache
+    def cls_callables(self):
+        return sorted(self.cls_classmethods + self.cls_methods + self.cls_staticmethods)
+
+    @property
+    @cache
+    def cls_classified(self):
+        return classify_class_attrs(self.cls)
+
+    @property
+    @cache
+    def cls_classmethods(self):
+        return list(map(Name.name_.getter, self.cls_by_kind['class method']))
+
+    @property
+    @cache
+    def cls_data(self):
+        return list(map(Name.name_.getter, self.cls_by_kind['data']))
+
+    @property
+    @cache
+    def cls_dir(self):
+        return [i for i in dir(self.cls) if self.key.include(i)]
+
+    @property
+    @cache
+    def cls_methods(self):
+        return list(map(Name.name_.getter, self.cls_by_kind['method']))
+
+    @property
+    def cls_module_var(self):
+        return getattr(self.cls, '__module__', str())
+
+    @property
+    def cls_name(self):
+        return self.cls.__name__
+
+    @property
+    @cache
+    def cls_properties(self): return list(map(Name.name_.getter, self.cls_by_kind['property']))
+
+    @property
+    def cls_qual_var(self):
+        return getattr(self.cls, '__qualname__', str())
+
+    @property
+    @cache
+    def cls_staticmethods(self):
+        return list(map(Name.name_.getter, self.cls_by_kind['static method']))
+
+    get_dir = property(lambda self: list({self.cls_dir + self.get_dirinstance}))
+    get_dirinstance = property(lambda self: [i for i in dir(self.data)if self.key.include(i)])
+    get_importable_name = property(lambda self: importable_name(self.cls))
     get_module = property(lambda self: getmodule(self.data))
-    get_mro = property(lambda self: self.get_cls.__mro__)
+    get_mro = property(lambda self: self.cls.__mro__)
     get_mroattrins = lambda self, name='__ignore_attr__': {
-        a for i in (info(), self.data) for a in {*getattr(i, name, list()), *Base.get_mroattr(i.__class__, name)}}
-    get_staticmethods = property(lambda self: {
-        i.name: i for i in self.get_inspect() if 'static' in i.kind and self.key.include(i.name)})
+        a for i in (info(), self.data) for a in {*getattr(i, name, list()), *Base1.get_mroattr(i.__class__, name)}}
+
     has_attr = lambda self, name='__slots__': hasattr(self.data, name)
     has_method = lambda self, name: has_method(self.data, name)
     has_reduce = property(lambda self: has_reduce(self.data))
-    in_slot = lambda self, name='__slots__': name in Base.get_mroattr(self.get_cls)
-    is_annotations_type = property(lambda self: isinstance(self.data, AnnotationsType))
-    is_annotations_type_sub = property(lambda self: issubclass(self.data, AnnotationsType))
-    is_asdict_classmethod_type = property(lambda self: isinstance(self.data, AsDictClassMethodType))
-    is_asdict_classmethod_type_sub = property(lambda self: issubclass(self.data, AsDictClassMethodType))
-    is_asdict_method_type = property(lambda self: isinstance(self.data, AsDictMethodType))
-    is_asdict_method_type_sub = property(lambda self: issubclass(self.data, AsDictMethodType))
-    is_asdict_property_type = property(lambda self: isinstance(self.data, AsDictPropertyType))
-    is_asdict_property_type_sub = property(lambda self: issubclass(self.data, AsDictPropertyType))
-    is_asdict_staticmethod_type = property(lambda self: isinstance(self.data, AsDictStaticMethodType))
-    is_asdict_staticmethod_type_sub = property(lambda self: issubclass(self.data, AsDictStaticMethodType))
-    is_asyncgen = property(lambda self: isasyncgen(self.data))
-    is_asyncgenfunc = property(lambda self: isasyncgenfunction(self.data))
-    is_attr = lambda self, name: name in self.get_dir
-    is_awaitable = property(lambda self: isawaitable(self.data))
-    is_bool = property(lambda self: isinstance(self.data, int) and isinstance(self.data, bool))
-    is_chain = property(lambda self: isinstance(self.data, Chain))
-    is_chainmap = property(lambda self: isinstance(self.data, ChainMap))
-    is_classmethod = property(lambda self: isinstance(self.data, classmethod))
-    is_collections = property(lambda self: is_collections(self.data))
-    is_coro = property(lambda self: any([self.is_asyncgen, self.is_asyncgenfunc, self.is_awaitable, self.is_coroutine,
-                                         self.is_coroutinefunc]))
-    is_coroutine = property(lambda self: iscoroutine(self.data))
-    is_coroutinefunc = property(lambda self: iscoroutinefunction(self.data))
-    is_data_type = property(lambda self: isinstance(self.data, DataType))
-    is_data_type_sub = property(lambda self: issubclass(self.data, DataType))
-    is_defaultdict = property(lambda self: isinstance(self.data, defaultdict))
-    is_dict = property(lambda self: isinstance(self.data, dict))
-    is_dict_type = property(lambda self: isinstance(self.data, DictType))
-    is_dict_type_sub = property(lambda self: issubclass(self.data, DictType))
-    is_dlst = property(lambda self: isinstance(self.data, (dict, list, set, tuple)))
-    is_enum = property(lambda self: isinstance(self.data, Enum))
-    is_enum_sub = property(lambda self: issubclass(self.data, Enum))
-    is_enumdict = property(lambda self: isinstance(self.data, EnumDict))
-    is_enumdict_sub = property(lambda self: issubclass(self.data, EnumDict))
-    is_float = property(lambda self: isinstance(self.data, float))
-    is_generator = property(lambda self: isinstance(self.data, Generator))
-    is_get_type = property(lambda self: isinstance(self.data, GetType))
-    is_get_type_sub = property(lambda self: issubclass(self.data, GetType))
-    is_getsetdescriptor = lambda self, n: isgetsetdescriptor(self.get_clsattr(n)) if n else self.data
-    is_hashable = property(lambda self: bool(noexception(TypeError, hash, self.data)))
-    is_installed = property(lambda self: is_installed(self.data))
-    is_instance = lambda self, *args: isinstance(self.data, args)
-    is_int = property(lambda self: isinstance(self.data, int))
-    is_iterable = property(lambda self: isinstance(self.data, Iterable))
-    is_iterator = property(lambda self: isinstance(self.data, Iterator))
-    is_list = property(lambda self: isinstance(self.data, list))
-    is_lst = property(lambda self: isinstance(self.data, (list, set, tuple)))
-    is_method = property(
-        lambda self: callable(self.data) and not type(self)(self.data).is_instance(classmethod, property, staticmethod))
-    is_mlst = property(lambda self: isinstance(self.data, (MutableMapping, list, set, tuple)))
-    is_module = property(lambda self: is_module(self.data))
-    is_module_function = property(lambda self: is_module_function(self.data))
-    is_noncomplex = property(lambda self: is_noncomplex(self.data))
-    is_named_type = property(lambda self: isinstance(self.data, NamedType))
-    is_named_type_sub = property(lambda self: issubclass(self.data, NamedType))
-    is_named_annotations_type = property(lambda self: isinstance(self.data, NamedAnnotationsType))
-    is_named_annotations_type_sub = property(lambda self: issubclass(self.data, NamedAnnotationsType))
-    is_object = property(lambda self: is_object(self.data))
-    is_picklable = lambda self, name: is_picklable(name, self.data)
-    is_primitive = property(lambda self: is_primitive(self.data))
-    is_property = property(lambda self: isinstance(self.data, property))
-    is_reducible = property(lambda self: is_reducible(self.data))
-    is_reducible_sequence_subclass = property(lambda self: is_reducible_sequence_subclass(self.data))
-    is_sequence = property(lambda self: is_sequence(self.data))
-    is_sequence_subclass = property(lambda self: is_sequence_subclass(self.data))
-    is_slots_type = property(lambda self: isinstance(self.data, SlotsType))
-    is_slots_type_sub = property(lambda self: issubclass(self.data, SlotsType))
-    is_staticmethod = property(lambda self: isinstance(self.data, staticmethod))
-    is_tuple = property(lambda self: isinstance(self.data, tuple))
-    is_type = property(lambda self: isinstance(self.data, type))
-    is_unicode = property(lambda self: is_unicode(self.data))
+    in_slot = lambda self, name='__slots__': name in Base1.get_mroattr(self.cls)
+
+    @property
+    def get_source(self):
+        # if self.is_file
+        # OSError
+        return self
+
+    @property
+    def get_node(self):
+        return self
+
+    @property
+    def get_file(self):
+        return self
+
+    @property
+    def get_function(self):
+        return self
+
+    @property
+    def get_lineno(self):
+        return self
+
+    @property
+    def get_code(self):
+        return self
+
+    @property
+    def get_package(self):
+        return self
+
+    @property
+    def get_name(self):
+        return self
+
+    @property
+    def get_var(self):
+        return self
 
 
-def is_even(number: str): return not number % 2
+def is_even(number): return Es(number).even
 
 
 def join_newline(data): return NEWLINE.join(data)
@@ -1374,7 +1803,7 @@ def varname(index: int = 2, lower=True, sep: str = '_') -> Optional[str]:
     with suppress(IndexError, KeyError):
         _stack = stack()
         func = _stack[index - 1].function
-        index = index + 1 if func == _POST_INIT_NAME else index
+        index = index + 1 if func == POST_INIT_NAME else index
         if line := textwrap.dedent(_stack[index].code_context[0]):
             if var := re.sub(f'(.| ){func}.*', str(), line.split(' = ')[0].replace('assert ', str()).split(' ')[0]):
                 return (var.lower() if lower else var).split(**split_sep(sep))[0]

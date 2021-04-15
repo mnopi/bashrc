@@ -84,7 +84,7 @@ PATHS_EXCL = PATHS_SYS_EXCL + ([_i] if (_i := Path(getenv('PYCHARM_PLUGINS', '<N
 
 FId = namedtuple('_FrameID', 'code decorator function parts real ASYNC')
 File = namedtuple('File', 'include exists path')
-Function = namedtuple('Function', 'ASYNC cls decorators=list, module name qual')
+Function = namedtuple('Function', 'ASYNC cls decorators module name qual')
 GlobalsModule = namedtuple('GlobalsModule', 'all annotations builtins cached doc file loader name package repo pypi '
                                             'spec')
 GLOBALS_MODULE = GlobalsModule(*[f'__{_i}__' for _i in GlobalsModule._fields])
@@ -111,9 +111,9 @@ class FrameId(Enum):
 
 
 class Frame(Base, NodeVisitor):
-    __file: Path = Path(__file__)
-    __path: Path = __file.path
-    __package: str = __path.name
+    __file = Path(__file__)
+    __path = __file.path
+    __package = __path.name
 
     __slots__ = ('exists', '_external', 'file', 'frame', 'include', 'internal', '_function', 'functions', 'lineno',
                  'lines', 'module', 'obj', 'source', 'stack')
