@@ -25,6 +25,7 @@ _POp = TypeVar('_POp', bound='PathOption')
 _POu = TypeVar('_POu', bound='PathOutput')
 _PS = TypeVar('_PS', bound='PathSuffix')
 _PG = TypeVar('_PG', bound='PathGit')
+_S  = TypeVar('_S', bound=str)
 
 __all__: tuple
 AUTHORIZED_KEYS: str

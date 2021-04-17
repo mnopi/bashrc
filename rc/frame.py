@@ -66,6 +66,8 @@ from more_itertools import first_true
 from .path import Path
 from .path import PathIs
 from .path import PathSuffix
+from .utils import FRAME_SYS_INIT
+from .utils import FUNCTION_MODULE
 from .utils import Base
 from .utils import delete
 from .utils import dict_sort
@@ -75,13 +77,10 @@ from .utils import prefixed
 from .utils import repr_format
 
 FRAME_INDEX = 1
-FRAME_SYS_INIT = sys._getframe(0)
-FUNCTION_MODULE = '<module>'
 MODULE_MAIN = '__main__'
 PATHS_SYS = {key: Path(value) for key, value in get_paths().items()}
 PATHS_SYS_EXCL = [PATHS_SYS[_i] for _i in ['stdlib', 'purelib', 'include', 'platinclude', 'scripts']]
 PATHS_EXCL = PATHS_SYS_EXCL + ([_i] if (_i := Path(getenv('PYCHARM_PLUGINS', '<None>'))).resolved.exists() else list())
-
 FId = namedtuple('_FrameID', 'code decorator function parts real ASYNC')
 File = namedtuple('File', 'include exists path')
 Function = namedtuple('Function', 'ASYNC cls decorators module name qual')

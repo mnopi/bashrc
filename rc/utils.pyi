@@ -2,6 +2,8 @@
 """Utils Module."""
 import pathlib
 from abc import ABCMeta
+from abc import abstractmethod
+from ast import AST
 from asyncio.events import _RunningLoop
 from collections import defaultdict
 from collections import deque
@@ -13,9 +15,12 @@ from functools import singledispatchmethod
 from inspect import Attribute
 from inspect import FrameInfo
 from operator import attrgetter
+from os import PathLike
+from pathlib import Path as PathLib
 from subprocess import CompletedProcess
 from types import FrameType
 from types import ModuleType
+from types import TracebackType
 from typing import _alias
 from typing import Any
 from typing import Callable
@@ -26,6 +31,8 @@ from typing import MutableMapping
 from typing import NamedTuple
 from typing import Optional
 from typing import OrderedDict
+from typing import Protocol
+from typing import runtime_checkable
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -44,6 +51,9 @@ _T = TypeVar('_T')
 _U = TypeVar('_U')
 
 __all__: tuple
+BUILTIN_CLASSES: Iterable[Type]
+FRAME_SYS_INIT: FrameType
+FUNCTION_MODULE: str
 NEWLINE: str
 PYTHON_SYS: str
 PYTHON_SITE: pathlib.Path
@@ -54,8 +64,11 @@ fmic: IceCreamDebugger().format
 fmicc: IceCreamDebugger().format
 ic: IceCreamDebugger
 icc: IceCreamDebugger
+POST_INIT_NAME: str
 pp: console.print
 print_exception: console.print_exception
+RunningLoop = _RunningLoop
+
 class pproperty(property):
     def __init__(self, fget: Callable = ..., fset: Callable = ..., fdel: Callable = ..., doc: str = ...) -> None: ...
 Annotation = NamedTuple('Annotation', args=list[Type, ...], cls=Type, hints=dict, key=str, origin=Type)
@@ -99,7 +112,7 @@ class Base1:
     def __repr__(self) -> str: ...
     def get(self, name: str, default: Union[Any, partial] = ...) -> Any: ...
     @property
-    def get_clsname(self) -> str: ...
+    def cls_name(self) -> str: ...
     @staticmethod
     def get_mroattr(cls: Type, name: str = ...) -> set[str]: ...
     @classmethod
@@ -204,7 +217,7 @@ class Es:
     @property
     def builtinfunctiontype(self) -> bool:...
     @property
-    def bytesio(self) -> bool:...
+    def binaryio(self) -> bool:...
     @property
     def chain(self) -> bool:...
     @property
@@ -236,8 +249,6 @@ class Es:
     @property
     def dicttype_sub(self) -> bool:...
     @property
-    def directory(self) -> bool:...
-    @property
     def dlst(self) -> bool:...
     @property
     def enum(self) -> bool:...
@@ -250,8 +261,6 @@ class Es:
     @property
     def even(self) -> bool:...
     @property
-    def file(self) -> bool:...
-    @property
     def float(self) -> bool:...
     @property
     def frameinfo(self) -> bool:...
@@ -263,6 +272,14 @@ class Es:
     def functiontype(self) -> bool:...
     @property
     def generator(self) -> bool:...
+    @property
+    def getattrnobuiltintype(self) -> bool:...
+    @property
+    def getattrnobuiltintype_sub(self) -> bool:...
+    @property
+    def getattrtype(self) -> bool:...
+    @property
+    def getattrtype_sub(self) -> bool:...
     @property
     def gettype(self) -> bool:...
     @property
@@ -281,6 +298,8 @@ class Es:
     @property
     def int(self) -> bool:...
     @property
+    def io(self) -> bool:...
+    @property
     def iterable(self) -> bool:...
     @property
     def iterator(self) -> bool:...
@@ -292,6 +311,8 @@ class Es:
     def lst(self) -> bool:...
     @property
     def mlst(self) -> bool:...
+    @property
+    def mm(self) -> bool:...
     @property
     def method(self) -> bool:...
     @property
@@ -334,9 +355,11 @@ class Es:
     @property
     def staticmethod(self) -> bool:...
     @property
-    def stringio(self) -> bool:...
-    @property
     def source(self) -> bool:...
+    @property
+    def textio(self) -> bool:...
+    @property
+    def tracebacktype(self) -> bool:...
     @property
     def tuple(self) -> bool:...
     @property
@@ -348,68 +371,89 @@ class Executor(Enum, Generic[_E]):
     THREAD: _E
     NONE: _E
     async def run(self, func: Any, *args: Any, **kwargs: Any) -> Any: ...
+class GetAttrNoBuiltinType(metaclass=ABCMeta):
+    def __getattribute__(self, name: str) -> Any: ...
+    @classmethod
+    def __subclasshook__(cls, C: Type) -> bool: ...
+class GetAttrType(metaclass=ABCMeta):
+    def __getattribute__(self, name: str) -> Any: ...
+    @classmethod
+    def __subclasshook__(cls, C: Type) -> bool: ...
+@runtime_checkable
+class GetSupport(Protocol):
+    __slots__: tuple
+    @abstractmethod
+    def get(self, name: str, default: Any = ...) -> Any: ...
 class GetType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C: Type) -> bool: ...
     def get(self, name: str, default: Any = ...) -> bool: ...
 class Name(Enum, Generic[_N]):
-    __all: _N
-    __class: _N
-    __annotations: _N
-    __builtins: _N
-    __cached: _N
-    __contains: _N
-    __dataclass_fields: _N
-    __dataclass_params: _N
-    __delattr: _N
-    __dir: _N
-    __dict: _N
-    __doc: _N
-    __eq: _N
-    __file: _N
-    __getattribute: _N
-    __hash_exclude: _N
-    __ignore_attr: _N
-    __ignore_str: _N
-    __len: _N
-    __loader: _N
-    __members: _N
-    __module: _N
-    __mro: _N
-    __name: _N
-    __package: _N
-    __qualname: _N
-    __reduce: _N
-    __repr: _N
-    __repr_exclude: _N
-    __setattr: _N
-    __slots: _N
-    __spec: _N
-    __str: _N
+    _all0: _N
+    _class0: _N
+    _annotations0: _N
+    _builtins0: _N
+    _cached0: _N
+    _code0: _N
+    _contains0: _N
+    _dataclass_fields0: _N
+    _dataclass_params0: _N
+    _delattr0: _N
+    _dir0: _N
+    _dict0: _N
+    _doc0: _N
+    _eq0: _N
+    _file0: _N
+    _getattribute0: _N
+    _hash_exclude0: _N
+    _ignore_attr0: _N
+    _ignore_str0: _N
+    _len0: _N
+    _loader0: _N
+    _members0: _N
+    _module0: _N
+    _mro0: _N
+    _name0: _N
+    _package0: _N
+    _qualname0: _N
+    _reduce0: _N
+    _repr0: _N
+    _repr_exclude0: _N
+    _setattr0: _N
+    _slots0: _N
+    _spec0: _N
+    _str0: _N
     _asdict: _N
     add: _N
     append: _N
     asdict: _N
     cls_: _N
     clear: _N
+    co_name: _N
+    code_context: _N
     copy: _N
     count: _N
     data: _N
     endswith: _N
     extend: _N
     external: _N
+    f_back: _N
     f_code: _N
     f_globals: _N
+    f_lineno: _N
     f_locals: _N
+    filename: _N
     frame: _N
     function: _N
     get_: _N
+    globals: _N
     index: _N
     item: _N
     items: _N
     keys: _N
     kind: _N
     lineno: _N
+    locals: _N
     name_: _N
     origin: _N
     obj: _N
@@ -423,27 +467,40 @@ class Name(Enum, Generic[_N]):
     self_: _N
     sort: _N
     startswith: _N
+    tb_frame: _N
+    tb_lineno: _N
+    tb_next: _N
     update: _N
     value_: _N
     values: _N
+    vars: _N
+    @classmethod
+    @cache
+    def _attrs(cls) -> dict[bool, Iterable]: ...
+    @classmethod
+    @cache
+    def attrs(cls) -> tuple: ...
     @singledispatchmethod
-    def get(self, obj: GetType, default: Any = ...) -> Any: ...
+    def get(self, obj: Any, default: Any = ...) -> Any: ...
     @get.register
-    def _(self, obj: FrameInfo, default: Any = ...) -> Any: ...
+    def get_getattrtype(self, obj: GetAttrType, default: Any = ...) -> Any: ...
     @get.register
-    def _(self, obj: FrameType, default: Any = ...) -> Any: ...
+    def get_frameinfo(self, obj: FrameInfo, default: Any = ...) -> Any: ...
     @get.register
-    def _(self, obj: DictType, default: Any = ...) -> Any: ...
+    def get_frametype(self, obj: FrameType, default: Any = ...) -> Any: ...
+    @get.register
+    def get_tracebacktype(self, obj: TracebackType, default: Any = ...) -> Any: ...
     @property
     @cache
     def getter(self) -> attrgetter: ...
     def has(self, obj: Any) -> bool: ...
     @classmethod
-    @cache
-    def attrs(cls) -> dict: ...
+    def node(cls, obj: Any, complete: bool = ..., line: bool = ...) -> Union[tuple[AST, int], AST]: ...
+    @classmethod
+    def path(cls, obj: Any) -> PathLib: ...
     @classmethod
     @cache
-    def private(cls) -> list: ...
+    def private(cls) -> tuple: ...
     @classmethod
     @cache
     def public(cls) -> tuple: ...
@@ -452,6 +509,10 @@ class Name(Enum, Generic[_N]):
     def _real(cls, name: str) -> str: ...
     @property
     def real(self) -> str: ...
+    @classmethod
+    def _source(cls, obj: Any, line: bool = ...) -> Optional[Union[tuple[str, int], str]]: ...
+    @classmethod
+    def source(cls, obj: Any, complete: bool = ..., line: bool = ...) -> Union[tuple[str, int], str]: ...
 class NamedType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C: Type) -> bool: ...
@@ -462,8 +523,10 @@ class NamedAnnotationsType(metaclass=ABCMeta):
 class SlotsType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C: Type) -> bool: ...
-def aioloop() -> Optional[_RunningLoop]: ...
-def annotations(obj: Any, index: int = ...) -> Union[dict[str, Annotation]: ...]: ...
+def aioloop() -> Optional[RunningLoop]: ...
+def allin(data: Iterable, dest: Iterable) -> bool: ...
+def annotations(origin: Any, destination: int = ...) -> Union[dict[str, Annotation]: ...]: ...
+def anyin(data: Iterable, dest: Iterable) -> Optional[Any]: ...
 def cmd(command: Iterable,
         exc: bool = ...,
         lines: bool = ...,
@@ -473,11 +536,11 @@ def cmd(command: Iterable,
 def cmdname(func: Callable, sep: str = ...) -> str: ...
 def current_task_name() -> str: ...
 @singledispatch
-def delete(data, key: Iterable = ...) -> Optional[dict]: ...
+def delete(data: Union[MutableMapping, list], key: Iterable = ...) -> Optional[dict]: ...
 @delete.register
-def _(data, key: Iterable = ...) -> Optional[list]: ...
+def delete_list(data: list, key: Iterable = ...) -> Optional[list]: ...
 def dict_sort(data: dict, ordered: bool = ..., reverse: bool = ...) -> Union[dict, OrderedDict]:...
-def get(obj: Any, name: str, d: Any = ...) -> Any: ...
+def get(data: Any, name: str, default: Any = ...) -> Any: ...
 class info:
     __slots__: tuple
     data: Any
@@ -507,7 +570,8 @@ class info:
     @property
     @cache
     def cls_data(self) -> list[str]:...
-    def cls_dir(self, public: bool = ...) -> list[str]:...
+    @property
+    def cls_dir(self) -> list[str]:...
     @property
     @cache
     def cls_methods(self) -> list[str]:...
@@ -540,7 +604,7 @@ class info:
     @property
     def has_reduce(self) -> bool:...
     def in_slot(self, name: str = ...) -> bool:...
-
+def is_even(number: int) -> bool: ...
 def join_newline(data: Iterable[str]) -> str: ...
 def map_reduce_even(iterable: Iterable[_T]) -> list[_U, list[_T]]:...
 def namedinit(cls: Type[Union[NamedAnnotationsType, NamedTuple]], optional: bool = ..., **kwargs) -> NamedTuple: ...
@@ -556,6 +620,7 @@ def repr_format(obj: Any, attrs: Iterable[str], clear: bool = ..., newline: bool
 def split_sep(sep: str = ...) -> dict: ...
 def startswith(name: str, builtin: bool = ...) -> bool: ...
 def to_iter(data: Any, exclude: Optional[Union[Type, tuple[Union[Type, tuple[Any, ...]], ...]]] = ...) -> list: ...
+def token_open(file: Union[PathLike, PathLib, str]) -> str: ...
 def varname(index: int = ..., lower: bool = ..., sep: str = ...) -> Optional[str]: ...
 def black(msg: Any, bold: bool = ..., nl: bool = ..., underline: bool = ...,
           blink: bool = ..., err: bool = ..., reset: bool = ..., rc: Optional[int] = ...) -> None:...

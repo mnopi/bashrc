@@ -16,6 +16,9 @@ __all__ = (
     'POST_INIT_NAME',
     'PathLib',
 
+    'BUILTIN_CLASSES',
+    'FRAME_SYS_INIT',
+    'FUNCTION_MODULE',
     'NEWLINE',
     'PYTHON_SYS',
     'PYTHON_SITE',
@@ -54,6 +57,9 @@ __all__ = (
     'EnumDictType',
     'Es',
     'Executor',
+    'GetAttrNoBuiltinType',
+    'GetAttrType',
+    'GetSupport',
     'GetType',
     'Name',
     'NamedType',
@@ -61,7 +67,9 @@ __all__ = (
     'SlotsType',
 
     'aioloop',
+    'allin',
     'annotations',
+    'anyin',
     'Base1',
     'BoxKeys',
     'cmd',
@@ -100,11 +108,14 @@ __all__ = (
     'byellow',
 )
 
+import ast
 import re
 import subprocess
 import sys
 import textwrap
+import tokenize
 from abc import ABCMeta
+from abc import abstractmethod
 from ast import AST
 from ast import AsyncFor
 from ast import AsyncFunctionDef
@@ -128,6 +139,7 @@ from collections import OrderedDict
 from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import suppress
+from copy import copy
 from dataclasses import _POST_INIT_NAME
 from enum import auto
 from enum import Enum
@@ -137,15 +149,17 @@ from functools import singledispatch
 from functools import singledispatchmethod
 from inspect import classify_class_attrs
 from inspect import FrameInfo
+from inspect import getfile
 from inspect import getmodule
+from inspect import getsource
+from inspect import getsourcefile
+from inspect import getsourcelines
 from inspect import isasyncgen
 from inspect import isasyncgenfunction
 from inspect import isawaitable
 from inspect import iscoroutinefunction
 from inspect import isgetsetdescriptor
 from inspect import stack
-from io import BytesIO
-from io import StringIO
 from operator import attrgetter
 from pathlib import Path as PathLib
 from subprocess import CompletedProcess
@@ -155,17 +169,23 @@ from types import FrameType
 from types import FunctionType
 from types import LambdaType
 from types import ModuleType
+from types import TracebackType
 from typing import _alias
+from typing import BinaryIO
 from typing import Generator
 from typing import get_args
 from typing import get_origin
 from typing import get_type_hints
+from typing import IO
 from typing import Iterable
 from typing import Iterator
 from typing import Literal
 from typing import MutableMapping
 from typing import NamedTuple
 from typing import Optional
+from typing import Protocol
+from typing import runtime_checkable
+from typing import TextIO
 from typing import Union
 
 from box import Box
@@ -190,11 +210,17 @@ from jsonpickle.util import is_sequence_subclass
 from jsonpickle.util import is_unicode
 from more_itertools import always_iterable
 from more_itertools import bucket
+from more_itertools import collapse
+from more_itertools import first_true
 from more_itertools import map_reduce
 from rich import pretty
 from rich.console import Console
 
-
+BUILTIN_CLASSES = tuple(filter(
+    lambda x:
+    isinstance(x, type) and not issubclass(x, BaseException), copy(globals()['__builtins__']).values()))
+FRAME_SYS_INIT = sys._getframe(0)
+FUNCTION_MODULE = '<module>'
 NEWLINE = '\n'
 PYTHON_SYS = PathLib(sys.executable)
 PYTHON_SITE = PathLib(PYTHON_SYS).resolve()
@@ -257,12 +283,12 @@ class AnnotationsType(metaclass=ABCMeta):
         >>> named = namedtuple('named', 'a', defaults=('a', ))
         >>> Named = NamedTuple('Named', a=str)
         >>>
-        >>> Es(named).annotationstype
+        >>> Es(named).annotationstype_sub
         False
         >>> Es(named()).annotationstype
         False
         >>>
-        >>> Es(Named).annotationstype
+        >>> Es(Named).annotationstype_sub
         True
         >>> Es(Named(a='a')).annotationstype
         True
@@ -517,25 +543,6 @@ class Base:
         ...     prop = Base1.get_propnew('prop')
         >>>
         >>> test = Test()
-        >>> test.cls_name
-        'Test'
-        >>> assert Test.get_mroattr(Test) == set(Test.__slots__) == test.get_mroslots()
-
-        >>> assert Test.get_mroattr(Test, '__hash_exclude__') == set(Test.__hash_exclude__)
-        >>> assert Test.__hash_exclude__ not in Test.get_mrohash()
-
-        >>> assert Test.get_mroattr(Test, '__repr_exclude__') == set(Test.__repr_exclude__)
-        >>> assert Test.__repr_exclude__[0] not in Test.get_mrorepr()
-        >>> assert Test.__repr_exclude__[0] not in repr(test)
-        >>> assert Test.__hash_exclude__[0] in repr(test)
-        >>> assert test.cls_name in repr(test)
-
-        >>> assert test.prop is None
-        >>> test.prop = 2
-        >>> test.prop
-        2
-        >>> del test.prop
-        >>> assert test.prop is None
     """
     __slots__ = ()
 
@@ -836,16 +843,16 @@ class DataType(metaclass=ABCMeta):
         >>> data = Data()
         >>> d = Dict()
         >>>
-        >>> issubclass(Data, DataType)
+        >>> Es(Data).datatype_sub
         True
-        >>> isinstance(data, DataType)
+        >>> Es(data).datatype
         True
-        >>> isinstance(Data, DataType)
+        >>> Es(Data).datatype
         False
         >>>
-        >>> issubclass(Dict, DataType)
+        >>> Es(Dict).datatype_sub
         False
-        >>> isinstance(d, DataType)
+        >>> Es(d).datatype
         False
     """
     __subclasshook__ = classmethod(
@@ -863,14 +870,14 @@ class DictType(metaclass=ABCMeta):
         >>> d = Dict()
         >>> s = Slots()
         >>>
-        >>> issubclass(Dict, DictType)
+        >>> Es(Dict).dicttype_sub
         True
-        >>> isinstance(d, DictType)
+        >>> Es(d).dicttype
         True
         >>>
-        >>> issubclass(Slots, DictType)
+        >>> Es(Slots).dicttype_sub
         False
-        >>> isinstance(s, DictType)
+        >>> Es(s).dicttype
         False
     """
     __subclasshook__ = classmethod(lambda cls, C: cls is DictType and '__dict__' in C.__dict__)
@@ -948,7 +955,31 @@ class Es:
     """
     __slots__ = ('data', )
     def __init__(self, data=None): self.data = data
-    def __call__(self, *args): return self.instance(*args)
+
+    def __call__(self, *args):
+        """
+        Call alias of :meth:`Es.instance`
+
+        Examples:
+            >>> from rc import Es
+            >>> es = Es(2)
+            >>> es.int
+            True
+            >>> es.bool
+            False
+            >>> es.instance(dict, tuple)
+            False
+            >>> es(dict, tuple)
+            False
+
+        Args:
+            *args: type or tuple of types
+
+        Returns:
+            Is instance of args
+        """
+        return self.instance(*args)
+
     asyncfor = property(lambda self: isinstance(self.data, AsyncFor))
     asyncfunctiondef = property(lambda self: isinstance(self.data, AsyncFunctionDef))
     asyncwith = property(lambda self: isinstance(self.data, AsyncWith))
@@ -970,7 +1001,7 @@ class Es:
     awaitable = property(lambda self: isawaitable(self.data))
     bool = property(lambda self: isinstance(self.data, int) and isinstance(self.data, bool))
     builtinfunctiontype = property(lambda self: isinstance(self.data, BuiltinFunctionType))
-    bytesio = property(lambda self: isinstance(self.data, BytesIO))
+    binaryio = property(lambda self: isinstance(self.data, BinaryIO))
     chain = property(lambda self: isinstance(self.data, Chain))
     chainmap = property(lambda self: isinstance(self.data, ChainMap))
     classdef = property(lambda self: isinstance(self.data, ClassDef))
@@ -987,20 +1018,22 @@ class Es:
     dict = property(lambda self: isinstance(self.data, dict))
     dicttype = property(lambda self: isinstance(self.data, DictType))
     dicttype_sub = property(lambda self: issubclass(self.data, DictType))
-    directory: property(lambda self: None)
     dlst = property(lambda self: isinstance(self.data, (dict, list, set, tuple)))
     enum = property(lambda self: isinstance(self.data, Enum))
     enum_sub = property(lambda self: issubclass(self.data, Enum))
     enumdict = property(lambda self: isinstance(self.data, EnumDict))
     enumdict_sub = property(lambda self: issubclass(self.data, EnumDict))
     even: property(lambda self: not self.data % 2)
-    file: property(lambda self: None)
     float = property(lambda self: isinstance(self.data, float))
-    frameinfo = lambda self, *args: isinstance(self.data, FrameInfo)
-    frametype = lambda self, *args: isinstance(self.data, FrameType)
+    frameinfo = property(lambda self: isinstance(self.data, FrameInfo))
+    frametype = property(lambda self: isinstance(self.data, FrameType))
     functiondef = property(lambda self: isinstance(self.data, FunctionDef))
     functiontype = property(lambda self: isinstance(self.data, FunctionType))
     generator = property(lambda self: isinstance(self.data, Generator))
+    getattrnobuiltintype = property(lambda self: isinstance(self.data, GetAttrNoBuiltinType))
+    getattrnobuiltintype_sub = property(lambda self: issubclass(self.data, GetAttrNoBuiltinType))
+    getattrtype = property(lambda self: isinstance(self.data, GetAttrType))
+    getattrtype_sub = property(lambda self: issubclass(self.data, GetAttrType))
     gettype = property(lambda self: isinstance(self.data, GetType))
     gettype_sub = property(lambda self: issubclass(self.data, GetType))
     getsetdescriptor = lambda self, n: isgetsetdescriptor(self.cls_attr_value(n)) if n else self.data
@@ -1010,15 +1043,17 @@ class Es:
     installed = property(lambda self: is_installed(self.data))
     instance = lambda self, *args: isinstance(self.data, args)
     int = property(lambda self: isinstance(self.data, int))
+    io = property(lambda self: isinstance(self.data, IO))
     iterable = property(lambda self: isinstance(self.data, Iterable))
     iterator = property(lambda self: isinstance(self.data, Iterator))
     lambdatype = property(lambda self: isinstance(self.data, LambdaType))
     list = property(lambda self: isinstance(self.data, list))
     lst = property(lambda self: isinstance(self.data, (list, set, tuple)))
     method = property(
-        lambda self: callable(self.data) and not type(self)(self.data).instance(classmethod, property, property,
-                                                                                staticmethod))
+        lambda self:
+        callable(self.data) and not type(self)(self.data).instance(classmethod, property, property, staticmethod))
     mlst = property(lambda self: isinstance(self.data, (MutableMapping, list, set, tuple)))
+    mm = property(lambda self: isinstance(self.data, MutableMapping))
     moduletype = property(lambda self: isinstance(self.data, ModuleType))
     module_function = property(lambda self: is_module_function(self.data))
     noncomplex = property(lambda self: is_noncomplex(self.data))
@@ -1039,8 +1074,9 @@ class Es:
     slotstype = property(lambda self: isinstance(self.data, SlotsType))
     slotstype_sub = property(lambda self: issubclass(self.data, SlotsType))
     staticmethod = property(lambda self: isinstance(self.data, staticmethod))
-    stringio = property(lambda self: isinstance(self.data, StringIO))
     source: property(lambda self: None)
+    textio = property(lambda self: isinstance(self.data, TextIO))
+    tracebacktype = property(lambda self: isinstance(self.data, TracebackType))
     tuple = property(lambda self: isinstance(self.data, tuple))
     type = property(lambda self: isinstance(self.data, type))
     unicode = property(lambda self: is_unicode(self.data))
@@ -1079,6 +1115,125 @@ class Executor(Enum):
         return await loop.run_in_executor(self.value, call)
 
 
+class GetAttrNoBuiltinType(metaclass=ABCMeta):
+    """
+    Get Attr Type (Everything but builtins, except: object and errors)
+
+    Examples:
+        >>> from collections import namedtuple
+        >>> class Dict: a = 1
+        >>> class Get: a = 1; get = lambda self, item: self.__getattribute__(item)
+        >>> Named = namedtuple('Named', 'a')
+        >>>
+        >>> d = Dict()
+        >>> dct = dict(a=1)
+        >>> g = Get()
+        >>> n = Named('a')
+        >>> t = tuple()
+        >>>
+        >>> Es(Dict).getattrnobuiltintype_sub
+        True
+        >>> Es(d).getattrnobuiltintype
+        True
+        >>>
+        >>> Es(Get).getattrnobuiltintype_sub
+        False
+        >>> Es(g).getattrnobuiltintype
+        False
+        >>>
+        >>> Es(dict).getattrnobuiltintype_sub
+        False
+        >>> Es(dct).getattrnobuiltintype
+        False
+        >>>
+        >>> Es(tuple).getattrnobuiltintype_sub
+        False
+        >>> Es(t).getattrnobuiltintype
+        False
+        >>>
+        >>> Es(list).getattrnobuiltintype_sub
+        False
+        >>> Es(list()).getattrnobuiltintype
+        False
+        >>>
+        >>> Es(Named).getattrnobuiltintype_sub
+        True
+        >>> Es(n).getattrnobuiltintype
+        True
+        """
+    __getattribute__ = lambda self, n: object.__getattribute__(self, n)
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        return cls is GetAttrNoBuiltinType and any(['_field_defaults' in C.__dict__,
+                                                    not allin(C.__mro__, BUILTIN_CLASSES) and 'get' not in C.__dict__ or
+                                                    ('get' in C.__dict__ and not callable(C.__dict__['get']))])
+
+
+class GetAttrType(metaclass=ABCMeta):
+    """
+    Get Attr Type (Everything but GetType)
+
+    Examples:
+        >>> from collections import namedtuple
+        >>> class Dict: a = 1
+        >>> class Get: a = 1; get = lambda self, item: self.__getattribute__(item)
+        >>> Named = namedtuple('Named', 'a')
+        >>>
+        >>> d = Dict()
+        >>> dct = dict(a=1)
+        >>> g = Get()
+        >>> n = Named('a')
+        >>> t = tuple()
+        >>>
+        >>> Es(Dict).getattrtype_sub
+        True
+        >>> Es(d).getattrtype
+        True
+        >>>
+        >>> Es(Get).getattrtype_sub
+        False
+        >>> Es(g).getattrtype
+        False
+        >>>
+        >>> Es(dict).getattrtype_sub
+        False
+        >>> Es(dct).getattrtype
+        False
+        >>>
+        >>> Es(tuple).getattrtype_sub
+        True
+        >>> Es(t).getattrtype
+        True
+        >>>
+        >>> Es(list).getattrtype_sub
+        True
+        >>> Es(list()).getattrtype
+        True
+        >>>
+        >>> Es(Named).getattrtype_sub
+        True
+        >>> Es(n).getattrtype
+        True
+        """
+    __getattribute__ = lambda self, n: object.__getattribute__(self, n)
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        return cls is GetAttrType and \
+               ('get' not in C.__dict__ or ('get' in C.__dict__ and not callable(C.__dict__['get'])))
+
+
+@runtime_checkable
+class GetSupport(Protocol):
+    """An ABC with one abstract method get."""
+    __slots__ = ()
+
+    @abstractmethod
+    def get(self, name, default=None):
+        return self, name, default
+
+
 class GetType(metaclass=ABCMeta):
     """
     Dict Type.
@@ -1097,84 +1252,92 @@ class GetType(metaclass=ABCMeta):
         >>> g.get('a')
         1
         >>>
-        >>> issubclass(Dict, GetType)
+        >>> Es(Dict).gettype_sub
         False
-        >>> isinstance(d, GetType)
+        >>> Es(d).gettype
         False
         >>>
-        >>> issubclass(Get, GetType)
+        >>> Es(Get).gettype_sub
         True
-        >>> isinstance(g, GetType)
+        >>> Es(g).gettype
         True
         >>>
-        >>> issubclass(dict, GetType)
+        >>> Es(dict).gettype_sub
         True
-        >>> isinstance(dct, GetType)
+        >>> Es(dct).gettype
         True
     """
-    get = lambda self, name, default: getattr(self, name, default)
+    get = lambda self, name, default=None: getattr(self, name, default)
     __subclasshook__ = classmethod(
         lambda cls, C: cls is GetType and 'get' in C.__dict__ and callable(C.__dict__['get']))
 
 
 class Name(Enum):
-    __all = auto()
-    __class = auto()
-    __annotations = auto()
-    __builtins = auto()
-    __cached = auto()
-    __contains = auto()
-    __dataclass_fields = auto()
-    __dataclass_params = auto()
-    __delattr = auto()
-    __dir = auto()
-    __dict = auto()
-    __doc = auto()
-    __eq = auto()
-    __file = auto()
-    __getattribute = auto()
-    __hash_exclude = auto()
-    __ignore_attr = auto()
-    __ignore_str = auto()
-    __len = auto()
-    __loader = auto()
-    __members = auto()
-    __module = auto()
-    __mro = auto()
-    __name = auto()
-    __package = auto()
-    __qualname = auto()
-    __reduce = auto()
-    __repr = auto()
-    __repr_exclude = auto()
-    __setattr = auto()
-    __slots = auto()
-    __spec = auto()
-    __str = auto()
+    _all0 = auto()
+    _class0 = auto()
+    _annotations0 = auto()
+    _builtins0 = auto()
+    _cached0 = auto()
+    _code0 = auto()
+    _contains0 = auto()
+    _dataclass_fields0 = auto()
+    _dataclass_params0 = auto()
+    _delattr0 = auto()
+    _dir0 = auto()
+    _dict0 = auto()
+    _doc0 = auto()
+    _eq0 = auto()
+    _file0 = auto()
+    _getattribute0 = auto()
+    _hash_exclude0 = auto()
+    _ignore_attr0 = auto()
+    _ignore_str0 = auto()
+    _len0 = auto()
+    _loader0 = auto()
+    _members0 = auto()
+    _module0 = auto()
+    _mro0 = auto()
+    _name0 = auto()
+    _package0 = auto()
+    _qualname0 = auto()
+    _reduce0 = auto()
+    _repr0 = auto()
+    _repr_exclude0 = auto()
+    _setattr0 = auto()
+    _slots0 = auto()
+    _spec0 = auto()
+    _str0 = auto()
     _asdict = auto()
     add = auto()
     append = auto()
     asdict = auto()
     cls_ = auto()  # To avoid conflict with Name.cls
     clear = auto()
+    co_name = auto()
+    code_context = auto()
     copy = auto()
     count = auto()
     data = auto()
     endswith = auto()
     extend = auto()
     external = auto()
+    f_back = auto()
     f_code = auto()
     f_globals = auto()
+    f_lineno = auto()
     f_locals = auto()
+    filename = auto()
     frame = auto()
     function = auto()
     get_ = auto()  # To avoid conflict with Name.get
+    globals = auto()
     index = auto()
     item = auto()
     items = auto()
     keys = auto()
     kind = auto()
     lineno = auto()
+    locals = auto()
     name_ = auto()  # To avoid conflict with Enum.name
     origin = auto()
     obj = auto()
@@ -1188,73 +1351,642 @@ class Name(Enum):
     self_ = auto()  # To avoid conflict with Enum
     sort = auto()
     startswith = auto()
+    tb_frame = auto()
+    tb_lineno = auto()
+    tb_next = auto()
     update = auto()
     value_ = auto()  # To avoid conflict with Enum.value
     values = auto()
+    vars = auto()
+
+    @classmethod
+    @cache
+    def _attrs(cls):
+        """
+        Get map_reduce (dict) attrs lists converted to real names.
+
+        Examples:
+            >>> from rich import pretty
+            >>> from rc import Name
+            >>>
+            >>> pretty.install()
+            >>> Name._attrs().keys()
+            dict_keys([True, False])
+            >>> Name._attrs().values()  # doctest: +ELLIPSIS
+            dict_values([['__all__', ...], ['_asdict', ...])
+
+        Returns:
+            [True]: private attrs.
+            [False[: public attrs.
+        """
+        return map_reduce(cls.__members__, lambda x: x.endswith('0'), lambda x: cls._real(x))
+
+    @classmethod
+    @cache
+    def attrs(cls):
+        """
+        Get attrs tuple with private converted to real names.
+
+        Examples:
+            >>> from rich import pretty
+            >>> from rc import Name
+            >>>
+            >>> pretty.install()
+            >>> Name.attrs()  # doctest: +ELLIPSIS
+            (
+                '__all__',
+                ...,
+                '_asdict',
+                ...
+            )
+
+        Returns:
+            Tuple of attributes wit private converted to real names.
+        """
+        return tuple(collapse(Name._attrs().values()))
 
     @singledispatchmethod
     def get(self, obj: GetType, default=None):
-        if self is Name.function:
-            return obj.get(self.__name.real, default)
+        """
+        Get value from GetType/MutableMapping.
+
+        Examples:
+            >>> import inspect
+            >>> from ast import unparse
+            >>> from inspect import FrameInfo
+            >>> from inspect import getmodulename
+            >>> from rich import pretty
+            >>> from rc import Name
+            >>>
+            >>> pretty.install()
+            >>> f = inspect.stack()[0]
+            >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
+            >>> Name.filename.get(f), Name.function.get(f), Name.code_context.get(f)[0], Name.source(f)
+            (
+                PosixPath('<doctest get[7]>'),
+                '<module>',
+                'f = inspect.stack()[0]\\n',
+                'f = inspect.stack()[0]\\n'
+            )
+            >>> Name._file0.get(globs_locs)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> assert Name._file0.get(globs_locs) == PathLib(__file__) == PathLib(Name._spec0.get(globs_locs).origin)
+            >>> assert Name._name0.get(globs_locs) == getmodulename(__file__) == Name._spec0.get(globs_locs).name
+            >>> Name.source(globs_locs)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> Name.source(__file__)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> assert Name.source(globs_locs) == Name.source(__file__)
+            >>> unparse(Name.node(globs_locs)) == unparse(Name.node(__file__))  # Unparse does not have encoding line
+            True
+            >>> Name.source(f) in unparse(Name.node(globs_locs))
+            True
+            >>> Name.source(f) in unparse(Name.node(__file__))
+            True
+
+        Args:
+            obj: object
+            default: None
+
+        Returns:
+            Value from get() method
+        """
+        if self is Name._file0:
+            return self.path(obj)
         return obj.get(self.real, default)
 
     @get.register
-    def _(self, obj: FrameInfo, default=None):
-        if self is Name.f_code:
-            return obj.frame.f_code
-        if self is Name.function:
-            return obj.function
-        if self is Name.lineno:
-            return obj.lineno
-        if self is Name.__file:
-            return PathLib(obj.filename)
-        return default
+    def get_getattrtype(self, obj: GetAttrType, default=None):
+        """
+        Get value of attribute from GetAttrType.
 
-    @get.register
-    def _(self, obj: FrameType, default=None):
-        if self is Name.f_code:
-            return obj.f_code
-        if self is Name.function:
-            return obj.f_code.co_name
-        if self is Name.lineno:
-            return obj.f_lineno
-        if self is Name.__file:
-            return PathLib(obj.f_globals.get(self.real, default))
+        Examples:
+            >>> import inspect
+            >>> from ast import unparse
+            >>> from inspect import FrameInfo
+            >>> from inspect import getmodulename
+            >>> import rc.utils
+            >>> from rich import pretty
+            >>> from rc import Name
+            >>>
+            >>> pretty.install()
+            >>> f = inspect.stack()[0]
+            >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
+            >>> Name._file0.get(globs_locs)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> Name._file0.get(rc.utils)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> PathLib(Name._spec0.get(globs_locs).origin)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> PathLib(Name._spec0.get(rc.utils).origin)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> Name._spec0.get(rc.utils).name == rc.utils.__name__
+            True
+            >>> Name._spec0.get(rc.utils).name.split('.')[0] == rc.utils.__package__
+            True
+            >>> Name._name0.get(rc.utils) == rc.utils.__name__
+            True
+            >>> Name._package0.get(rc.utils) == rc.utils.__package__
+            True
 
-    @get.register
-    def _(self, obj: DictType, default=None):
+        Args:
+            obj: object
+            default: None
+
+        Returns:
+            Value from __getattribute__ method.
+        """
+        if self is Name._file0:
+            try:
+                p = object.__getattribute__(obj, Name._file0.real)
+                return PathLib(p)
+            except AttributeError:
+                return self.path(obj)
         try:
             return object.__getattribute__(obj, self.real)
         except AttributeError:
             return default
 
+    @get.register
+    def get_frameinfo(self, obj: FrameInfo, default=None):
+        """
+        Get value of attribute from FrameInfo.
+
+        Examples:
+            >>> import inspect
+            >>> from ast import unparse
+            >>> from inspect import FrameInfo
+            >>> from rc import Name
+            >>>
+            >>> f = inspect.stack()[0]
+            >>> assert f == FrameInfo(Name.frame.get(f), str(Name.filename.get(f)), Name.lineno.get(f),\
+            Name.function.get(f), Name.code_context.get(f), Name.index.get(f))
+            >>> assert Name.filename.get(f) == Name._file0.get(f)
+            >>> Name.source(f)
+            'f = inspect.stack()[0]\\n'
+            >>> unparse(Name.node(f))
+            'f = inspect.stack()[0]'
+            >>> unparse(Name.node('pass'))
+            'pass'
+            >>> assert str(Name._file0.get(f)) == str(Name.filename.get(f))
+            >>> assert Name._name0.get(f) == Name.co_name.get(f) == Name.function.get(f)
+            >>> assert Name.lineno.get(f) == Name.f_lineno.get(f) == Name.tb_lineno.get(f)
+            >>> assert Name.vars.get(f) == (f.frame.f_globals | f.frame.f_locals).copy()
+            >>> assert Name.vars.get(f) == (Name.f_globals.get(f) | Name.f_locals.get(f)).copy()
+            >>> assert Name.vars.get(f) == (Name.globals.get(f) | Name.locals.get(f)).copy()
+            >>> assert unparse(Name.node(f)) in Name.code_context.get(f)[0]
+            >>> assert Name._spec0.get(f).origin == __file__
+
+        Args:
+            obj: object
+            default: None
+
+        Returns:
+            Value from FrameInfo method
+        """
+        if self in [Name._file0, Name.filename]:
+            return PathLib(obj.filename)
+        if self in [Name._name0, Name.co_name, Name.function]:
+            return obj.function
+        if self in [Name.lineno, Name.f_lineno, Name.tb_lineno]:
+            return obj.lineno
+        if self in [Name.f_globals, Name.globals]:
+            return obj.frame.f_globals
+        if self in [Name.f_locals, Name.locals]:
+            return obj.frame.f_locals
+        if self in [Name.frame, Name.tb_frame]:
+            return obj.frame
+        if self is Name.vars:
+            return (obj.frame.f_globals | obj.frame.f_locals).copy()
+        if self in [Name._code0, Name.f_code]:
+            return obj.frame.f_code
+        if self in [Name.f_back, Name.tb_next]:
+            return obj.frame.f_back
+        if self is Name.index:
+            return obj.index
+        if self is Name.code_context:
+            return obj.code_context
+        return self.get((obj.frame.f_globals | obj.frame.f_locals).copy(), default=default)
+
+    @get.register
+    @cache
+    def get_frametype(self, obj: FrameType, default=None):
+        """
+        Get value of attribute from FrameType.
+
+        Examples:
+            >>> import inspect
+            >>> from ast import unparse
+            >>> from inspect import FrameInfo
+            >>> from rc import Name
+            >>>
+            >>> frameinfo = inspect.stack()[0]
+            >>> f = frameinfo.frame
+            >>> assert Name.filename.get(f) == Name.filename.get(frameinfo)
+            >>> assert Name.frame.get(f) == Name.frame.get(frameinfo)
+            >>> assert Name.lineno.get(f) == Name.lineno.get(frameinfo)
+            >>> assert Name.function.get(f) == Name.function.get(frameinfo)
+            >>> assert frameinfo == FrameInfo(Name.frame.get(f), str(Name.filename.get(f)), Name.lineno.get(f),\
+            Name.function.get(f), frameinfo.code_context, frameinfo.index)
+            >>> assert Name.filename.get(f) == Name._file0.get(f)
+            >>> Name.source(f)
+            'frameinfo = inspect.stack()[0]\\n'
+            >>> unparse(Name.node(f))
+            'frameinfo = inspect.stack()[0]'
+            >>> unparse(Name.node('pass'))
+            'pass'
+            >>> assert str(Name._file0.get(f)) == str(Name.filename.get(f))
+            >>> assert Name._name0.get(f) == Name.co_name.get(f) == Name.function.get(f)
+            >>> assert Name.lineno.get(f) == Name.f_lineno.get(f) == Name.tb_lineno.get(f)
+            >>> assert Name.vars.get(f) == (f.f_globals | f.f_locals).copy()
+            >>> assert Name.vars.get(f) == (Name.f_globals.get(f) | Name.f_locals.get(f)).copy()
+            >>> assert Name.vars.get(f) == (Name.globals.get(f) | Name.locals.get(f)).copy()
+            >>> assert unparse(Name.node(f)) in Name.code_context.get(frameinfo)[0]
+            >>> assert Name._spec0.get(f).origin == __file__
+
+        Args:
+            obj: object
+            default: None
+
+        Returns:
+            Value from FrameType method
+        """
+        if self in [Name._file0, Name.filename]:
+            return self.path(obj)
+        if self in [Name._name0, Name.co_name, Name.function]:
+            return obj.f_code.co_name
+        if self in [Name.lineno, Name.f_lineno, Name.tb_lineno]:
+            return obj.f_lineno
+        if self in [Name.f_globals, Name.globals]:
+            return obj.f_globals
+        if self in [Name.f_locals, Name.locals]:
+            return obj.f_locals
+        if self in [Name.frame, Name.tb_frame]:
+            return obj
+        if self is Name.vars:
+            return (obj.f_globals | obj.f_locals).copy()
+        if self in [Name._code0, Name.f_code]:
+            return obj.f_code
+        if self in [Name.f_back, Name.tb_next]:
+            return obj.f_back
+        return self.get((obj.f_globals | obj.f_locals).copy(), default=default)
+
+    @get.register
+    @cache
+    def get_tracebacktype(self, obj: TracebackType, default=None):
+        """
+        Get value of attribute from TracebackType.
+
+        Args:
+            obj: object
+            default: None
+
+        Returns:
+            Value from TracebackType method
+        """
+        if self in [Name._file0, Name.filename]:
+            return self.path(obj)
+        if self in [Name._name0, Name.co_name, Name.function]:
+            return obj.tb_frame.f_code.co_name
+        if self in [Name.lineno, Name.f_lineno, Name.tb_lineno]:
+            return obj.tb_lineno
+        if self in [Name.f_globals, Name.globals]:
+            return obj.tb_frame.f_globals
+        if self in [Name.f_locals, Name.locals]:
+            return obj.tb_frame.f_locals
+        if self in [Name.frame, Name.tb_frame]:
+            return obj.tb_frame
+        if self is Name.vars:
+            return (obj.tb_frame.f_globals | obj.tb_frame.f_locals).copy()
+        if self in [Name._code0, Name.f_code]:
+            return obj.tb_frame.f_code
+        if self in [Name.f_back, Name.tb_next]:
+            return obj.tb_next
+        return self.get((obj.tb_frame.f_globals | obj.tb_frame.f_locals).copy(), default=default)
+
     @property
     @cache
-    def getter(self): return attrgetter(self.real)
+    def getter(self):
+        """
+        Attr getter with real name for private and public which conflicts with Enum.
 
-    def has(self, obj): return hasattr(obj, self.name)
+        Examples:
+            >>> import rc.utils
+            >>> from rc import Name
+            >>>
+            >>> Name._module0.getter(tuple)
+            'builtins'
+            >>> Name._name0.getter(tuple)
+            'tuple'
+            >>> Name._file0.getter(rc.utils)  # doctest: +ELLIPSIS
+            '/Users/jose/....py'
+
+        Returns:
+            Attr getter with real name for private and public which conflicts with Enum.
+        """
+        return attrgetter(self.real)
+
+    def has(self, obj):
+        """
+        Checks if has attr with real name for private and public which conflicts with Enum.
+
+        Examples:
+            >>> import rc.utils
+            >>> from rc import Name
+            >>>
+            >>> Name._module0.has(tuple)
+            True
+            >>> Name._name0.has(tuple)
+            True
+            >>> Name._file0.has(tuple)
+            False
+            >>> Name._file0.has(rc.utils)
+            True
+
+        Returns:
+            Checks if has attr  with real name for private and public which conflicts with Enum.
+        """
+        return hasattr(obj, self.real)
+
+    @classmethod
+    def node(cls, obj, complete=False, line=False):
+        """
+        Get node of object.
+
+        Examples:
+            >>> import inspect
+            >>> from ast import unparse
+            >>> from inspect import FrameInfo
+            >>> from inspect import getmodulename
+            >>> from rich import pretty
+            >>> from rc import Name
+            >>>
+            >>> pretty.install()
+            >>> f = inspect.stack()[0]
+            >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
+            >>> Name.filename.get(f), Name.function.get(f), Name.code_context.get(f)[0], Name.source(f) \
+             # doctest: +ELLIPSIS
+            (
+                PosixPath('<doctest ...node[7]>'),
+                '<module>',
+                'f = inspect.stack()[0]\\n',
+                'f = inspect.stack()[0]\\n'
+            )
+            >>> Name._file0.get(globs_locs)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> assert Name._file0.get(globs_locs) == PathLib(__file__) == PathLib(Name._spec0.get(globs_locs).origin)
+            >>> assert Name._name0.get(globs_locs) == getmodulename(__file__) == Name._spec0.get(globs_locs).name
+            >>> Name.source(globs_locs)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> Name.source(__file__)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> assert Name.source(globs_locs) == Name.source(__file__)
+            >>> unparse(Name.node(globs_locs)) == unparse(Name.node(__file__))  # Unparse does not have encoding line
+            True
+            >>> Name.source(f) in unparse(Name.node(globs_locs))
+            True
+            >>> Name.source(f) in unparse(Name.node(__file__))
+            True
+
+        Args:
+            obj: object.
+            complete: return complete node for file (always for module and frame corresponding to module)
+                or object node (default=False)
+            line: return line
+
+        Returns:
+            Node.
+        """
+        return ast.parse(cls.source(obj, complete, line) or str(obj))
+
+    @classmethod
+    def path(cls, obj):
+        """
+        Get path of object.
+
+        Examples:
+            >>> import inspect
+            >>> from ast import unparse
+            >>> from inspect import FrameInfo
+            >>> from inspect import getmodulename
+            >>> from rich import pretty
+            >>> from rc import Name
+            >>> from rc import allin
+            >>>
+            >>> pretty.install()
+            >>> frameinfo = inspect.stack()[0]
+            >>> globs_locs = (frameinfo.frame.f_globals | frameinfo.frame.f_locals).copy()
+            >>> Name.path(Name.path)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> Name.path(__file__)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> Name.path(allin)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> Name.path(dict(a=1))
+            PosixPath("{'a': 1}")
+
+        Args:
+            obj: object.
+
+        Returns:
+            Path.
+        """
+        es = Es(obj)
+        if es.mm:
+            f = obj.get(Name._file0.real)
+        elif es.frameinfo:
+            f = obj.filename
+        else:
+            try:
+                f = getsourcefile(obj) or getfile(obj)
+            except TypeError:
+                f = None
+        return PathLib(f or str(obj))
 
     @classmethod
     @cache
-    def attrs(cls):
-        return map_reduce(cls.__members__, lambda x: x.startswith('__'), lambda x: cls._real(x))
+    def private(cls):
+        """
+        Get private attrs tuple converted to real names.
+
+        Examples:
+            >>> from rich import pretty
+            >>> from rc import Name
+            >>>
+            >>> pretty.install()
+            >>> Name.private()  # doctest: +ELLIPSIS
+            (
+                '__all__',
+                ...
+            )
+
+        Returns:
+            Tuple of private attrs converted to real names.
+        """
+        return tuple(cls._attrs()[True])
 
     @classmethod
     @cache
-    def private(cls): return cls.attrs()[True]
+    def public(cls):
+        """
+        Get public attrs tuple.
 
-    @classmethod
-    @cache
-    def public(cls): return cls.attrs()[False]
+        Examples:
+            >>> from rich import pretty
+            >>> from rc import Name
+            >>>
+            >>> pretty.install()
+            >>> Name.public()  # doctest: +ELLIPSIS
+            (
+                '_asdict',
+                ...
+            )
+
+        Returns:
+            Tuple of public attrs.
+        """
+        return tuple(cls._attrs()[False])
 
     @classmethod
     @cache
     def _real(cls, name):
-        return f'{name}__' if name.startswith('__') else name.removesuffix('_')
+        return f'_{name.replace("0", "_")}_' if name.startswith('_') and name.endswith('0') else name.removesuffix('_')
 
     @property
     def real(self):
+        """
+        Get real attr name converted for private and attrs that conflict with Enum.
+
+        Examples:
+            >>> from rc import Name
+            >>> Name._file0.real
+            '__file__'
+            >>> Name._asdict.real
+            '_asdict'
+            >>> Name.cls_.real
+            'cls'
+            >>> Name.get_.real
+            'get'
+            >>> Name.name_.real
+            'name'
+            >>> Name.self_.real
+            'self'
+            >>> Name.value_.real
+            'value'
+
+        Returns:
+            Real attribute name converted for private and attrs that conflict with Enum.
+        """
         return self._real(self.name)
+
+    @classmethod
+    def _source(cls, obj, line=False):
+        f = cls._file0.get(obj) or obj
+        if (p := PathLib(f)).is_file():
+            if s := token_open(p):
+                if line:
+                    return s, 1
+                return s
+
+    @classmethod
+    def source(cls, obj, complete=False, line=False):
+        """
+        Get source of object.
+
+        Examples:
+            >>> import inspect
+            >>> from ast import unparse
+            >>> from inspect import FrameInfo
+            >>> from inspect import getmodulename
+            >>> import rc.utils
+            >>> from rich import pretty
+            >>> from rc import Name
+            >>> from rc import allin
+            >>>
+            >>> pretty.install()
+            >>>
+            >>> Name.source(__file__)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> Name.source(__file__, complete=True)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>>
+            >>> Name.source(Name.source)  # doctest: +ELLIPSIS
+            '    @classmethod\\n    def source(cls, obj, complete=False, line=False):\\n...'
+            >>> Name.source(Name.source, complete=True)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> Name.source(Name.source).splitlines()[1] in Name.source(Name.source, complete=True)
+            True
+            >>>
+            >>> Name.source(allin)  # doctest: +ELLIPSIS
+            'def allin(origin, destination):\\n...'
+            >>> Name.source(allin, line=True)  # doctest: +ELLIPSIS
+            (
+                'def allin(origin, destination):\\n...',
+                ...
+            )
+            >>> Name.source(allin, complete=True)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> Name.source(allin, complete=True, line=True)  # doctest: +ELLIPSIS
+            (
+                '# -*- coding: utf-8 -*-\\n...,
+                ...
+            )
+            >>> Name.source(allin).splitlines()[0] in Name.source(allin, complete=True)
+            True
+            >>>
+            >>> Name.source(dict(a=1))
+            "{'a': 1}"
+            >>> Name.source(dict(a=1), complete=True)
+            "{'a': 1}"
+            >>>
+            >>> Name.source(rc.utils)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> Name.source(rc.utils, complete=True)  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>>
+            >>> frameinfo = inspect.stack()[0]
+            >>> Name.source(frameinfo), frameinfo.function
+            ('frameinfo = inspect.stack()[0]\\n', '<module>')
+            >>> Name.source(frameinfo, complete=True), frameinfo.function
+            ('frameinfo = inspect.stack()[0]\\n', '<module>')
+            >>>
+            >>> frametype = frameinfo.frame
+            >>> Name.source(frametype), frametype.f_code.co_name
+            ('frameinfo = inspect.stack()[0]\\n', '<module>')
+            >>> Name.source(frameinfo, complete=True), frametype.f_code.co_name
+            ('frameinfo = inspect.stack()[0]\\n', '<module>')
+            >>>
+            >>> Name.source(None)
+            'None'
+
+        Args:
+            obj: object.
+            complete: return complete source file (always for module and frame corresponding to module)
+                or object source (default=False)
+            line: return line
+
+        Returns:
+            Source.
+        """
+        es = Es(obj)
+        if any([es.moduletype, (es.frameinfo and obj.function == FUNCTION_MODULE),
+                (es.frametype and obj.f_code.co_name == FUNCTION_MODULE) or
+                (es.tracebacktype and obj.tb_frame.f_code.co_name == FUNCTION_MODULE) or
+                complete]):
+            if source := cls._source(obj, line):
+                return source
+
+        try:
+            if line:
+                lines, lnum = getsourcelines(obj.frame if es.frameinfo else obj)
+                return ''.join(lines), lnum
+            return getsource(obj.frame if es.frameinfo else obj)
+        except (OSError, TypeError):
+            if source := cls._source(obj, line):
+                return source
+            if line:
+                return str(obj), 1
+            return str(obj)
 
 
 class NamedType(metaclass=ABCMeta):
@@ -1266,12 +1998,12 @@ class NamedType(metaclass=ABCMeta):
         >>>
         >>> named = namedtuple('named', 'a', defaults=('a', ))
         >>>
-        >>> isinstance(named(), NamedType)
+        >>> Es(named()).namedtype
         True
-        >>> issubclass(named, NamedType)
+        >>> Es(named).namedtype_sub
         True
         >>>
-        >>> isinstance(named(), tuple)
+        >>> Es(named()).tuple
         True
         >>> issubclass(named, tuple)
         True
@@ -1291,17 +2023,17 @@ class NamedAnnotationsType(metaclass=ABCMeta):
         >>> named = namedtuple('named', 'a', defaults=('a', ))
         >>> Named = NamedTuple('Named', a=str)
         >>>
-        >>> isinstance(named(), NamedAnnotationsType)
+        >>> Es(named()).named_annotationstype
         False
-        >>> issubclass(named, NamedAnnotationsType)
+        >>> Es(named).named_annotationstype_sub
         False
         >>>
-        >>> isinstance(Named('a'), NamedAnnotationsType)
+        >>> Es(Named('a')).named_annotationstype
         True
-        >>> issubclass(Named, NamedAnnotationsType)
+        >>> Es(Named).named_annotationstype_sub
         True
         >>>
-        >>> isinstance(named(), tuple)
+        >>> Es(named()).tuple
         True
         >>> issubclass(named, tuple)
         True
@@ -1322,20 +2054,85 @@ class SlotsType(metaclass=ABCMeta):
         >>> d = Dict()
         >>> s = Slots()
         >>>
-        >>> issubclass(Dict, SlotsType)
+        >>> Es(Dict).slotstype_sub
         False
-        >>> isinstance(d, SlotsType)
+        >>> Es(d).slotstype
         False
         >>>
-        >>> issubclass(Slots, SlotsType)
+        >>> Es(Slots).slotstype_sub
         True
-        >>> isinstance(s, SlotsType)
+        >>> Es(s).slotstype
         True
     """
     __subclasshook__ = classmethod(lambda cls, C: cls is SlotsType and '__slots__' in C.__dict__)
 
 
 def aioloop(): return noexception(RuntimeError, get_running_loop)
+
+
+def allin(origin, destination):
+    """
+    Checks all items in origin are in destination iterable.
+
+    Examples:
+        >>> from rc import allin
+        >>> from rc import BUILTIN_CLASSES
+        >>>
+        >>> class Int(int):
+        ...     pass
+        >>> allin(tuple.__mro__, BUILTIN_CLASSES)
+        True
+        >>> allin(Int.__mro__, BUILTIN_CLASSES)
+        False
+        >>> allin('tuple int', 'bool dict int')
+        False
+        >>> allin('bool int', ['bool', 'dict', 'int'])
+        True
+        >>> allin(['bool', 'int'], ['bool', 'dict', 'int'])
+        True
+
+    Args:
+        origin: origin iterable.
+        destination: destination iterable to check if origin items are in.
+
+    Returns:
+        True if all items in origin are in destination.
+    """
+    origin = to_iter(origin)
+    destination = to_iter(destination)
+    return all(map(lambda x: x in destination, origin))
+
+
+def anyin(origin, destination):
+    """
+    Checks any item in origin are in destination iterable and return the first found.
+
+    Examples:
+        >>> from rc import anyin
+        >>> from rc import BUILTIN_CLASSES
+        >>>
+        >>> class Int(int):
+        ...     pass
+        >>> anyin(tuple.__mro__, BUILTIN_CLASSES)
+        <class 'tuple'>
+        >>> assert anyin('tuple int', BUILTIN_CLASSES) is None
+        >>> anyin('tuple int', 'bool dict int')
+        'int'
+        >>> anyin('tuple int', ['bool', 'dict', 'int'])
+        'int'
+        >>> anyin(['tuple', 'int'], ['bool', 'dict', 'int'])
+        'int'
+
+    Args:
+        origin: origin iterable.
+        destination: destination iterable to check if any of origin items are in.
+
+    Returns:
+        First found if any item in origin are in destination.
+    """
+    origin = to_iter(origin)
+    destination = to_iter(destination)
+    return first_true(origin, pred=lambda x: x in destination)
 
 
 def annotations(obj, index=1):
@@ -1444,7 +2241,7 @@ def delete(data: MutableMapping, key=('self', 'cls', )):
 
 
 @delete.register
-def _(data: list, key: Iterable = ('self', 'cls', )) -> Optional[list]:
+def delete_list(data: list, key=('self', 'cls', )):
     """
     Deletes value in list.
 
@@ -1480,7 +2277,7 @@ def dict_sort(data, ordered=False, reverse=False):
     return rv.copy()
 
 
-def get(obj, name, d=None): return obj.get(name, d) if Es(obj).gettype else getattr(obj, name, d)
+def get(data, name, default=None): return data.get(name, default) if Es(data).gettype else getattr(data, name, default)
 
 
 class info:
@@ -1499,35 +2296,33 @@ class info:
         keys to include (default: :attr:`rc.Key.PRIVATE`)
 
     Examples:
-        >>> from rc.utils import Base
+        >>> from rc.utils import Base1
         >>> from rc.utils import info
         >>>
-        >>> base = info(Base)
+        >>> base = info(Base1)
         >>> assert 'cls_name' in base.cls_properties
         >>> i = info(info)
         >>> assert not set(info.__slots__).difference(i.cls_data)
         >>> assert len(base.cls_classmethods) == 3
         >>> assert len(base.cls_methods) == 1
+        >>> assert len(base.cls_properties) == 1
         >>> assert len(base.cls_staticmethods) == 2
-        >>> Base.get.__name__
-        '<lambda>'
+        >>> assert Base1.get.__name__ in base.cls_methods
         >>> assert len(base.cls_methods) == 1
-        >>> assert len(base.cls_dir()) == len(base.cls_classmethods) + len(base.cls_methods) + \
-        len(base.cls_staticmethods)
+        >>> assert len(base.cls_dir) == len(base.cls_classmethods) + len(base.cls_methods) + \
+        len(base.cls_staticmethods) + len(base.cls_properties) + len(base.cls_data)
         >>> base_all = info(Base1, Attr.ALL)
         >>> assert len(base_all.cls_methods) == 19
         >>> base.get_importable_name
-        'rc.utils.Base'
+        'rc.utils.Base1'
         >>> base.cls_module_var
         'rc.utils'
         >>> base.cls_qual_var
-        'Base'
+        'Base1'
         >>> i.cls_attr_value('key')
         <member 'key' of 'info' objects>
         >>> i.get_module
         <module 'rc.utils' from '/Users/jose/bashrc/rc/utils.py'>
-        # >>> i.get_source
-
     """
     __slots__ = ('data', 'es', 'key', )
 
@@ -1772,6 +2567,20 @@ def to_iter(data, exclude=(str, bytes)):
     if isinstance(data, str):
         data = data.split(' ')
     return list(always_iterable(data, base_type=exclude))
+
+
+def token_open(file):
+    """
+    Read file with tokenize to use in nested classes ast node.
+
+    Args:
+        file: filename
+
+    Returns:
+        Source
+    """
+    with tokenize.open(str(file)) as f:
+        return f.read()
 
 
 def varname(index: int = 2, lower=True, sep: str = '_') -> Optional[str]:
