@@ -17,6 +17,7 @@ more-itertools
 pip
 psutil
 pydantic
+pymongo[tls]
 python-box[all]
 rich
 semver

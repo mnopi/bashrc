@@ -13,8 +13,10 @@ __all__ = (
     'ImportFrom',
     'NodeVisitor',
     'walk',
-    'POST_INIT_NAME',
     'PathLib',
+
+    'Environs',
+    'GitRepo',
 
     'BUILTIN_CLASSES',
     'FRAME_SYS_INIT',
@@ -24,6 +26,7 @@ __all__ = (
     'PYTHON_SITE',
 
     'Alias',
+    'CRLock',
     'console',
     'debug',
     'fmic',
@@ -49,6 +52,7 @@ __all__ = (
     'BoxKeys',
     'ChainRV',
     'Chain',
+    'Cls',
     'CmdError',
     'CmdAioError',
     'DataType',
@@ -61,6 +65,7 @@ __all__ = (
     'GetAttrType',
     'GetSupport',
     'GetType',
+    'Instance',
     'Name',
     'NamedType',
     'NamedAnnotationsType',
@@ -78,6 +83,7 @@ __all__ = (
     'dict_sort',
     'dict_sort',
     'get',
+    'getset',
     'info',
     'is_even',
     'join_newline',
@@ -116,18 +122,18 @@ import textwrap
 import tokenize
 from abc import ABCMeta
 from abc import abstractmethod
-from ast import AST
-from ast import AsyncFor
-from ast import AsyncFunctionDef
-from ast import AsyncWith
-from ast import Await
-from ast import ClassDef
-from ast import FunctionDef
-from ast import get_source_segment
-from ast import Import
-from ast import ImportFrom
-from ast import NodeVisitor
-from ast import walk
+from ast import AST as AST
+from ast import AsyncFor as AsyncFor
+from ast import AsyncFunctionDef as AsyncFunctionDef
+from ast import AsyncWith as AsyncWith
+from ast import Await as Await
+from ast import ClassDef as ClassDef
+from ast import FunctionDef as FunctionDef
+from ast import get_source_segment as get_source_segment
+from ast import Import as Import
+from ast import ImportFrom as ImportFrom
+from ast import NodeVisitor as NodeVisitor
+from ast import walk as walk
 from asyncio import current_task
 from asyncio import get_running_loop
 from asyncio import iscoroutine
@@ -163,11 +169,13 @@ from inspect import stack
 from operator import attrgetter
 from pathlib import Path as PathLib
 from subprocess import CompletedProcess
+from threading import _CRLock
 from types import BuiltinFunctionType
 from types import CodeType
 from types import FrameType
 from types import FunctionType
 from types import LambdaType
+from types import MethodWrapperType
 from types import ModuleType
 from types import TracebackType
 from typing import _alias
@@ -189,9 +197,15 @@ from typing import TextIO
 from typing import Union
 
 from box import Box
+from bson import ObjectId
 from click import secho
 from click.exceptions import Exit
 from devtools import Debug
+from environs import Env as Environs
+from git import GitConfigParser
+from git import Remote
+from git import Repo as GitRepo
+from git.refs import SymbolicReference as GitSymbolicReference
 from icecream import IceCreamDebugger
 from jsonpickle.util import has_method
 from jsonpickle.util import has_reduce
@@ -226,6 +240,7 @@ PYTHON_SYS = PathLib(sys.executable)
 PYTHON_SITE = PathLib(PYTHON_SYS).resolve()
 
 Alias = _alias
+CRLock = _CRLock
 console = Console(color_system='256')
 debug = Debug(highlight=True)
 fmic = IceCreamDebugger(prefix=str()).format
@@ -523,48 +538,279 @@ class Base:
     Attributes:
     -----------
     __slots__: tuple
-        slots
+        slots (default: ()).
+    __hash_exclude__: tuple
+        Exclude slot attr for hash (default: ()).
+    __ignore_attr__: tuple
+        Exclude instance attribute (default: ()).
+    __ignore_copy__: tuple
+        True or class for repr instead of nested asdict and deepcopy. No deepcopy (default: ()).
+    __ignore_kwarg__: tuple
+        Exclude attr from kwargs (default: ()).
+    __ignore_str__: tuple
+        Use str value for object (default: ()).
+    __repr_exclude__: tuple
+        Exclude slot attr for repr (default: ()).
+    __repr_newline__: tuple
+        New line per attr in repr (default: ()).
 
     Methods:
     --------
     __getattribute__(item, default=None)
         :class:`function`:  Sets ``None`` as default value is attr is not defined.
+    __hash__(self)
+        :class:`function`: hash
+    __repr__(self)
+        :class:`function`: repr
     get(cls, name, default=None)
         :class:`function`: Get attribute value.
+    info(self, key=Attr.PRIVATE)
+        :class:`function`: :class:`info`
 
     Examples:
     ---------
+        >>> from rich import pretty
         >>> from rc import Base
+        >>> from rc import Cls
+        >>> from rc import pproperty
         >>>
+        >>> pretty.install()
         >>> class Test(Base):
         ...     __slots__ = ('_hash', '_prop', '_repr', '_slot', )
         ...     __hash_exclude__ = ('_slot', )
         ...     __repr_exclude__ = ('_repr', )
-        ...     prop = Base1.get_propnew('prop')
+        ...     prop = Cls.propnew('prop')
+        ...     @classmethod
+        ...     def clsmethod(cls):
+        ...         pass
+        ...     @staticmethod
+        ...     def static(cls):
+        ...         pass
+        ...     @pproperty
+        ...     def pprop(self):
+        ...         return 'pprop'
         >>>
         >>> test = Test()
-    """
+        >>> test.info().cls.name
+        'Test'
+        >>> sorted(test.info().cls.mroattr())
+        ['_hash', '_prop', '_repr', '_slot']
+        >>> sorted(set(Test.__slots__))
+        ['_hash', '_prop', '_repr', '_slot']
+        >>> sorted(test.info().cls.mroinclude())
+        ['_hash', '_prop', '_repr']
+        >>> assert sorted(tuple(test.info().cls.mroinclude()) + test.__hash_exclude__) == sorted(test.__slots__)
+        >>> sorted(test.info().cls.mroinclude(exclude='__repr_exclude__'))
+        ['_hash', '_prop', '_slot']
+        >>> assert sorted(tuple(test.info().cls.mroinclude(exclude='__repr_exclude__')) + test.__repr_exclude__) == \
+        sorted(test.__slots__)
+        >>> repr(test)
+        'Test(_hash: None,\\n_prop: None,\\n_slot: None,\\npprop: pprop)'
+        >>> assert test.__repr_exclude__[0] not in repr(test)
+        >>> test.prop
+        >>> test.prop = 2
+        >>> test.prop
+        2
+        >>> del test.prop
+        >>> test.prop
+        >>> assert hash((test._hash, test._prop, test._repr)) == hash(test)
+        >>> set(test.__slots__).difference(test.info().cls.data_attrs)
+        set()
+        >>> sorted(test.info().cls.data_attrs)
+        ['_hash', '_prop', '_repr', '_slot']
+        >>> '__slots__' in sorted(test.info(key=Attr.ALL).cls.data_attrs)
+        True
+        >>> test.get.__name__ in test.info().cls.methods
+        True
+        >>> test.get.__name__ in test.info().cls.callables
+        True
+        >>> test.clsmethod.__name__ in test.info().cls.classmethods
+        True
+        >>> test.static.__name__ in test.info().cls.staticmethods
+        True
+        >>> 'prop' in test.info().cls.properties
+        True
+        >>> 'pprop' in test.info().cls.pproperties
+        True
+        >>> test.info().cls.importable_name  # doctest: +ELLIPSIS
+        '....Test'
+        >>> test.info().cls.importable_name.split('.')[0] == test.info().cls.modname
+        True
+        >>> test.info().cls.qualname
+        'Test'
+        >>> test.info().cls.attr_value('pprop')  # doctest: +ELLIPSIS
+        <....pproperty object at 0x...>
+        >>> test.info().instance.attr_value('pprop')
+        'pprop'
+        >>> test.info().attr_value('pprop')
+        'pprop'
+        >>> test.info().module  # doctest: +ELLIPSIS
+        <module '...' from '/Users/jose/....py'>
+        >>> assert sorted(test.info().dir) == sorted(test.info().cls.dir) == sorted(test.info().instance.dir)
+     """
     __slots__ = ()
+    __hash_exclude__ = ()
+    """Exclude slot attr for hash (default: ())."""
+    __ignore_attr__ = ()
+    """Exclude instance attribute (default: ())."""
+    __ignore_copy__ = ()
+    """True or class for repr instead of nested asdict and deepcopy. No deepcopy (default: ())"""
+    __ignore_kwarg__ = ()
+    """Exclude attr from kwargs (default: ())."""
+    __ignore_str__ = ()
+    """Use str value for object (default: ())."""
+    __repr_exclude__ = ()
+    """Exclude slot attr for repr (default: ())."""
+    __repr_newline__ = True
+    """New line per attr in repr (default: ())."""
 
+    # noinspection PyUnresolvedReferences
     def __getattribute__(self, name, default=None):
         """
-        Sets attribute with default if it does not exists.
+        Sets attribute:
+            - with None if it does not exists and involked with getattr()
+                # getattr does not pass default to __getattribute__
+            - with default if called directly.
+
+        Examples:
+            >>> from rc import Base
+            >>> class Dict(Base): pass
+            >>> class Slots(Base): __slots__ = ('a', )
+            >>>
+            >>> d = Dict()
+            >>> s = Slots()
+            >>> getattr(d, 'a')
+            >>> d.a
+            >>> getattr(s, 'a')
+            >>> s.a
+            >>>
+            >>> d = Dict()
+            >>> s = Slots()
+            >>> getattr(d, 'a', 2)  # getattr does not pass default to __getattribute__
+            >>> d.a
+            >>> getattr(s, 'a', 2)  # getattr does not pass default to __getattribute__
+            >>> s.a
+            >>>
+            >>> d = Dict()
+            >>> s = Slots()
+            >>> d.__getattribute__('a', 2)
+            2
+            >>> d.a
+            2
+            >>> s.__getattribute__('a', 2)
+            2
+            >>> s.a
+            2
+            >>>
+            >>> class Dict(Base): a = 1
+            >>> class Slots(Base):
+            ...     __slots__ = ('a', )
+            ...     def __init__(self):
+            ...         self.a = 1
+            >>> d = Dict()
+            >>> s = Slots()
+            >>> getattr(d, 'a')
+            1
+            >>> getattr(s, 'a')
+            1
+            >>> getattr(d, 'a', 2)
+            1
+            >>> getattr(s, 'a', 2)
+            1
 
         Args:
             name: attr name.
-            default: default value (default: None)
+            default: default value (default: None).
 
         Returns:
-            Attribute value or sets with partial callable or sets default value
+            Attribute value or sets default value and returns.
         """
-        try:
-            return object.__getattribute__(self, name)
-        except AttributeError:
-            object.__setattr__(self, name, default)
-            return object.__getattribute__(self, name)
+        return getset(self, name, default)
+
+    def __hash__(self):
+        return self.info().instance.hash
+
+    def __repr__(self):
+        return self.info().instance.repr(newline=self.__repr_newline__)
 
     def get(self, name, default=None):
-        return self.__getattribute__(name, default=default)
+        """
+        Sets attribute:
+            - with None if it does not exists and involked with getattr()
+                # getattr does not pass default to __getattribute__
+            - with default if called directly.
+
+        Examples:
+            >>> from rc import Base
+            >>> class Dict(Base): pass
+            >>> class Slots(Base): __slots__ = ('a', )
+            >>>
+            >>> d = Dict()
+            >>> s = Slots()
+            >>> d.get('a')
+            >>> d.a
+            >>> s.get('a')
+            >>> s.a
+            >>>
+            >>> d = Dict()
+            >>> s = Slots()
+            >>> getattr(d, 'a', 2)  # getattr does not pass default to __getattribute__
+            >>> d.a
+            >>> getattr(s, 'a', 2)  # getattr does not pass default to __getattribute__
+            >>> s.a
+            >>>
+            >>> d = Dict()
+            >>> s = Slots()
+            >>> d.get('a', 2)
+            2
+            >>> d.a
+            2
+            >>> s.get('a', 2)
+            2
+            >>> s.a
+            2
+            >>>
+            >>> class Dict(Base): a = 1
+            >>> class Slots(Base):
+            ...     __slots__ = ('a', )
+            ...     def __init__(self):
+            ...         self.a = 1
+            >>> d = Dict()
+            >>> s = Slots()
+            >>> d.get('a')
+            1
+            >>> s.get('a')
+            1
+            >>> d.get('a', 2)
+            1
+            >>> s.get('a', 2)
+            1
+            >>>
+            >>> class Dict(Base, dict): pass
+            >>> d = Dict()
+            >>> d.get('a', 2)
+            2
+            >>> d.a  # dict not super().__init__(dict(a=2)
+
+        Args:
+            name: attr name.
+            default: default value (default: None).
+
+        Returns:
+            Attribute value or sets default value and returns.
+        """
+        if hasattr(self, '__getitem__'):
+            if self.__getitem__ is not None:
+                try:
+                    rv = self.__getitem__(name)
+                except KeyError:
+                    self[name] = default
+                    rv = self.__getitem__(name)
+                return rv
+        return getset(self, name, default)
+
+    def info(self, depth=None, ignore=False, key=Attr.PRIVATE):
+        return info(self, depth=depth, ignore=ignore, key=key)
 
 
 class Base1:
@@ -589,13 +835,13 @@ class Base1:
     __getattribute__(item, default=None)
         Sets ``None`` as default value is attr is not defined.
     get_mroattr(cls, n='__slots__')
-        :class:`staticmethod`: All values of atribute `cls.__slots__` in ``cls.__mro__``.
+        :class:`staticmethod`: All values of attribute `cls.__slots__` in ``cls.__mro__``.
     get_mrohash()
-        :class:`classmethod`: All values of atribute `cls.__hash__` in ``cls.__mro__``.
+        :class:`classmethod`: All values of attribute `cls.__hash__` in ``cls.__mro__``.
     get_mrorepr()
-        :class:`classmethod`: All values of atribute `cls.__repr__` in ``cls.__mro__``.
+        :class:`classmethod`: All values of attribute `cls.__repr__` in ``cls.__mro__``.
     get_mroslots()
-        :class:`classmethod`: All values of atribute `cls.__slots__` in ``cls.__mro__``.
+        :class:`classmethod`: All values of attribute `cls.__slots__` in ``cls.__mro__``.
     get_propnew(n, d=None)
         :class:`staticmethod`: Get a new :class:`property` with f'_{n}' as attribute name.
         It should be included in :attr:`rc.utils.Base1.__slots__`.
@@ -603,34 +849,6 @@ class Base1:
 
     Examples:
     ---------
-        >>> from rc import Base1
-        >>>
-        >>> class Test(Base1):
-        ...     __slots__ = ('_hash', '_prop', '_repr', '_slot', )
-        ...     __hash_exclude__ = ('_slot', )
-        ...     __repr_exclude__ = ('_repr', )
-        ...     prop = Base1.get_propnew('prop')
-        >>>
-        >>> test = Test()
-        >>> test.cls_name
-        'Test'
-        >>> assert Test.get_mroattr(Test) == set(Test.__slots__) == test.get_mroslots()
-
-        >>> assert Test.get_mroattr(Test, '__hash_exclude__') == set(Test.__hash_exclude__)
-        >>> assert Test.__hash_exclude__ not in Test.get_mrohash()
-
-        >>> assert Test.get_mroattr(Test, '__repr_exclude__') == set(Test.__repr_exclude__)
-        >>> assert Test.__repr_exclude__[0] not in Test.get_mrorepr()
-        >>> assert Test.__repr_exclude__[0] not in repr(test)
-        >>> assert Test.__hash_exclude__[0] in repr(test)
-        >>> assert test.cls_name in repr(test)
-
-        >>> assert test.prop is None
-        >>> test.prop = 2
-        >>> test.prop
-        2
-        >>> del test.prop
-        >>> assert test.prop is None
 
     """
     __slots__ = ()
@@ -640,7 +858,6 @@ class Base1:
     def __getattribute__(self, name: str, default=None):
         """
         Sets attribute with default if it does not exists.
-        If default is a partial instance th returned value will be used. It is similar to a cache property:
 
         Args:
             name: attr name.
@@ -652,7 +869,7 @@ class Base1:
         try:
             return object.__getattribute__(self, name)
         except AttributeError:
-            object.__setattr__(self, name, default() if isinstance(default, partial) else default)
+            object.__setattr__(self, name, default)
             return object.__getattribute__(self, name)
 
     def __hash__(self):
@@ -660,25 +877,6 @@ class Base1:
 
     def __repr__(self):
         return f'{self.cls_name}({", ".join([f"{s}: {repr(getattr(self, s))}" for s in self.get_mrorepr()])})'
-
-    def get(self, name, default=None):
-        return self.__getattribute__(name, default=default)
-
-    @property
-    def cls_name(self):
-        return self.__class__.__name__
-
-    get_mroattr = staticmethod(lambda cls, n='__slots__': {a for i in cls.__mro__ for a in getattr(i, n, tuple())})
-    get_mrohash = classmethod(lambda cls: cls.get_mroslots().difference(cls.get_mroattr(cls, n='__hash_exclude__')))
-    get_mrorepr = classmethod(lambda cls:
-                              sorted(cls.get_mroslots().difference(cls.get_mroattr(cls, n='__repr_exclude__'))))
-    get_mroslots = classmethod(lambda cls: cls.get_mroattr(cls))
-    get_propnew = staticmethod(lambda name, default=None: property(
-        lambda self: self.__getattribute__(f'_{name}',
-                                           default=default(self) if isinstance(default, partial) else default),
-        lambda self, value: self.__setattr__(f'_{name}', value),
-        lambda self: self.__delattr__(f'_{name}')
-    ))
 
 
 class BoxKeys(Box):
@@ -811,6 +1009,181 @@ class Chain(ChainMap):
 
     def set(self, key, value):
         return self.__setitem__(key, value)
+
+
+class Cls:
+    """
+    Class Helper Class.
+
+    Examples:
+    ---------
+    >>> from rc import Cls
+
+    Attributes:
+    -----------
+    __slots__: tuple
+        slots (default: ()).
+
+    data: Type
+        Class to provide information (default: None)
+    key: :class:`rc.Key`
+        keys to include (default: :attr:`rc.Key.PRIVATE`)
+
+    """
+    __slots__ = ('data', 'key', )
+
+    def __init__(self, data=None, key=Attr.PRIVATE):
+        self.data = data if Es(data).type else type(data)
+        self.key = key
+
+    def __call__(self, data=None, key=Attr.PRIVATE):
+        self.data = (data if Es(data).type else type(data)) if data else self.data
+        self.key = key or self.key
+        return self
+
+    @cache
+    def attr_value(self, name, default=None):
+        return getattr(self.data, name, default)
+
+    @property
+    @cache
+    def by_kind(self):
+        return bucket(self.classified, key=lambda x: x.kind if self.key.include(x.name) else 'e')
+
+    @property
+    @cache
+    def by_name(self):
+        return {i.name: i for i in self.classified if self.key.include(i.name)}
+
+    @property
+    @cache
+    def callables(self):
+        return sorted(self.classmethods + self.methods + self.staticmethods)
+
+    @property
+    @cache
+    def classified(self):
+        return classify_class_attrs(self.data)
+
+    @property
+    @cache
+    def classmethods(self):
+        """
+        Cls class methods.
+
+        Returns:
+            Class Methods.
+        """
+        return list(map(Name.name_.getter, self.by_kind['class method']))
+
+    @property
+    @cache
+    def data_attrs(self):
+        return list(map(Name.name_.getter, self.by_kind['data']))
+
+    @property
+    @cache
+    def dir(self):
+        return [i for i in dir(self.data) if self.key.include(i)]
+
+    def has_attr(self, name):
+        return hasattr(self.data, name)
+
+    def has_method(self, name):
+        return has_method(self.data, name)
+
+    @property
+    def has_reduce(self):
+        return has_reduce(self.data)
+
+    @property
+    @cache
+    def importable_name(self):
+        return importable_name(self.data)
+
+    def in_slot(self, name):
+        return name in self.mroattr()
+
+    @property
+    @cache
+    def methods(self):
+        return list(map(Name.name_.getter, self.by_kind['method']))
+
+    @property
+    def modname(self):
+        return Name._module0.get(self.data, default=str())
+
+    @property
+    @cache
+    def mro(self):
+        """
+        Class __mro__
+
+        Returns:
+            __mro__
+        """
+        return self.data.__mro__
+
+    @cache
+    def mroattr(self, name='__slots__'):
+        """
+        All values of attr in mro.
+
+        Args:
+            name: attr name.
+
+        Returns:
+            All/accumulated values of attr in mro.
+        """
+        return {value for cls in self.mro for value in getattr(cls, name, tuple())}
+
+    @cache
+    def mroinclude(self, name='__slots__', exclude='__hash_exclude__'):
+        """
+        Accumulated values from mro attr name - accumulated values from attr exclude
+
+        Args:
+            name: attr accumulated value (default: __slots__).
+            exclude: attr to check in mro all accumulated values (default: __hash_exclude__).
+
+        Returns:
+            Set with attr names to include.
+
+        """
+        return self.mroattr(name=name).difference(self.mroattr(name=exclude))
+
+    @property
+    @cache
+    def name(self):
+        return self.data.__name__
+
+    @property
+    @cache
+    def pproperties(self):
+        return [i.name for i in self.classified if Es(i.object).pproperty]
+
+    @property
+    @cache
+    def properties(self):
+        return list(map(Name.name_.getter, self.by_kind['property']))
+
+    @staticmethod
+    def propnew(name, default=None):
+        return property(
+            lambda self:
+            self.__getattribute__(f'_{name}', default=default(self) if isinstance(default, partial) else default),
+            lambda self, value: self.__setattr__(f'_{name}', value),
+            lambda self: self.__delattr__(f'_{name}')
+        )
+
+    @property
+    def qualname(self):
+        return Name._qualname0.get(self.data, default=str())
+
+    @property
+    @cache
+    def staticmethods(self):
+        return list(map(Name.name_.getter, self.by_kind['static method']))
 
 
 class CmdError(Exception):
@@ -1052,6 +1425,8 @@ class Es:
     method = property(
         lambda self:
         callable(self.data) and not type(self)(self.data).instance(classmethod, property, property, staticmethod))
+    methodwrappertype = property(lambda self: isinstance(self.data, MethodWrapperType))
+    methodwrappertype_sub = property(lambda self: issubclass(self.data, MethodWrapperType))
     mlst = property(lambda self: isinstance(self.data, (MutableMapping, list, set, tuple)))
     mm = property(lambda self: isinstance(self.data, MutableMapping))
     moduletype = property(lambda self: isinstance(self.data, ModuleType))
@@ -1220,8 +1595,8 @@ class GetAttrType(metaclass=ABCMeta):
 
     @classmethod
     def __subclasshook__(cls, C):
-        return cls is GetAttrType and \
-               ('get' not in C.__dict__ or ('get' in C.__dict__ and not callable(C.__dict__['get'])))
+        return cls is GetAttrType and 'get' not in C.__dict__ or \
+               ('get' in C.__dict__ and not callable(C.__dict__['get']))
 
 
 @runtime_checkable
@@ -1270,6 +1645,87 @@ class GetType(metaclass=ABCMeta):
     get = lambda self, name, default=None: getattr(self, name, default)
     __subclasshook__ = classmethod(
         lambda cls, C: cls is GetType and 'get' in C.__dict__ and callable(C.__dict__['get']))
+
+
+class Instance:
+    """
+    Instance Helper Class
+
+    Attributes:
+    -----------
+    __slots__: tuple
+        slots (default: ()).
+    cls: :class:`Cls`
+        :class:`Cls` (default: Cls(data))
+    data: Any
+        object to provide instance information (default: None)
+    es: :class:`Es`
+        :class:`Es` (default: Es(data))
+    key: :class:`Key`
+        keys to include (default: :attr:`rc.Key.PRIVATE`)
+    """
+    __slots__ = ('data', 'key', )
+
+    def __init__(self, data=None, key=Attr.PRIVATE):
+        self.data = data
+        self.key = key
+
+    def __call__(self, data=None, key=Attr.PRIVATE):
+        self.data = data or self.data
+        self.key = key or self.key
+        return self
+
+    @cache
+    def attr_value(self, name, default=None):
+        return getattr(self.data, name, default)
+
+    @property
+    @cache
+    def cls(self):
+        return Cls(self.data, self.key)
+
+    @property
+    def dir(self):
+        return [i for i in dir(self.data) if self.key.include(i)]
+
+    @property
+    @cache
+    def es(self):
+        return Es(self.data)
+
+    def has_attr(self, name):
+        return hasattr(self.data, name)
+
+    def has_method(self, name):
+        return has_method(self.data, name)
+
+    @property
+    def has_reduce(self):
+        return has_reduce(self.data)
+
+    @property
+    def hash(self):
+        return hash(tuple(map(lambda x: getset(self.data, x), self.cls.mroinclude())))
+
+    @cache
+    def mroattr(self, name='__ignore_attr__'):
+        """
+        All values of attr in instance.
+
+        Args:
+            name: attr name.
+
+        Returns:
+            All/accumulated values of attr in instance.
+        """
+        return getattr(self.data, name, set())
+
+    def repr(self, newline=True, pprop=True):
+        attrs = self.cls.mroinclude(exclude="__repr_exclude__")
+        attrs.update(self.cls.pproperties if pprop else list())
+        r = [f"{s}: {getset(self.data, s)}" for s in sorted(attrs) if s]
+        new = f',{NEWLINE if newline else " "}'
+        return f'{self.cls.name}({new.join(r)})'
 
 
 class Name(Enum):
@@ -2277,7 +2733,113 @@ def dict_sort(data, ordered=False, reverse=False):
     return rv.copy()
 
 
-def get(data, name, default=None): return data.get(name, default) if Es(data).gettype else getattr(data, name, default)
+@singledispatch
+def get(data: GetType, name, default=None):
+    """
+    Get value of name in Mutabble Mapping/GetType or object.
+
+    Examples:
+        >>> from rc import get
+        >>>
+        >>> get(dict(a=1), 'a')
+        1
+        >>> get(dict(a=1), 'b')
+        >>> get(dict(a=1), 'b', 2)
+        2
+
+    Args:
+        data: MutabbleMapping/GetType to get value.
+        name: key.
+        default: default value (default:None)
+
+    Returns:
+        Value for key.
+    """
+    return data.get(name, default)
+
+
+@get.register
+def get_getattrtype(data: GetAttrType, name, default=None):
+    """
+    Get value of name in Mutabble Mapping or object.
+
+    Examples:
+        >>> from rc import get
+        >>>
+        >>> get(dict, '__module__')
+        'builtins'
+        >>> get(dict, '__file__')
+
+    Args:
+        data: object to get value.
+        name: attr name.
+        default: default value (default:None)
+
+    Returns:
+        Value for attribute.
+    """
+    try:
+        return object.__getattribute__(data, name)
+    except AttributeError:
+        return default
+
+
+# noinspection PyUnresolvedReferences
+def getset(data, name, default=None):
+    """
+    Sets attribute with default if it does not exists and returns value.
+
+    Examples:
+        >>> class Dict: pass
+        >>> class Slots: __slots__ = ('a', )
+        >>>
+        >>> d = Dict()
+        >>> s = Slots()
+        >>> getset(d, 'a')
+        >>> d.a
+        >>> getset(s, 'a')
+        >>> s.a
+        >>>
+        >>> d = Dict()
+        >>> s = Slots()
+        >>> getset(d, 'a', 2)
+        2
+        >>> d.a
+        2
+        >>> getset(s, 'a', 2)
+        2
+        >>> s.a
+        2
+        >>>
+        >>> class Dict: a = 1
+        >>> class Slots:
+        ...     __slots__ = ('a', )
+        ...     def __init__(self):
+        ...         self.a = 1
+        >>> d = Dict()
+        >>> s = Slots()
+        >>> getset(d, 'a')
+        1
+        >>> getset(s, 'a')
+        1
+        >>> getset(d, 'a', 2)
+        1
+        >>> getset(s, 'a', 2)
+        1
+
+    Args:
+        data: object.
+        name: attr name.
+        default: default value (default: None)
+
+    Returns:
+        Attribute value or sets default value and returns.
+    """
+    try:
+        return object.__getattribute__(data, name)
+    except AttributeError:
+        object.__setattr__(data, name, default)
+        return object.__getattribute__(data, name)
 
 
 class info:
@@ -2286,176 +2848,112 @@ class info:
 
     Attributes:
     -----------
+    __slots__: tuple
+        slots (default: ()).
+        __ignore_attr__: tuple
+        Exclude instance attribute (default: ()).
+    __ignore_copy__: tuple
+        True or class for repr instead of nested asdict and deepcopy. No deepcopy (default: (:class:`rc.CRLock`,
+        :class:`rc.Environs`, :class:`types.FrameType`, :class:`git.GitConfigParser`, :class:`rc.GitSymbolicReference`,
+        :class:`git.Remote`, ).
+    __ignore_kwarg__: tuple
+        Exclude attr from kwargs (default: ()).
+    __ignore_str__: tuple
+        Use str value for object (default: (:class:`git.GitConfigParser`, :class:`rc.GitRepo`, :class:`bson.ObjectId`,
+        :class:`rc.PathLib`, )).
+    cls: :class:`Cls`
+        :class:`Cls` (default: Cls(data))
     data: Any
         object to provide information (default: None)
     depth: Optional[int]
         recursion depth (default: None)
+    es: :class:`Es`
+        :class:`Es` (default: Es(data))
     ignore: bool
         ignore properties (default: False)
-    key: :class:`rc.Key`
+    instance: :class:`Instance`
+        :class:`Instance` (default: Instance(data))
+    key: :class:`Key`
         keys to include (default: :attr:`rc.Key.PRIVATE`)
-
-    Examples:
-        >>> from rc.utils import Base1
-        >>> from rc.utils import info
-        >>>
-        >>> base = info(Base1)
-        >>> assert 'cls_name' in base.cls_properties
-        >>> i = info(info)
-        >>> assert not set(info.__slots__).difference(i.cls_data)
-        >>> assert len(base.cls_classmethods) == 3
-        >>> assert len(base.cls_methods) == 1
-        >>> assert len(base.cls_properties) == 1
-        >>> assert len(base.cls_staticmethods) == 2
-        >>> assert Base1.get.__name__ in base.cls_methods
-        >>> assert len(base.cls_methods) == 1
-        >>> assert len(base.cls_dir) == len(base.cls_classmethods) + len(base.cls_methods) + \
-        len(base.cls_staticmethods) + len(base.cls_properties) + len(base.cls_data)
-        >>> base_all = info(Base1, Attr.ALL)
-        >>> assert len(base_all.cls_methods) == 19
-        >>> base.get_importable_name
-        'rc.utils.Base1'
-        >>> base.cls_module_var
-        'rc.utils'
-        >>> base.cls_qual_var
-        'Base1'
-        >>> i.cls_attr_value('key')
-        <member 'key' of 'info' objects>
-        >>> i.get_module
-        <module 'rc.utils' from '/Users/jose/bashrc/rc/utils.py'>
     """
-    __slots__ = ('data', 'es', 'key', )
+    __slots__ = ('data', 'depth', 'ignore', 'key', )
+    __ignore_attr__ = ()
+    """Exclude instance attribute (default: ())."""
+    __ignore_copy__ = ()
+    """True or class for repr instead of nested asdict and deepcopy. No deepcopy (default: ())"""
+    __ignore_kwarg__ = (CRLock, Environs, FrameType, GitConfigParser, GitSymbolicReference, Remote, )
+    """Exclude attr from kwargs (default: (:class:`rc.CRLock`, :class:`rc.Environs`, :class:`types.FrameType`, 
+    :class:`git.GitConfigParser`, :class:`rc.GitSymbolicReference`, :class:`git.Remote`, ))."""
+    __ignore_str__ = (GitConfigParser, GitRepo, ObjectId, PathLib, )
+    """Use str value for object (default: (:class:`git.GitConfigParser`, :class:`rc.GitRepo`, :class:`bson.ObjectId`, 
+    :class:`rc.PathLib`, ))."""
 
-    def __init__(self, data=None, key=Attr.PRIVATE):
+    def __init__(self, data=None, depth=None, ignore=False, key=Attr.PRIVATE):
         self.data = data
-        self.es = Es(self.data)
+        self.depth = depth
+        self.ignore = ignore
         self.key = key
 
-    def __call__(self, data=None, key=None):
+    def __call__(self, data=None, depth=None, ignore=False, key=None):
         self.data = data or self.data
-        self.es = Es(self.data)
+        self.depth = depth or self.depth
+        self.ignore = ignore or self.ignore
         self.key = key or self.key
         return self
 
+    @cache
+    def attr_value(self, name, default=None):
+        return getattr(self.data, name, default)
+
     @property
+    @cache
     def cls(self):
-        return self.data if self.es.type else type(self.data)
+        return Cls(self.data, self.key)
 
-    @cache
-    def cls_attr_value(self, name, default=None):
-        return getattr(self.cls, name, default)
+    @property
+    def dir(self):
+        return set(self.cls.dir + self.instance.dir)
+
+    @property
+    def ignore_attr(self):
+        return
 
     @property
     @cache
-    def cls_by_kind(self):
-        return bucket(self.cls_classified, key=lambda x: x.kind if self.key.include(x.name) else 'e')
+    def es(self):
+        return Es(self.data)
+
+    def has_attr(self, name):
+        return self.cls.has_attr(name=name) or self.instance.has_attr(name=name)
+
+    def has_method(self, name):
+        return self.cls.has_method(name=name) or self.instance.has_method(name=name)
+
+    @property
+    def has_reduce(self):
+        return self.cls.has_reduce or self.instance.has_reduce
 
     @property
     @cache
-    def cls_by_name(self):
-        return {i.name: i for i in self.cls_classified if self.key.include(i.name)}
+    def instance(self):
+        return Instance(self.data, self.key)
 
     @property
     @cache
-    def cls_callables(self):
-        return sorted(self.cls_classmethods + self.cls_methods + self.cls_staticmethods)
+    def module(self):
+        return getmodule(self.data)
 
-    @property
-    @cache
-    def cls_classified(self):
-        return classify_class_attrs(self.cls)
+    def mroattr(self, name='__ignore_attr__'):
+        """
+        All values of attr in instance and class.
 
-    @property
-    @cache
-    def cls_classmethods(self):
-        return list(map(Name.name_.getter, self.cls_by_kind['class method']))
+        Args:
+            name: attr name.
 
-    @property
-    @cache
-    def cls_data(self):
-        return list(map(Name.name_.getter, self.cls_by_kind['data']))
-
-    @property
-    @cache
-    def cls_dir(self):
-        return [i for i in dir(self.cls) if self.key.include(i)]
-
-    @property
-    @cache
-    def cls_methods(self):
-        return list(map(Name.name_.getter, self.cls_by_kind['method']))
-
-    @property
-    def cls_module_var(self):
-        return getattr(self.cls, '__module__', str())
-
-    @property
-    def cls_name(self):
-        return self.cls.__name__
-
-    @property
-    @cache
-    def cls_properties(self): return list(map(Name.name_.getter, self.cls_by_kind['property']))
-
-    @property
-    def cls_qual_var(self):
-        return getattr(self.cls, '__qualname__', str())
-
-    @property
-    @cache
-    def cls_staticmethods(self):
-        return list(map(Name.name_.getter, self.cls_by_kind['static method']))
-
-    get_dir = property(lambda self: list({self.cls_dir + self.get_dirinstance}))
-    get_dirinstance = property(lambda self: [i for i in dir(self.data)if self.key.include(i)])
-    get_importable_name = property(lambda self: importable_name(self.cls))
-    get_module = property(lambda self: getmodule(self.data))
-    get_mro = property(lambda self: self.cls.__mro__)
-    get_mroattrins = lambda self, name='__ignore_attr__': {
-        a for i in (info(), self.data) for a in {*getattr(i, name, list()), *Base1.get_mroattr(i.__class__, name)}}
-
-    has_attr = lambda self, name='__slots__': hasattr(self.data, name)
-    has_method = lambda self, name: has_method(self.data, name)
-    has_reduce = property(lambda self: has_reduce(self.data))
-    in_slot = lambda self, name='__slots__': name in Base1.get_mroattr(self.cls)
-
-    @property
-    def get_source(self):
-        # if self.is_file
-        # OSError
-        return self
-
-    @property
-    def get_node(self):
-        return self
-
-    @property
-    def get_file(self):
-        return self
-
-    @property
-    def get_function(self):
-        return self
-
-    @property
-    def get_lineno(self):
-        return self
-
-    @property
-    def get_code(self):
-        return self
-
-    @property
-    def get_package(self):
-        return self
-
-    @property
-    def get_name(self):
-        return self
-
-    @property
-    def get_var(self):
-        return self
+        Returns:
+            All/accumulated values of attr in class mro and instance.
+        """
+        return self.cls.mroattr(name=name).update(self.instance.mroattr(name=name))
 
 
 def is_even(number): return Es(number).even
