@@ -71,7 +71,7 @@ from .utils import FUNCTION_MODULE
 from .utils import Base
 from .utils import delete
 from .utils import dict_sort
-from .utils import namedinit
+from .utils import annotations_init
 from .utils import NEWLINE
 from .utils import prefixed
 from .utils import repr_format
@@ -240,7 +240,7 @@ class Frame(Base, NodeVisitor):
             return Package(init=init, module=name.split('.')[-1] if '__init__' in module else module, name=path.stem,
                            package=package, path=path, prefix=prefixed(package), relative=relative, root=root,
                            var=var)
-        return namedinit(Package, optional=False)
+        return annotations_init(Package, optional=False)
 
     @property
     @cache

@@ -1,4 +1,12 @@
 async_property
 datamodel-code-generator
+executing
+heartrate
 orjson
+pure_eval
+varname
+snoop
+sorcery
+stack_data
 ujson
+birdseye
