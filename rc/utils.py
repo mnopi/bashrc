@@ -13,6 +13,33 @@ __all__ = (
     'ImportFrom',
     'NodeVisitor',
     'walk',
+    'AsyncGenerator',
+    'AsyncIterable',
+    'AsyncIterator',
+    'Awaitable',
+    'ByteString',
+    'Callable',
+    'Collection',
+    'Container',
+    'Coroutine',
+    'Generator',
+    'Hashable',
+    'ItemsView',
+    'Iterable',
+    'Iterator',
+    'KeysView',
+    'Mapping',
+    'MappingView',
+    'MutableMapping',
+    'MutableSequence',
+    'MutableSet',
+    'Reversible',
+    'Sequence',
+    'Set',
+    'Sized',
+    'ValuesView',
+    'datafield',
+    'datafields',
     'insstack',
     'PathLib',
     'Simple',
@@ -26,14 +53,8 @@ __all__ = (
     'dpathvalues',
     'Environs',
     'GitRepo',
-
-    'BUILTINS',
-    'BUILTINS_CLASSES',
-    'FRAME_SYS_INIT',
-    'FUNCTION_MODULE',
-    'NEWLINE',
-    'PYTHON_SYS',
-    'PYTHON_SITE',
+    'pretty_install',
+    'traceback_install',
 
     'Alias',
     'CRLock',
@@ -42,23 +63,24 @@ __all__ = (
     'debug',
     'fmic',
     'fmicc',
+    'FRAME_SYS_INIT',
+    'FUNCTION_MODULE',
     'ic',
     'icc',
-    'IgnoreCopyType',
-    'IGNORE_COPY',
-    'IgnoreStrType',
-    'IGNORE_STR',
+    'IgnoreAttr',
+    'IgnoreCopy',
+    'IgnoreStr',
     'LST',
     'MISSING_TYPE',
+    'NEWLINE',
     'POST_INIT_NAME',
     'pp',
     'print_exception',
+    'PYTHON_SYS',
+    'PYTHON_SITE',
     'RunningLoop',
     'SeqNoStr',
     'Seq',
-
-    'pproperty',
-    'runwarning',
 
     'Annotation',
     'AnnotationsType',
@@ -84,6 +106,7 @@ __all__ = (
     'GetAttrType',
     'GetSupport',
     'GetType',
+    'IsCoro',
     'Kind',
     'Mro',
     'Name',
@@ -98,6 +121,8 @@ __all__ = (
     'annotations_init',
     'anyin',
     'cmd',
+    'asdict',
+    'asdict_props',
     'cmdname',
     'current_task_name',
     'delete',
@@ -109,15 +134,21 @@ __all__ = (
     'getset',
     'info',
     'is_even',
+    'iscoro',
     'in_dict',
     'join_newline',
     'map_reduce_even',
     'map_with_args',
+    'newprop',
     'noexception',
+    'pproperty',
     'prefixed',
     'repr_format',
+    'runinloop',
+    'runwarning',
     'split_sep',
     'startswith',
+    'to_camel',
     'to_iter',
     'token_open',
     'varname',
@@ -182,23 +213,41 @@ from collections import ChainMap
 from collections import defaultdict
 from collections import namedtuple
 from collections import OrderedDict
-from collections.abc import Callable
-from collections.abc import Generator
-from collections.abc import Iterable
-from collections.abc import Iterator
-from collections.abc import MutableMapping
-from collections.abc import Sized
-from concurrent.futures.process import ProcessPoolExecutor
-from concurrent.futures.thread import ThreadPoolExecutor
+from collections.abc import AsyncGenerator as AsyncGenerator
+from collections.abc import AsyncIterable as AsyncIterable
+from collections.abc import AsyncIterator as AsyncIterator
+from collections.abc import Awaitable as Awaitable
+from collections.abc import ByteString as ByteString
+from collections.abc import Callable as Callable
+from collections.abc import Collection as Collection
+from collections.abc import Container as Container
+from collections.abc import Coroutine as Coroutine
+from collections.abc import Generator as Generator
+from collections.abc import Hashable as Hashable
+from collections.abc import ItemsView as ItemsView
+from collections.abc import Iterable as Iterable
+from collections.abc import Iterator as Iterator
+from collections.abc import KeysView as KeysView
+from collections.abc import Mapping as Mapping
+from collections.abc import MappingView as MappingView
+from collections.abc import MutableMapping as MutableMapping
+from collections.abc import MutableSequence as MutableSequence
+from collections.abc import MutableSet as MutableSet
+from collections.abc import Reversible as Reversible
+from collections.abc import Sequence as Sequence
+from collections.abc import Set as Set
+from collections.abc import Sized as Sized
+from collections.abc import ValuesView as ValuesView
+from concurrent.futures.process import ProcessPoolExecutor as ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor as ThreadPoolExecutor
 from contextlib import suppress
-from copy import copy
 from dataclasses import _FIELDS
 from dataclasses import _MISSING_TYPE
 from dataclasses import _POST_INIT_NAME
 from dataclasses import dataclass
 from dataclasses import Field
-from dataclasses import field
-from dataclasses import fields
+from dataclasses import field as datafield
+from dataclasses import fields as datafields
 from dataclasses import InitVar
 from enum import auto
 from enum import Enum
@@ -306,16 +355,9 @@ from more_itertools import first_true
 from more_itertools import map_reduce
 from more_itertools import side_effect
 from nested_lookup import nested_lookup
-from rich import pretty
 from rich.console import Console
-BUILTINS = copy(globals()['__builtins__'])
-BUILTINS_CLASSES = tuple(filter(lambda x: isinstance(x, type), BUILTINS.values()))
-BUILTINS_FUNCTIONS = tuple(filter(lambda x: isinstance(x, type), BUILTINS.values()))
-FRAME_SYS_INIT = sys._getframe(0)
-FUNCTION_MODULE = '<module>'
-NEWLINE = '\n'
-PYTHON_SYS = PathLib(sys.executable)
-PYTHON_SITE = PathLib(PYTHON_SYS).resolve()
+from rich.pretty import install as pretty_install
+from rich.traceback import install as traceback_install
 
 Alias = _alias
 CRLock = _CRLock
@@ -324,66 +366,45 @@ DATACLASS_FIELDS = _FIELDS
 debug = Debug(highlight=True)
 fmic = IceCreamDebugger(prefix=str()).format
 fmicc = IceCreamDebugger(prefix=str(), includeContext=True).format
+FRAME_SYS_INIT = sys._getframe(0)
+FUNCTION_MODULE = '<module>'
 ic = IceCreamDebugger(prefix=str())
 icc = IceCreamDebugger(prefix=str(), includeContext=True)
-IgnoreCopyType = Union[CRLock, Environs, FrameType, GitConfigParser, GitSymbolicReference, Remote]
+IgnoreAttr = Literal['asdict', 'attrs', 'defaults', 'keys', 'kwargs', 'kwargs_dict', 'public', 'values', 'values_dict']
+"""Exclude instance attribute."""
+IgnoreCopy = Union[CRLock, Environs, FrameType, GitConfigParser, GitSymbolicReference, Remote]
 """True or class for repr instead of nested asdict and deepcopy. No deepcopy (default: (:class:`rc.CRLock`,
 :class:`rc.Environs`, :class:`types.FrameType`, :class:`git.GitConfigParser`, :class:`rc.GitSymbolicReference`,
 :class:`git.Remote`, ))."""
-IGNORE_COPY = IgnoreCopyType.__args__
-IgnoreStrType = Union[GitConfigParser, GitRepo, ObjectId, PathLib]
+IgnoreStr = Union[GitConfigParser, GitRepo, ObjectId, PathLib]
 """Use str value for object (default: (:class:`git.GitConfigParser`, :class:`rc.GitRepo`, :class:`bson.ObjectId`,
 :class:`rc.PathLib`, ))."""
-IGNORE_STR = IgnoreStrType.__args__
 LST = Union[typing.MutableSequence, typing.MutableSet, tuple]
 MISSING_TYPE = _MISSING_TYPE
+NEWLINE = '\n'
 POST_INIT_NAME = _POST_INIT_NAME
 pp = console.print
 print_exception = console.print_exception
-pretty.install(console=console, expand_all=True)
+pretty_install(console=console, expand_all=True)
+PYTHON_SYS = PathLib(sys.executable)
+PYTHON_SITE = PathLib(PYTHON_SYS).resolve()
 # rich.traceback.install(console=console, extra_lines=5, show_locals=True)
 RunningLoop = _RunningLoop
 SeqNoStr = Union[typing.Iterator, typing.KeysView, typing.MutableSequence, typing.MutableSet, tuple, typing.ValuesView]
 Seq = Union[typing.AnyStr, typing.ByteString, typing.Iterator, typing.KeysView, typing.MutableSequence,
             typing.MutableSet, typing.Sequence, tuple, typing.ValuesView]
 
-
-class pproperty(property):
-    """
-    Print property.
-
-    Examples:
-        >>> from functools import cache
-        >>> from rich import pretty
-        >>> from rc import pproperty
-        >>>
-        >>> pretty.install()
-        >>> class Test:
-        ...     _pp = 0
-        ...     @pproperty
-        ...     def pp(self):
-        ...         self._pp += 1
-        ...         prop = isinstance(self.__class__.__dict__['pp'], property)
-        ...         pprop = isinstance(self.__class__.__dict__['pp'], pproperty)
-        ...         return self._pp, prop, pprop
-        >>> test = Test()
-        >>> test.pp
-        (1, True, True)
-        >>> test.pp
-        (1, True, True)
-    """
-
-    def __init__(self, fget=None, fset=None, fdel=None, doc=None):
-        super().__init__(fget=fget, fset=fset, fdel=fdel, doc=doc)
-
-
-@decorator
-def runwarning(func, *args, **kwargs):
-    with catch_warnings(record=False):
-        filterwarnings('ignore', category=RuntimeWarning)
-        warnings.showwarning = lambda *_args, **_kwargs: None
-        rv = func(*args, **kwargs)
-        return rv
+# TODO: iscoro
+# TODO: asdict_props
+# TODO: runinloop
+# TODO: Es.asdict
+# TODO: Es.__hash__
+# TODO: Es.__getstate__
+# TODO: Es.__repr__
+# TODO: Es.__setstate__
+# TODO: Es.__str__
+# TODO: Es.asdict
+# TODO: classify_cls
 
 
 Annotation = namedtuple('Annotation', 'any args classvar cls default final hint initvar literal name optional '
@@ -759,7 +780,7 @@ class Attr(Enum):
         return not obj.startswith(self.value)
 
 
-Attribute = namedtuple('Attribute', 'defining field kind name object hint')
+Attribute = namedtuple('Attribute', 'coro defining es field hint kind name object')
 
 
 class Base:
@@ -802,24 +823,24 @@ class Base:
 
     Examples:
     ---------
-        >>> from rich import pretty
         >>> from rc import Base
         >>> from rc import Cls
         >>> from rc import pproperty
+        >>> from rc import pretty_install
         >>> from rc import TestBase
         >>>
-        >>> pretty.install()
+        >>> pretty_install()
         >>> test = TestBase()
         >>>
         >>> sorted(Mro.hash_exclude.val(test))
         ['_slot']
         >>> sorted(Mro.ignore_attr.val(test))
         []
-        >>> Mro.ignore_copy.val(test).difference(IGNORE_COPY)
+        >>> Mro.ignore_copy.val(test).difference(Mro.ignore_copy.default)
         set()
         >>> sorted(Mro.ignore_kwarg.val(test))
         []
-        >>> Mro.ignore_str.val(test).difference(IGNORE_STR)
+        >>> Mro.ignore_str.val(test).difference(Mro.ignore_str.default)
         set()
         >>> sorted(Mro.repr_exclude.val(test))
         ['_repr']
@@ -1130,10 +1151,10 @@ class BoxKeys(Box):
         Creates Box instance.
 
         Examples:
-            >>> from rich.pretty import install
             >>> from rc import BoxKeys
+            >>> from rc import pretty_install
             >>>
-            >>> install()
+            >>> pretty_install()
             >>>
             >>> BoxKeys('a b', value=None)
             <Box: {'a': 'a', 'b': 'b'}>
@@ -1291,11 +1312,11 @@ class Cls:
         Class Helper init.
 
         Examples:
-            >>> from rich.pretty import install
             >>> from rc import Cls
+            >>> from rc import pretty_install
             >>> from rc import TestData
             >>>
-            >>> install()
+            >>> pretty_install()
             >>>
             >>> test = Cls(TestDataDictSlotMix)
             >>>
@@ -1442,10 +1463,10 @@ x
         Updates instance with ignore adn key (default: Attr.ALL)
 
         Examples:
-            >>> from rich.pretty import install
             >>> from rc import Cls
+            >>> from rc import pretty_install
             >>>
-            >>> install()
+            >>> pretty_install()
             >>>
             >>> cls = Cls(dict())
             >>> cls.is_callable(Mro.getitem.value)
@@ -1509,11 +1530,11 @@ x
         Class Callables filtered based on startswith.
 
         Examples:
-            >>> from rich.pretty import install
             >>> from rc import Cls
+            >>> from rc import pretty_install
             >>> from rc import TestBase
             >>>
-            >>> install()
+            >>> pretty_install()
             >>> test = TestBase()
             >>> test.info.cls.callable
             ['_info', 'clsmethod', 'get', 'method_async', 'static']
@@ -1543,11 +1564,11 @@ x
         Class Methods filtered based on startswith.
 
         Examples:
-            >>> from rich.pretty import install
             >>> from rc import Cls
+            >>> from rc import pretty_install
             >>> from rc import TestBase
             >>>
-            >>> install()
+            >>> pretty_install()
             >>> test = TestBase()
             >>> test.info.cls.classmethod
             ['clsmethod']
@@ -1588,11 +1609,11 @@ x
         filtered based on startswith.
 
         Examples:
-            >>> from rich.pretty import install
             >>> from rc import Cls
+            >>> from rc import pretty_install
             >>> from rc import TestData
             >>>
-            >>> install()
+            >>> pretty_install()
             >>> testdata = Cls(TestData)
             >>> testdata.data_attrs
             ['a', 'b', 'c', 'd', 'e', 'f', 'g']
@@ -1612,11 +1633,11 @@ x
         Data Class Fields List.
 
         Examples:
-            >>> from rich.pretty import install
             >>> from rc import Cls
+            >>> from rc import pretty_install
             >>> from rc import TestData
             >>>
-            >>> install()
+            >>> pretty_install()
             >>> testdata = Cls(TestData)
             >>> testdata.defaults
             ['a', 'b', 'c', 'd', 'e', 'f', 'g']
@@ -1639,11 +1660,11 @@ x
             filtered based on startswith.
 
         Examples:
-            >>> from rich.pretty import install
             >>> from rc import Cls
+            >>> from rc import pretty_install
             >>> from rc import TestData
             >>>
-            >>> install()
+            >>> pretty_install()
             >>> testdata = Cls(TestData)
             >>> testdata.data_attrs
             ['a', 'b', 'c', 'd', 'e', 'f', 'g']
@@ -1687,10 +1708,10 @@ x
         Is Class Callable filtered based on startswith.
 
         Examples:
-            >>> from rich.pretty import install
+            >>> from rc import pretty_install
             >>> from rc import TestBase
             >>>
-            >>> install()
+            >>> pretty_install()
             >>>
             >>> test = TestBase()
             >>> test.info.cls.is_callable('clsmethod')
@@ -1713,10 +1734,10 @@ x
         Is Class Method filtered based on startswith.
 
         Examples:
-            >>> from rich.pretty import install
+            >>> from rc import pretty_install
             >>> from rc import TestBase
             >>>
-            >>> install()
+            >>> pretty_install()
             >>>
             >>> test = TestBase()
             >>> test.info.cls.is_classmethod('clsmethod')
@@ -1791,10 +1812,10 @@ x
         Is Static Method filtered based on startswith.
 
         Examples:
-            >>> from rich.pretty import install
+            >>> from rc import pretty_install
             >>> from rc import TestBase
             >>>
-            >>> install()
+            >>> pretty_install()
             >>>
             >>> test = TestBase()
             >>> test.info.cls.is_staticmethod('static')
@@ -1901,11 +1922,11 @@ x
         Static Methods filtered based on startswith.
 
         Examples:
-            >>> from rich.pretty import install
             >>> from rc import Cls
+            >>> from rc import pretty_install
             >>> from rc import TestBase
             >>>
-            >>> install()
+            >>> pretty_install()
             >>> test = TestBase()
             >>> test.info.cls.staticmethod
             ['static']
@@ -2085,6 +2106,7 @@ class Es:
     builtins_other = tuple(map(builtins.get, ('__doc__', '__import__', '__spec__', 'copyright', 'credits', 'exit',
                                               'help', 'license', 'quit', )))
     __slots__ = ('data', )
+    __ignore_attr__ = ('asdict', )
 
     def __init__(self, data=None): self.data = data
 
@@ -2111,24 +2133,32 @@ class Es:
             Is instance of args
         """
         return self.instance(*args)
-    _data = property(lambda self: self.object if self.attribute else self.data)
-    asyncfor = property(lambda self: isinstance(self._data, AsyncFor))
-    asyncfunctiondef = property(lambda self: isinstance(self._data, AsyncFunctionDef))
-    asyncwith = property(lambda self: isinstance(self._data, AsyncWith))
+
+    def __getstate__(self): return dict(data=self.data)
+    def __repr__(self): return f'{self.__class__.__name__}({self.data})'
+    def __setstate__(self, state): self.data = state['data']
+    def __str__(self): return str(self.data)
+    _data = property(lambda self: self.data.object if self.attribute else self.data)
+    _fget = property(lambda self: self._data.fget if self.property_any else None)
+    _func = property(lambda self: self._data.__func__ if self.instance(classmethod, staticmethod) else None)
     annotation = property(lambda self: isinstance(self._data, Annotation))
     annotationstype = property(lambda self: isinstance(self._data, AnnotationsType))
     annotationstype_sub = property(lambda self: issubclass(self._data, AnnotationsType))
+    asdict = property(lambda self: dict(data=self.data) | asdict_props(self))
     asdictmethod = property(lambda self: isinstance(self._data, AsDictMethod))
     asdictmethod_sub = property(lambda self: issubclass(self._data, AsDictMethod))
     asdictproperty = property(lambda self: isinstance(self._data, AsDictProperty))
     asdictproperty_sub = property(lambda self: issubclass(self._data, AsDictProperty))
     ast = property(lambda self: isinstance(self._data, AST))
-    asyncgen = property(lambda self: isasyncgen(self._data))
-    asyncgeneratortype = property(lambda self: isinstance(self._data, AsyncGeneratorType))
-    asyncgenfunc = property(lambda self: isasyncgenfunction(self._data))
-    attribute = property(lambda self: isinstance(self._data, Attribute))
+    asyncfor = property(lambda self: isinstance(self._data, AsyncFor))
+    asyncfunctiondef = property(lambda self: isinstance(self._data, AsyncFunctionDef))
+    asyncgen = property(lambda self: isasyncgen(self._fget or self._func or self._data))
+    asyncgeneratortype = property(lambda self: isinstance(self._fget or self._func or self._data, AsyncGeneratorType))
+    asyncgenfunc = property(lambda self: isasyncgenfunction(self._fget or self._func or self._data))
+    asyncwith = property(lambda self: isinstance(self._data, AsyncWith))
+    attribute = property(lambda self: isinstance(self.data, Attribute))
     await_ast = property(lambda self: isinstance(self._data, Await))
-    awaitable = property(lambda self: isawaitable(self._data))
+    awaitable = property(lambda self: isawaitable(self._fget or self._func or self._data))
     bool = property(lambda self: isinstance(self._data, int) and isinstance(self._data, bool))
     builtin = property(lambda self: any([in_dict(self.builtins, self._data), self.builtinclass, self.builtinfunction]))
     builtinclass = property(lambda self: self._data in self.builtins_classes)
@@ -2147,10 +2177,11 @@ class Es:
         lambda self: (self.datafield and get_origin(self._data.type) == ClassVar) or get_origin(self._data) == ClassVar)
     codetype = property(lambda self: isinstance(self._data, CodeType))
     collections = property(lambda self: is_collections(self._data))
+    container = property(lambda self: isinstance(self._data, Container))
     coro = property(
         lambda self: any([self.asyncgen, self.asyncgenfunc, self.awaitable, self.coroutine, self.coroutinefunc]))
-    coroutine = property(lambda self: iscoroutine(self._data))
-    coroutinefunc = property(lambda self: iscoroutinefunction(self._data))
+    coroutine = property(lambda self: iscoroutine(self._fget or self._func or self._data))
+    coroutinefunc = property(lambda self: iscoroutinefunction(self._fget or self._func or self._data))
     coroutinetype = property(lambda self: isinstance(self._data, CoroutineType))
     datafactory = property(
         lambda self: self.datafield and Es(self._data.default).missing and hasattr(self._data, 'default_factory'))
@@ -2158,7 +2189,7 @@ class Es:
     datatype = property(lambda self: isinstance(self._data, DataType))
     datatype_sub = property(lambda self: issubclass(self._data, DataType))
     defaultdict = property(lambda self: isinstance(self._data, defaultdict))
-    deleter = property(lambda self: self.prop and self._data.fdel is not None)
+    deleter = property(lambda self: self.property_any and self._data.fdel is not None)
     dict = property(lambda self: isinstance(self._data, dict))
     dicttype = property(lambda self: isinstance(self._data, DictType))
     dicttype_sub = property(lambda self: issubclass(self._data, DictType))
@@ -2227,7 +2258,7 @@ class Es:
     primitive = property(lambda self: is_primitive(self._data))
     pproperty = property(lambda self: isinstance(self._data, pproperty))
     prop = property(lambda self: isinstance(self._data, property))
-    property_any = property(lambda self: self.prop and self.cached_property)
+    property_any = property(lambda self: self.prop or self.cached_property)
     reducible = property(lambda self: is_reducible(self._data))
     reducible_sequence_subclass = property(lambda self: is_reducible_sequence_subclass(self._data))
     routine = property(lambda self: isroutine(self._data))
@@ -2338,7 +2369,7 @@ class GetAttrNoBuiltinType(metaclass=ABCMeta):
         if cls is GetAttrNoBuiltinType:
             g = Mro.get.firstdict(C)
             return any([Mro._field_defaults.firstdict(C) is not NotImplemented,
-                        not allin(C.__mro__, BUILTINS_CLASSES) and g is NotImplemented or
+                        not allin(C.__mro__, Es.builtins_classes) and g is NotImplemented or
                         (g is not NotImplemented and not callable(g))])
         return NotImplemented
 
@@ -2451,12 +2482,16 @@ class GetType(Protocol):
         pass
 
 
+IsCoro = namedtuple('IsCoro', 'asyncfor asyncfunctiondef asyncgen asyncgeneratortype asyncgenfunc asyncwith '
+                              'awaitable coro coroutine coroutinefunc coroutinetype')
+
+
 class Kind(Enum):
-    classmethod = 'class method'
-    data = 'data'
-    method = 'method'
-    property = 'property'
-    staticmethod = 'static method'
+    CLASS = 'class method'
+    DATA = 'data'
+    METHOD = 'method'
+    PROPERTY = 'property'
+    STATIC = 'static method'
 
 
 class _Mro(Enum):
@@ -2527,10 +2562,10 @@ class Mro(_Mro):
         Get attrs tuple with private converted to real names.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> Mro.attrs()  # doctest: +ELLIPSIS
             (
@@ -2550,10 +2585,10 @@ class Mro(_Mro):
         Object Class MRO.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> Mro.cls(dict(a=1))
             (<class 'dict'>, <class 'object'>)
@@ -2566,15 +2601,49 @@ class Mro(_Mro):
         """
         return obj.__mro__ if isinstance(obj, type) else type(obj).__mro__
 
+    @property
+    def default(self):
+        # noinspection PyUnresolvedReferences
+        """
+        Default ignore values from Type
+
+        Examples:
+            >>> from rc import CRLock
+            >>> from rc import IgnoreAttr
+            >>> from rc import IgnoreCopy
+            >>> from rc import Mro
+            >>>
+            >>> Mro.ignore_attr.default  # doctest: +ELLIPSIS
+            (
+                'asdict',
+                ...
+            )
+            >>> Mro.ignore_attr.default == IgnoreAttr.__args__
+            True
+            >>> Mro.ignore_copy.default  # doctest: +ELLIPSIS
+            (
+                <class '_thread.RLock'>,
+                ...
+            )
+            >>> Mro.ignore_copy.default == IgnoreCopy.__args__
+            True
+            >>> Mro.getattribute.default
+            ()
+
+        Returns:
+            Tuple with default values
+        """
+        return noexception(Exception, getattr, globals().get(to_camel(self.name)), Mro.args.value, default_=tuple())
+
     def first(self, obj):
         """
         First value of attr found in mro and instance if obj is instance.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> class Test:
             ...     __repr_newline__ = True
@@ -2610,10 +2679,10 @@ class Mro(_Mro):
 
         Examples:
             >>> from collections import namedtuple
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> class Test:
             ...     __repr_newline__ = False
@@ -2646,10 +2715,10 @@ class Mro(_Mro):
 
         Examples:
             >>> from collections import namedtuple
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> class Test:
             ...     __repr_newline__ = False
@@ -2708,10 +2777,10 @@ class Mro(_Mro):
         Checks if Object has attr.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> class Test:
             ...     __repr_newline__ = True
@@ -2733,10 +2802,10 @@ class Mro(_Mro):
         Names and real names.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> Mro.members()  # doctest: +ELLIPSIS
             {
@@ -2758,10 +2827,10 @@ class Mro(_Mro):
         Object and Class MRO tuple.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> Mro.obj(dict(a=1))
             ({'a': 1}, <class 'dict'>, <class 'object'>)
@@ -2780,10 +2849,10 @@ class Mro(_Mro):
         Is attribute in slots?
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> class First:
             ...     __slots__ = ('_hash', )
@@ -2812,10 +2881,10 @@ class Mro(_Mro):
         Accumulated values from slots - Accumulated values from mro attr name.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> class First:
             ...     __slots__ = ('_hash', )
@@ -2850,10 +2919,10 @@ class Mro(_Mro):
         All/accumulated values of attr in mro and obj if instance.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Mro
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> class First:
             ...     __slots__ = ('_hash', '_repr')
@@ -2870,13 +2939,17 @@ class Mro(_Mro):
             >>> test = Test()
             >>> sorted(Mro.hash_exclude.val(test))
             ['_slot']
-            >>> sorted(Mro.ignore_attr.val(test))
-            ['attr']
-            >>> Mro.ignore_copy.val(test).difference(IGNORE_COPY)
+            >>> sorted(Mro.ignore_attr.val(test))  # doctest: +ELLIPSIS
+            [
+                'asdict',
+                'attr',
+                ...
+            ]
+            >>> Mro.ignore_copy.val(test).difference(Mro.ignore_copy.default)
             {<class 'tuple'>}
             >>> sorted(Mro.ignore_kwarg.val(test))
             ['kwarg']
-            >>> Mro.ignore_str.val(test).difference(IGNORE_STR)
+            >>> Mro.ignore_str.val(test).difference(Mro.ignore_str.default)
             {<class 'tuple'>}
             >>> sorted(Mro.repr_exclude.val(test))
             ['_repr']
@@ -2886,9 +2959,7 @@ class Mro(_Mro):
         Returns:
             All/accumulated values of attr in mro and obj if instance.
         """
-        return {*(value for item in self.obj(obj) for value in getattr(item, self.value, tuple())),
-                *(IGNORE_COPY if self is self.__class__.ignore_copy else IGNORE_STR
-                if self is self.__class__.ignore_str else tuple())}
+        return {*(value for item in self.obj(obj) for value in getattr(item, self.value, tuple())), *self.default}
 
 
 class Name(Enum):
@@ -2981,10 +3052,10 @@ class Name(Enum):
         Get map_reduce (dict) attrs lists converted to real names.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Name
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>> Name._attrs().keys()
             dict_keys([True, False])
             >>> Name._attrs().values()  # doctest: +ELLIPSIS
@@ -3003,10 +3074,10 @@ class Name(Enum):
         Get attrs tuple with private converted to real names.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Name
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>> Name.attrs()  # doctest: +ELLIPSIS
             (
                 '__all__',
@@ -3029,11 +3100,11 @@ class Name(Enum):
             >>> from ast import unparse
             >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
-            >>> from rich import pretty
             >>> from rc import insstack
             >>> from rc import Name
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>> f = insstack()[0]
             >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
             >>> Name.filename.get(f), Name.function.get(f), Name.code_context.get(f)[0], Name.source(f)
@@ -3080,11 +3151,11 @@ class Name(Enum):
             >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
             >>> import rc.utils
-            >>> from rich import pretty
             >>> from rc import insstack
             >>> from rc import Name
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>> f = insstack()[0]
             >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
             >>> Name._file0.get(globs_locs)  # doctest: +ELLIPSIS
@@ -3331,11 +3402,11 @@ class Name(Enum):
             >>> from ast import unparse
             >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
-            >>> from rich import pretty
             >>> from rc import insstack
             >>> from rc import Name
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>> f = insstack()[0]
             >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
             >>> Name.filename.get(f), Name.function.get(f), Name.code_context.get(f)[0], Name.source(f) \
@@ -3382,12 +3453,12 @@ class Name(Enum):
             >>> from ast import unparse
             >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
-            >>> from rich import pretty
+            >>> from rc import allin
             >>> from rc import insstack
             >>> from rc import Name
-            >>> from rc import allin
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>> frameinfo = insstack()[0]
             >>> globs_locs = (frameinfo.frame.f_globals | frameinfo.frame.f_locals).copy()
             >>> Name.path(Name.path)  # doctest: +ELLIPSIS
@@ -3424,10 +3495,10 @@ class Name(Enum):
         Get private attrs tuple converted to real names.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Name
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>> Name.private()  # doctest: +ELLIPSIS
             (
                 '__all__',
@@ -3446,10 +3517,10 @@ class Name(Enum):
         Get public attrs tuple.
 
         Examples:
-            >>> from rich import pretty
             >>> from rc import Name
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>> Name.public()  # doctest: +ELLIPSIS
             (
                 '_asdict',
@@ -3512,12 +3583,12 @@ class Name(Enum):
             >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
             >>> import rc.utils
-            >>> from rich import pretty
             >>> from rc import insstack
             >>> from rc import Name
             >>> from rc import allin
+            >>> from rc import pretty_install
             >>>
-            >>> pretty.install()
+            >>> pretty_install()
             >>>
             >>> Name.source(__file__)  # doctest: +ELLIPSIS
             '# -*- coding: utf-8 -*-\\n...
@@ -3764,9 +3835,10 @@ def annotations(obj, stack=1):
         >>> from dataclasses import dataclass
         >>> from dataclasses import InitVar
         >>> from typing import ClassVar
-        >>> from rich.pretty import install
         >>> from rc import annotations
-        >>> install()
+        >>> from rc import pretty_install
+        >>>
+        >>> pretty_install()
         >>>
         >>> @dataclass
         ... class Test:
@@ -4029,6 +4101,29 @@ def asdict_ignorestr(data, convert=True):
     return str(data) if convert else data
 
 
+def asdict_props(data, key=Attr.PUBLIC, pprop=False):
+    """
+    Properties to dict.
+
+    Examples:
+        >>> from rc import asdict_props
+        >>> from rc import Es
+        >>> from rc import pretty_install
+        >>>
+        >>> pretty_install()
+        >>>
+
+    Args:
+        data: object to get properties.
+        key: startswith to include.
+        pprop: convert only :class:`rc.pproperty` or all properties excluding __ignore_attr__.
+
+    Returns:
+        Dict with names and values for properties.
+    """
+    pass
+
+
 def asdict_type(data, convert=True):
     rv = data
     es = Es(data)
@@ -4040,8 +4135,43 @@ def asdict_type(data, convert=True):
 
 
 def classify_cls(data):
-    c = classify_class_attrs(data if Es(data).type else data.__class__)
+    """
+    Classify Object Class or Class.
 
+    Examples:
+        >>> from rc import classify_cls
+        >>> from rc import pretty_install
+        >>>
+        >>> pretty_install()
+        >>>
+
+    Args:
+        data: any object.
+
+    Returns:
+        Attribute.
+    """
+    def attribute(defining, kind, field, name, obj):
+        e = Es(obj)
+        f = Es(field)
+        return Attribute(coro=e.coro, defining=defining, es=e, field=field, hint=hints.get(name),
+                         kind=kind, name=name, object=obj)
+    es = Es(data)
+    fields = data.__dataclass_fields__ if es.datatype_sub or es.datatype else {}
+    data = data if es.type else data.__class__
+    hints = annotations(data, stack=2) if es.annotationstype_sub else dict()
+    classified = dict()
+    for item in classify_class_attrs(data):
+        classified |= {item.name: attribute(item.defining_class, Kind[item.kind.split(' ')[0].upper()],
+                                            fields.pop(item.name, None), item.name, item.object)}
+    for key, value in fields:
+        cls = data
+        for C in cls.__mro__:
+            if Es(C).datatype_sub and key in C.__dataclass_fields__:
+                cls = C
+        key_obj = getattr(cls, key)
+        classified |= {key: attribute(cls, Kind.DATA, value, key, key_obj)}
+    return dict_sort(classified)
 
 
 def cmd(command, exc=False, lines=True, shell=True, py=False, pysite=True):
@@ -4173,11 +4303,11 @@ def effect(apply, data):
     Perform function on iterable.
 
     Examples:
-        >>> from rich.pretty import install
-        >>> from rc import Simple
         >>> from rc import effect
+        >>> from rc import pretty_install
+        >>> from rc import Simple
         >>>
-        >>> install()
+        >>> pretty_install()
         >>>
         >>> simple = Simple()
         >>> effect(lambda x: simple.__setattr__(x, dict()), 'a b')
@@ -4364,8 +4494,8 @@ class info:
             >>> from dataclasses import dataclass
             >>> from dataclasses import InitVar
             >>> from typing import ClassVar
-            >>> from rich.pretty import install
             >>> from rc import info
+            >>>
             >>> @dataclass
             ... class Test:
             ...     a: int = 1
@@ -4473,7 +4603,7 @@ class info:
         attrs = {item for item in self.cls.dir if
                  self._include_attr(item) and item in self.cls.data_attrs and item}
         if self.cls.es.datatype_sub:
-            _ = {attrs.add(item.name) for item in fields(self.data) if self._include_attr(item.name)}
+            _ = {attrs.add(item.name) for item in datafields(self.data) if self._include_attr(item.name)}
         return sorted(list(attrs))
 
     @property
@@ -4483,12 +4613,10 @@ class info:
     def coro(self): return [i.name for i in self.cls.classified if Es(i.object).coro] + self.coros_property
 
     @property
-    @runwarning
     def coro_pproperty(self): return [i.name for i in self.cls.classified if Es(i.object).pproperty and
                                       Es(object.__getattribute__(self.data, i.name)).coro]
 
     @property
-    @runwarning
     def coro_prop(self): return [i.name for i in self.cls.classified if Es(i.object).prop and
                                  Es(object.__getattribute__(self.data, i.name)).coro]
 
@@ -4511,7 +4639,7 @@ class info:
         if self.cls.es.datatype_sub:
             rv_data = {f.name: f.default if is_missing(
                 f.default) and is_missing(f.default_factory) else f.default if is_missing(
-                f.default_factory) else f.default_factory() for f in fields(self.data) if f.name in attrs}
+                f.default_factory) else f.default_factory() for f in datafields(self.data) if f.name in attrs}
         if self.cls.es.namedtype_sub:
             rv = self.cls.data._field_defaults
         elif self.cls.es.dicttype_sub or self.cls.es.slotstype_sub:
@@ -4689,6 +4817,26 @@ class info:
 def is_even(number): return Es(number).even
 
 
+def iscoro(data):
+    """
+    Check all async options for object.
+
+    Examples:
+        >>> from rc import Es
+        >>> from rc import iscoro
+        >>> from rc import pretty_install
+        >>>
+        >>> pretty_install()
+        >>>
+
+    Args:
+        data: any object.
+
+    Returns:
+        IsCoro.
+    """
+
+
 def in_dict(data, items=None, **kwargs):
     """
     Is Item in Dict?.
@@ -4735,9 +4883,9 @@ def map_with_args(data, func, /, *args, pred=lambda x: True if x else False, spl
     Apply pred/filter to data and map with args and kwargs.
 
     Examples:
-        >>> from rich.pretty import install
         >>> from rc import map_with_args
-        >>> install()
+        >>> from rc import pretty_install
+        >>> pretty_install()
         >>> # noinspection PyUnresolvedReferences
         >>> def f(i, *ar, **kw):
         ...     return f'{i}: {[a(i) for a in ar]}, {", ".join([f"{k}: {v(i)}" for k, v in kw.items()])}'
@@ -4756,6 +4904,73 @@ def map_with_args(data, func, /, *args, pred=lambda x: True if x else False, spl
         List with results.
     """
     return [func(item, *args, **kwargs) for item in yield_if(data, pred=pred, split=split)]
+
+
+def newprop(name=None, default=None, pprop=False):
+    """
+    Get a new property with getter, setter and deleter.
+
+    Examples:
+        >>> from rc import newprop
+        >>> class Test:
+        ...     prop = newprop()
+        ...     callable = newprop(default=str)
+        >>>
+        >>> test = Test()
+        >>> '_prop' not in vars(test)
+        True
+        >>> test.prop
+        >>> '_prop' in vars(test)
+        True
+        >>> test.prop
+        >>> test.prop = 2
+        >>> test.prop
+        2
+        >>> del test.prop
+        >>> '_prop' in vars(test)
+        False
+        >>> test.prop
+        >>> '_callable' not in vars(test)
+        True
+        >>> test.callable  # doctest: +ELLIPSIS
+        '....Test object at 0x...>'
+        >>> '_callable' in vars(test)
+        True
+        >>> test.callable  # doctest: +ELLIPSIS
+        '....Test object at 0x...>'
+        >>> test.callable = 2
+        >>> test.callable
+        2
+        >>> del test.callable
+        >>> '_callable' in vars(test)
+        False
+        >>> test.callable  # doctest: +ELLIPSIS
+        '....Test object at 0x...>'
+
+    Args:
+        name: property name (attribute name: _name). :func:' varname`is used if no name (default: varname())
+        default: default for getter if attribute is not defined.
+            Could be a callable/partial that will be called with self (default: None)
+        pprop: pproperty or property (default: False)
+
+    Returns:
+        Property.
+    """
+    func = pproperty if pprop else property
+    name = f'_{name if name else varname()}'
+    return func(
+        lambda self:
+        getset(self, name, default=default(self) if Es(default).instance(Callable, partial) else default),
+        lambda self, value: self.__setattr__(name, value),
+        lambda self: self.__delattr__(name)
+    )
+    # return property(
+    #     lambda self:
+    #     self.__getattribute__(f'_{name}', default=default(self) \
+    #     if Es(default).instance(Callable, partial) else default),
+    #     lambda self, value: self.__setattr__(f'_{name}', value),
+    #     lambda self: self.__delattr__(f'_{name}')
+    # )
 
 
 def noexception(exception, func, *args, default_=None, **kwargs):
@@ -4783,6 +4998,36 @@ def noexception(exception, func, *args, default_=None, **kwargs):
     return default_
 
 
+class pproperty(property):
+    """
+    Print property.
+
+    Examples:
+        >>> from functools import cache
+        >>> from rc import Es
+        >>> from rc import pproperty
+        >>> from rc import pretty_install
+        >>>
+        >>> pretty_install()
+        >>> class Test:
+        ...     _pp = 0
+        ...     @pproperty
+        ...     def pp(self):
+        ...         self._pp += 1
+        ...         prop = Es(self.__class__.__dict__['pp']).prop
+        ...         pprop = Es(self.__class__.__dict__['pp']).pproperty
+        ...         return self._pp, prop, pprop
+        >>> test = Test()
+        >>> test.pp
+        (1, True, True)
+        >>> test.pp
+        (2, True, True)
+    """
+
+    def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+        super().__init__(fget=fget, fset=fset, fdel=fdel, doc=doc)
+
+
 def prefixed(name: str) -> str:
     try:
         return f'{name.upper()}_'
@@ -4802,10 +5047,64 @@ def repr_format(obj, attrs, clear=True, newline=False):
     return f'{cls.__name__}({new}{msg}{new})'
 
 
+def runinloop(data):
+    """
+    Run in loop if loop is running otherwise start loop and run.
+
+    Examples:
+        >>> from rc import Es
+        >>> from rc import pretty_install
+        >>> from rc import runinloop
+        >>>
+        >>> pretty_install()
+        >>>
+
+    Args:
+        data: any object.
+
+    Returns:
+        IsCoro.
+    """
+
+@decorator
+def runwarning(func, *args, **kwargs):
+    with catch_warnings(record=False):
+        filterwarnings('ignore', category=RuntimeWarning)
+        warnings.showwarning = lambda *_args, **_kwargs: None
+        rv = func(*args, **kwargs)
+        return rv
+
+
 def split_sep(sep='_'): return dict(sep=sep) if sep else dict()
 
 
 def startswith(name: str, builtins=True): return name.startswith('__') if builtins else name.startswith('_')
+
+
+def to_camel(text, replace=True):
+    """
+    Convert to Camel
+
+    Examples:
+        >>> from rc import Mro
+        >>> from rc import to_camel
+        >>>
+        >>> to_camel(Mro.ignore_attr.name)
+        'IgnoreAttr'
+        >>> to_camel(Mro.ignore_attr.name, replace=False)
+        'Ignore_Attr'
+        >>> to_camel(Mro.ignore_attr.value, replace=False)
+        '__Ignore_Attr__'
+
+    Args:
+        text: text to convert.
+        replace: remove '_'  (default: True)
+
+    Returns:
+        Camel text.
+    """
+    rv = ''.join(map(str.title, to_iter(text, '_')))
+    return rv.replace('_', '') if replace else rv
 
 
 def to_iter(data, always=False, split=' '):
@@ -4813,9 +5112,9 @@ def to_iter(data, always=False, split=' '):
     To iter.
 
     Examples:
-        >>> from rich import pretty
+        >>> from rc import pretty_install
         >>> from rc import to_iter
-        >>> pretty.install()
+        >>> pretty_install()
         >>> to_iter('test1')
         ['test1']
         >>> to_iter('test1 test2')
@@ -4899,9 +5198,9 @@ def yield_if(data, pred=lambda x: True if x else False, split=' ', apply=None):
     Yield value if condition is met and apply function if predicate.
 
     Examples:
-        >>> from rich.pretty import install
+        >>> from rc import pretty_install
         >>> from rc import yield_if
-        >>> install()
+        >>> pretty_install()
         >>> list(yield_if([True, None]))
         [True]
         >>> list(yield_if('test1.test2', pred=lambda x: x.endswith('2'), split='.'))
@@ -4935,9 +5234,9 @@ def yield_last(data, split=' '):
     Yield value if condition is met and apply function if predicate.
 
     Examples:
-        >>> from rich.pretty import install
+        >>> from rc import pretty_install
         >>> from rc import yield_if
-        >>> install()
+        >>> pretty_install()
         >>> list(yield_last([True, None]))
         [(False, True, None), (True, None, None)]
         >>> list(yield_last('first last'))
@@ -5325,10 +5624,10 @@ class TestBase(Base):
 @dataclass
 class TestData:
     dataclass_classvar: ClassVar[str] = 'dataclass_classvar'
-    dataclass_default_factory: Union[dict, str] = field(default_factory=dict, init=False)
-    dataclass_default_factory_init: Union[dict, str] = field(default_factory=dict)
-    dataclass_default: str = field(default='dataclass_default', init=False)
-    dataclass_default_init: str = field(default='dataclass_default_init')
+    dataclass_default_factory: Union[dict, str] = datafield(default_factory=dict, init=False)
+    dataclass_default_factory_init: Union[dict, str] = datafield(default_factory=dict)
+    dataclass_default: str = datafield(default='dataclass_default', init=False)
+    dataclass_default_init: str = datafield(default='dataclass_default_init')
     dataclass_initvar: InitVar[str] = 'dataclass_initvar'
     dataclass_str: str = 'dataclass_integer'
 
