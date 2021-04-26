@@ -1,7 +1,10 @@
 async_property
 datamodel-code-generator
 executing
+glom
 heartrate
+jsonpath_ng
+nested-lookup
 orjson
 pure_eval
 varname
