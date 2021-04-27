@@ -3,6 +3,7 @@ datamodel-code-generator
 executing
 glom
 heartrate
+janus
 jsonpath_ng
 nested-lookup
 orjson
