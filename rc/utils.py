@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utils Module."""
 __all__ = (
-    # Imports Stdlib
     'AST',
     'AsyncFor',
     'AsyncFunctionDef',
@@ -124,8 +123,8 @@ __all__ = (
     # NamedTuples
     'Annotation',
     'Attribute',
-    'ClsAttr',
     'ClsInfo',
+    'ClsItem',
 
     # Bases
     'BoxKeys',
@@ -143,7 +142,7 @@ __all__ = (
     'asdict',
     'asdict_props',
     'classify_cls',
-    'clsattr',
+    'clsitem',
     'clsinfo',
     'cmdname',
     'current_task_name',
@@ -209,7 +208,6 @@ __all__ = (
     'TestDataDictMix',
     'TestDataDictSlotMix',
 )
-
 import _abc
 import ast
 import functools
@@ -430,20 +428,6 @@ RunningLoop = _RunningLoop
 SeqNoStr = Union[typing.Iterator, typing.KeysView, typing.MutableSequence, typing.MutableSet, tuple, typing.ValuesView]
 SeqUnion = Union[typing.AnyStr, typing.ByteString, typing.Iterator, typing.KeysView, typing.MutableSequence,
                  typing.MutableSet, typing.Sequence, tuple, typing.ValuesView]
-# </editor-fold>
-# <editor-fold desc="ToDo">
-# TODO: asdict_props
-# TODO: Es.asdict
-# TODO: Es.__hash__
-# TODO: Es.__getstate__
-# TODO: Es.__repr__
-# TODO: Es.__setstate__
-# TODO: Es.__str__
-# TODO: Es.asdict
-# TODO: classify_cls
-# TODO: Finish annotations wit defaults and kwargs and init
-
-
 # </editor-fold>
 # <editor-fold desc="Exceptions">
 class CmdError(Exception):
@@ -2279,8 +2263,8 @@ class Name(Enum):
 Annotation = namedtuple('Annotation', 'any args classvar cls default final hint initvar literal name optional '
                                       'origin union')
 Attribute = namedtuple('Attribute', 'defining es field hint kind name object')
-ClsAttr = namedtuple('ClsAttr', 'defining es field hint kind name object')
 ClsInfo = namedtuple('ClsInfo', 'builtin cls mro name qual super')
+ClsItem = namedtuple('ClsItem', 'defining es field hint kind name object')
 
 
 # </editor-fold>
@@ -2661,9 +2645,6 @@ class pproperty(property):
 
 
 # </editor-fold>
-
-
-
 # <editor-fold desc="Functions">
 def aioloop(): return noexception(RuntimeError, get_running_loop)
 
@@ -3048,7 +3029,7 @@ def classify_cls(data):
     return dict_sort(classified)
 
 
-def clsattr(data):
+def clsitem(data):
     """
     Classify Object Class or Class.
 
@@ -3066,8 +3047,8 @@ def clsattr(data):
         Attribute.
     """
     def attr(defining, kind, field, name, obj):
-        return ClsAttr(defining=defining, es=Es(obj), field=Es(field), hint=hints.get(name),
-                         kind=kind, name=name, object=obj)
+        return ClsItem(defining=defining, es=Es(obj), field=Es(field), hint=hints.get(name),
+                       kind=kind, name=name, object=obj)
     es = Es(data)
     fields = data.__dataclass_fields__ if es.datatype_sub or es.datatype else {}
     data = data if es.type else data.__class__
@@ -3739,17 +3720,17 @@ class ClsMeta(type):
         >>> pretty_install()
         >>>
     """
-    clsattr = dict()
     clsinfo = ClsInfo(*(None, ) * len(ClsInfo._fields))
+    clsitem = dict()
 
     def __new__(mcs, *args, **kwargs):
-        cls = super().__new__(mcs, *args, **kwargs)
-        cls.clsattr = clsattr(cls)
-        cls.clsinfo = clsinfo(cls)
-        cls.__class_getitem__ = classmethod(GenericAlias)
-        return cls
+        c = super().__new__(mcs, *args, **kwargs)
+        c.__class_getitem__ = classmethod(lambda cls, item: cls.clsitem.get(item, NotImplemented))
+        c.clsinfo = clsinfo(c)
+        c.clsitem = clsitem(c)
+        return c
 
-    __class_getitem__ = classmethod(GenericAlias)
+    def __class_getitem__(mcs, item): return mcs.clsitem.get(item, NotImplemented)
 
 
 class Class(metaclass=ClsMeta):
@@ -5858,4 +5839,18 @@ class TestDataDictSlotMix(TestDataDictMix):
     @pproperty
     def slot_property(self):
         return self._slot_property
+# </editor-fold>
+# <editor-fold desc="ToDo">
+# TODO: asdict_props
+# TODO: Es.asdict
+# TODO: Es.__hash__
+# TODO: Es.__getstate__
+# TODO: Es.__repr__
+# TODO: Es.__setstate__
+# TODO: Es.__str__
+# TODO: Es.asdict
+# TODO: classify_cls
+# TODO: Finish annotations wit defaults and kwargs and init
+
+
 # </editor-fold>

@@ -804,8 +804,8 @@ def asdict_ignorestr(data: IgnoreStr, convert: bool = ...) -> Union[str, IgnoreS
 def asdict_props(data: Any, key: Attr = ..., pprop: bool = ...) -> dict[str, Any]: ...
 def asdict_type(data: Type[Enum], convert: bool =  ...) -> Type[Enum]: ...
 def classify_cls(data: Any) -> dict[str, Attribute]: ...
-def clsattr(data: Any) -> dict[str, ClsAttr]: ...
 def clsinfo(data: Any) -> ClsInfo: ...
+def clsitem(data: Any) -> dict[str, ClsItem]: ...
 def cmd(command: Iterable,
         exc: bool = ...,
         lines: bool = ...,
@@ -856,13 +856,13 @@ def yield_last(data: Any) -> Iterator[tuple[bool, Any, Optional[Any, None]]]: ..
 # </editor-fold>
 # <editor-fold desc="Meta">
 class ClsMeta(type):
-    clsattr: dict[str, ClsAttr]
     clsinfo: ClsInfo
+    clsitem: dict[str, ClsItem]
     @overload
     def __new__(mcs, o: object) -> type: ...
     @overload
     def __new__(mcs, name: str, bases: tuple[type, ...], namespace: dict[str, Any]) -> type: ...
-    def __class_getitem__(mcs, item: Any) -> GenericAlias: ...
+    def __class_getitem__(mcs, item: str) -> Union[Any, NotImplemented]: ...
 class Class(metaclass=ClsMeta):
     __slots__: tuple[str, ...] = ...
 # </editor-fold>
@@ -1194,10 +1194,10 @@ Annotation = NamedTuple('Annotation', any=bool, args=list[Generic[_A], ...], cla
                         initvar=bool, literal=bool, name=str, optional=bool, origin=Any, union=bool)
 Attribute = NamedTuple('Attribute', defining=type, es=Es, field=Es[Field], hint=Any, kind=Kind, name=str,
                        object=Any)
-ClsAttr = NamedTuple('ClsAttr', defining=type, es=Es, field=Es[Field], hint=Any, kind=Kind, name=str,
-                       object=Any)
 ClsInfo = NamedTuple('ClsInfo', builtin=Optional[Type], cls=Optional[Type], mro=Optional[tuple[Type, ...]],
                       name=Optional[str], qual=Optional[str], super=Optional[Type])
+ClsItem = NamedTuple('ClsItem', defining=type, es=Es, field=Es[Field], hint=Any, kind=Kind, name=str,
+                      object=Any)
 # </editor-fold>
 # <editor-fold desc="Echo">
 def black(msg: Any, bold: bool = ..., nl: bool = ..., underline: bool = ...,
