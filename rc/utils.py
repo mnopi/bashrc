@@ -122,14 +122,14 @@ __all__ = (
 
     # NamedTuples
     'Annotation',
-    'Attribute',
-    'ClsInfo',
-    'ClsItem',
 
     # Bases
     'BoxKeys',
     'Chain',
     'Es',
+    'Attribute',
+    'InfoClsBase',
+    'InfoCls',
     'pproperty',
 
     # Functions
@@ -141,9 +141,6 @@ __all__ = (
     'cmd',
     'asdict',
     'asdict_props',
-    'classify_cls',
-    'clsitem',
-    'clsinfo',
     'cmdname',
     'current_task_name',
     'delete',
@@ -173,7 +170,7 @@ __all__ = (
     'yield_last',
 
     # Meta
-    'ClsMeta',
+    'BaseMeta',
     'Class',
 
     # Classes
@@ -390,7 +387,7 @@ from rich.pretty import install as pretty_install
 from rich.traceback import install as traceback_install
 # <editor-fold desc="Constants">
 Alias = _alias
-BUILTINS = (v if isinstance(v := globals()['__builtins__'], dict) else vars(v)).copy()
+BUILTINS = (_bltns if isinstance(_bltns := globals()['__builtins__'], dict) else vars(_bltns)).copy()
 BUILTINS_CLASSES = tuple(filter(lambda x: isinstance(x, type), BUILTINS.values()))
 BUILTINS_FUNCTIONS = tuple(filter(lambda x: isinstance(x, (BuiltinFunctionType, FunctionType,)), BUILTINS.values()))
 BUILTINS_OTHER = tuple(map(BUILTINS.get, ('__doc__', '__import__', '__spec__', 'copyright', 'credits', 'exit',
@@ -428,6 +425,8 @@ RunningLoop = _RunningLoop
 SeqNoStr = Union[typing.Iterator, typing.KeysView, typing.MutableSequence, typing.MutableSet, tuple, typing.ValuesView]
 SeqUnion = Union[typing.AnyStr, typing.ByteString, typing.Iterator, typing.KeysView, typing.MutableSequence,
                  typing.MutableSet, typing.Sequence, tuple, typing.ValuesView]
+
+
 # </editor-fold>
 # <editor-fold desc="Exceptions">
 class CmdError(Exception):
@@ -2262,9 +2261,6 @@ class Name(Enum):
 # <editor-fold desc="NamedTuples">
 Annotation = namedtuple('Annotation', 'any args classvar cls default final hint initvar literal name optional '
                                       'origin union')
-Attribute = namedtuple('Attribute', 'defining es field hint kind name object')
-ClsInfo = namedtuple('ClsInfo', 'builtin cls mro name qual super')
-ClsItem = namedtuple('ClsItem', 'defining es field hint kind name object')
 
 
 # </editor-fold>
@@ -2467,50 +2463,51 @@ class Es:
     __slots__ = ('data', )
     def __init__(self, data=None): self.data = data
     def __call__(self, *args): return isinstance(self.data, args)
+    # TODO: Test: __getstate__ and doc.
     def __getstate__(self): return dict(data=self.data)
     def __repr__(self): return f'{self.__class__.__name__}({self.data})'
+    # TODO: Test: __setstate__ and doc.
     def __setstate__(self, state): self.data = state['data']
     def __str__(self): return str(self.data)
-    __class_getitem__ = classmethod(GenericAlias)
     _func = property(
         lambda self:
         self.data.fget if self.prop else self.data.__func__ if self(classmethod, staticmethod) else self.data)
-    annotation = property(lambda self: isinstance(self.data, Annotation))
-    annotationstype = property(lambda self: isinstance(self.data, AnnotationsType))
-    annotationstype_sub = property(lambda self: issubclass(self.data, AnnotationsType))
+    annotation = property(lambda self: self(Annotation))
+    annotationstype = property(lambda self: self(AnnotationsType))
+    annotationstype_sub = property(lambda self: self.subclass(AnnotationsType))
     asdict = property(lambda self: dict(data=self.data) | asdict_props(self))
-    asdictmethod = property(lambda self: isinstance(self.data, AsDictMethodType))
-    asdictmethod_sub = property(lambda self: issubclass(self.data, AsDictMethodType))
-    asdictproperty = property(lambda self: isinstance(self.data, AsDictPropertyType))
-    asdictproperty_sub = property(lambda self: issubclass(self.data, AsDictPropertyType))
-    ast = property(lambda self: isinstance(self.data, AST))
+    asdictmethod = property(lambda self: self(AsDictMethodType))
+    asdictmethod_sub = property(lambda self: self.subclass(AsDictMethodType))
+    asdictproperty = property(lambda self: self(AsDictPropertyType))
+    asdictproperty_sub = property(lambda self: self.subclass(AsDictPropertyType))
+    ast = property(lambda self: self(AST))
     asyncfor = property(lambda self: isinstance(self._func, AsyncFor))
     asyncfunctiondef = property(lambda self: isinstance(self._func, AsyncFunctionDef))
     asyncgen = property(lambda self: isinstance(self._func, AsyncGeneratorType))
     asyncgenfunction = property(lambda self: isasyncgenfunction(self._func))
     asyncwith = property(lambda self: isinstance(self._func, AsyncWith))
-    attribute = property(lambda self: isinstance(self.data, Attribute))
+    attribute = property(lambda self: self(Attribute))
     await_ast = property(lambda self: isinstance(self._func, Await))
     awaitable = property(lambda self: isawaitable(self._func))
-    bool = property(lambda self: isinstance(self.data, int) and isinstance(self.data, bool))
+    bool = property(lambda self: self(int) and self(bool))
     builtin = property(lambda self: any([in_dict(BUILTINS, self.data), self.builtinclass, self.builtinfunction]))
     builtinclass = property(lambda self: self.data in BUILTINS_CLASSES)
     builtinfunction = property(lambda self: self.data in BUILTINS_FUNCTIONS)
-    builtinfunctiontype = property(lambda self: isinstance(self.data, BuiltinFunctionType))
-    bytesio = property(lambda self: isinstance(self.data, BytesIO))  # :class:`typing.BinaryIO`
+    builtinfunctiontype = property(lambda self: self(BuiltinFunctionType))
+    bytesio = property(lambda self: self(BytesIO))  # :class:`typing.BinaryIO`
     cache = property(lambda self: Mro.cache_clear.has(self.data))
-    cached_property = property(lambda self: isinstance(self.data, cached_property))
-    callable = property(lambda self: isinstance(self.data, Callable))
-    chain = property(lambda self: isinstance(self.data, Chain))
-    chainmap = property(lambda self: isinstance(self.data, ChainMap))
-    classdef = property(lambda self: isinstance(self.data, ClassDef))
-    classmethod = property(lambda self: isinstance(self.data, classmethod))
-    classmethoddescriptortype = property(lambda self: isinstance(self.data, ClassMethodDescriptorType))
+    cached_property = property(lambda self: self(cached_property))
+    callable = property(lambda self: self(Callable))
+    chain = property(lambda self: self(Chain))
+    chainmap = property(lambda self: self(ChainMap))
+    classdef = property(lambda self: self(ClassDef))
+    classmethod = property(lambda self: self(classmethod))
+    classmethoddescriptortype = property(lambda self: self(ClassMethodDescriptorType))
     classvar = property(
         lambda self: (self.datafield and get_origin(self.data.type) == ClassVar) or get_origin(self.data) == ClassVar)
-    codetype = property(lambda self: isinstance(self.data, CodeType))
+    codetype = property(lambda self: self(CodeType))
     collections = property(lambda self: is_collections(self.data))
-    container = property(lambda self: isinstance(self.data, Container))
+    container = property(lambda self: self(Container))
     coro = property(lambda self: any(
         [self.asyncfor, self.asyncfunctiondef, self.asyncwith, self.await_ast] if self.ast else
         [self.asyncgen, self.asyncgenfunction, self.awaitable, self.coroutine, self.coroutinefunction]))
@@ -2518,100 +2515,278 @@ class Es:
     coroutinefunction = property(lambda self: iscoroutinefunction(self._func))
     datafactory = property(
         lambda self: self.datafield and Es(self.data.default).missing and hasattr(self.data, 'default_factory'))
-    datafield = property(lambda self: isinstance(self.data, Field))
-    datatype = property(lambda self: isinstance(self.data, DataType))
-    datatype_sub = property(lambda self: issubclass(self.data, DataType))
-    defaultdict = property(lambda self: isinstance(self.data, defaultdict))
+    datafield = property(lambda self: self(Field))
+    datatype = property(lambda self: self(DataType))
+    datatype_sub = property(lambda self: self.subclass(DataType))
+    defaultdict = property(lambda self: self(defaultdict))
     deleter = property(lambda self: self.property_any and self.data.fdel is not None)
-    dict = property(lambda self: isinstance(self.data, dict))
-    dicttype = property(lambda self: isinstance(self.data, DictType))
-    dicttype_sub = property(lambda self: issubclass(self.data, DictType))
-    dynamicclassattribute = property(lambda self: isinstance(self.data, DynamicClassAttribute))
-    dlst = property(lambda self: isinstance(self.data, (dict, list, set, tuple)))
-    enum = property(lambda self: isinstance(self.data, Enum))
-    enum_sub = property(lambda self: issubclass(self.data, Enum))
-    enumdict = property(lambda self: isinstance(self.data, EnumDict))
-    enumdict_sub = property(lambda self: issubclass(self.data, EnumDict))
+    dict = property(lambda self: self(dict))
+    dicttype = property(lambda self: self(DictType))
+    dicttype_sub = property(lambda self: self.subclass(DictType))
+    dynamicclassattribute = property(lambda self: self(DynamicClassAttribute))
+    dlst = property(lambda self: self(dict, list, set, tuple))
+    enum = property(lambda self: self(Enum))
+    enum_sub = property(lambda self: self.subclass(Enum))
+    enumdict = property(lambda self: self(EnumDict))
+    enumdict_sub = property(lambda self: self.subclass(EnumDict))
     even: property(lambda self: not self.data % 2)
-    fileio = property(lambda self: isinstance(self.data, FileIO))
-    float = property(lambda self: isinstance(self.data, float))
-    frameinfo = property(lambda self: isinstance(self.data, FrameInfo))
-    frametype = property(lambda self: isinstance(self.data, FrameType))
-    functiondef = property(lambda self: isinstance(self.data, FunctionDef))
-    functiontype = property(lambda self: isinstance(self.data, FunctionType))
-    generator = property(lambda self: isinstance(self.data, Generator))
-    generatortype = property(lambda self: isinstance(self.data, GeneratorType))
-    genericalias = property(lambda self: isinstance(self.data, types.GenericAlias))
-    getattrnobuiltintype = property(lambda self: isinstance(self.data, GetAttrNoBuiltinType))
-    getattrnobuiltintype_sub = property(lambda self: issubclass(self.data, GetAttrNoBuiltinType))
-    getattrtype = property(lambda self: isinstance(self.data, GetAttrType))
-    getattrtype_sub = property(lambda self: issubclass(self.data, GetAttrType))
+    fileio = property(lambda self: self(FileIO))
+    float = property(lambda self: self(float))
+    frameinfo = property(lambda self: self(FrameInfo))
+    frametype = property(lambda self: self(FrameType))
+    functiondef = property(lambda self: self(FunctionDef))
+    functiontype = property(lambda self: self(FunctionType))
+    generator = property(lambda self: self(Generator))
+    generatortype = property(lambda self: self(GeneratorType))
+    genericalias = property(lambda self: self(types.GenericAlias))
+    getattrnobuiltintype = property(lambda self: self(GetAttrNoBuiltinType))
+    getattrnobuiltintype_sub = property(lambda self: self.subclass(GetAttrNoBuiltinType))
+    getattrtype = property(lambda self: self(GetAttrType))
+    getattrtype_sub = property(lambda self: self.subclass(GetAttrType))
     getsetdescriptor = lambda self, n: isgetsetdescriptor(self.cls_attr_value(n)) if n else self.data
-    getsetdescriptortype = property(lambda self: isinstance(self.data, GetSetDescriptorType))
-    gettype = property(lambda self: isinstance(self.data, GetType))
-    gettype_sub = property(lambda self: issubclass(self.data, GetType))
+    getsetdescriptortype = property(lambda self: self(GetSetDescriptorType))
+    gettype = property(lambda self: self(GetType))
+    gettype_sub = property(lambda self: self.subclass(GetType))
     hashable = property(lambda self: bool(noexception(TypeError, hash, self.data)))
-    import_ast = property(lambda self: isinstance(self.data, Import))
-    importfrom = property(lambda self: isinstance(self.data, ImportFrom))
+    import_ast = property(lambda self: self(Import))
+    importfrom = property(lambda self: self(ImportFrom))
     initvar = property(
-        lambda self: (self.datafield and isinstance(self.data.type, InitVar)) or isinstance(self.data, InitVar))
+        lambda self: (self.datafield and isinstance(self.data.type, InitVar)) or self(InitVar))
     installed = property(lambda self: is_installed(self.data))
     instance = lambda self, *args: isinstance(self.data, args)
-    int = property(lambda self: isinstance(self.data, int))
+    int = property(lambda self: self(int))
     io = property(lambda self: self.bytesio and self.stringio)  # :class:`typing.IO`
-    iterable = property(lambda self: isinstance(self.data, Iterable))
-    iterator = property(lambda self: isinstance(self.data, Iterator))
-    lambdatype = property(lambda self: isinstance(self.data, LambdaType))
-    list = property(lambda self: isinstance(self.data, list))
-    lst = property(lambda self: isinstance(self.data, (list, set, tuple)))
-    mappingproxytype = property(lambda self: isinstance(self.data, MappingProxyType))
-    mappingproxytype_sub = property(lambda self: issubclass(self.data, MappingProxyType))
+    iterable = property(lambda self: self(Iterable))
+    iterator = property(lambda self: self(Iterator))
+    lambdatype = property(lambda self: self(LambdaType))
+    list = property(lambda self: self(list))
+    lst = property(lambda self: self(list, set, tuple))
+    mappingproxytype = property(lambda self: self(MappingProxyType))
+    mappingproxytype_sub = property(lambda self: self.subclass(MappingProxyType))
     memberdescriptor = property(lambda self: ismemberdescriptor(self.data))
-    memberdescriptortype = property(lambda self: isinstance(self.data, MemberDescriptorType))
+    memberdescriptortype = property(lambda self: self(MemberDescriptorType))
     method = property(lambda self: self.methodtype and not self(classmethod, property, staticmethod))
     methoddescriptor = property(lambda self: ismethoddescriptor(self.data))
-    methoddescriptortype = property(lambda self: isinstance(self.data, types.MethodDescriptorType))
-    methodtype = property(lambda self: isinstance(self.data, MethodType))  # True if it is an instance method!.
-    methodwrappertype = property(lambda self: isinstance(self.data, MethodWrapperType))
-    methodwrappertype_sub = property(lambda self: issubclass(self.data, MethodWrapperType))
-    missing = property(lambda self: isinstance(self.data, MISSING_TYPE))
-    mlst = property(lambda self: isinstance(self.data, (MutableMapping, list, set, tuple)))
-    mm = property(lambda self: isinstance(self.data, MutableMapping))
-    moduletype = property(lambda self: isinstance(self.data, ModuleType))
+    methoddescriptortype = property(lambda self: self(types.MethodDescriptorType))
+    methodtype = property(lambda self: self(MethodType))  # True if it is an instance method!.
+    methodwrappertype = property(lambda self: self(MethodWrapperType))
+    methodwrappertype_sub = property(lambda self: self.subclass(MethodWrapperType))
+    missing = property(lambda self: self(MISSING_TYPE))
+    mlst = property(lambda self: self(MutableMapping, list, set, tuple))
+    mm = property(lambda self: self(MutableMapping))
+    moduletype = property(lambda self: self(ModuleType))
     module_function = property(lambda self: is_module_function(self.data))
     noncomplex = property(lambda self: is_noncomplex(self.data))
-    namedtype = property(lambda self: isinstance(self.data, NamedType))
-    namedtype_sub = property(lambda self: issubclass(self.data, NamedType))
-    named_annotationstype = property(lambda self: isinstance(self.data, NamedAnnotationsType))
-    named_annotationstype_sub = property(lambda self: issubclass(self.data, NamedAnnotationsType))
-    none = property(lambda self: isinstance(self.data, type(None)))
+    namedtype = property(lambda self: self(NamedType))
+    namedtype_sub = property(lambda self: self.subclass(NamedType))
+    named_annotationstype = property(lambda self: self(NamedAnnotationsType))
+    named_annotationstype_sub = property(lambda self: self.subclass(NamedAnnotationsType))
+    none = property(lambda self: self(type(None)))
     object = property(lambda self: is_object(self.data))
-    pathlib = property(lambda self: isinstance(self.data, PathLib))
+    pathlib = property(lambda self: self(PathLib))
     picklable = lambda self, name: is_picklable(name, self.data)
     primitive = property(lambda self: is_primitive(self.data))
-    pproperty = property(lambda self: isinstance(self.data, pproperty))
-    prop = property(lambda self: isinstance(self.data, property))
+    pproperty = property(lambda self: self(pproperty))
+    prop = property(lambda self: self(property))
     property_any = property(lambda self: self.prop or self.cached_property)
     reducible = property(lambda self: is_reducible(self.data))
     reducible_sequence_subclass = property(lambda self: is_reducible_sequence_subclass(self.data))
     routine = property(lambda self: isroutine(self.data))
     sequence = property(lambda self: is_sequence(self.data))
     sequence_subclass = property(lambda self: is_sequence_subclass(self.data))
-    set = property(lambda self: isinstance(self.data, set))
+    set = property(lambda self: self(set))
     setter = property(lambda self: self.prop and self.data.fset is not None)
-    simple = property(lambda self: isinstance(self.data, Simple))
-    sized = property(lambda self: isinstance(self.data, Sized))
-    slotstype = property(lambda self: isinstance(self.data, SlotsType))
-    slotstype_sub = property(lambda self: issubclass(self.data, SlotsType))
-    staticmethod = property(lambda self: isinstance(self.data, staticmethod))
-    str = property(lambda self: isinstance(self.data, str))
-    subclass = lambda self, *args: issubclass(self.data, args) if self.type else issubclass(type(self.data), args)
-    stringio = property(lambda self: isinstance(self.data, StringIO))  # :class:`typing.TextIO`
-    tracebacktype = property(lambda self: isinstance(self.data, TracebackType))
-    tuple = property(lambda self: isinstance(self.data, tuple))
-    type = property(lambda self: isinstance(self.data, type))
+    simple = property(lambda self: self(Simple))
+    sized = property(lambda self: self(Sized))
+    slotstype = property(lambda self: self(SlotsType))
+    slotstype_sub = property(lambda self: self.subclass(SlotsType))
+    staticmethod = property(lambda self: self(staticmethod))
+    str = property(lambda self: self(str))
+    subclass = lambda self, *args: self.type and issubclass(self.data, args)
+    stringio = property(lambda self: self(StringIO))  # :class:`typing.TextIO`
+    tracebacktype = property(lambda self: self(TracebackType))
+    tuple = property(lambda self: self(tuple))
+    type = property(lambda self: self(type))
     unicode = property(lambda self: is_unicode(self.data))
-    wrapperdescriptortype = property(lambda self: isinstance(self.data, WrapperDescriptorType))
+    wrapperdescriptortype = property(lambda self: self(WrapperDescriptorType))
+
+    def __class_getitem__(cls, prop):
+        # TODO: Examples: __class_getitem__
+        """
+        Getter with Property Name.
+
+        Examples:
+            >>> from rc import Es
+            >>> from rc import pretty_install
+            >>>
+            >>> pretty_install()
+            >>>
+
+        Args:
+            prop: property
+
+        Returns:
+            Getter with Property Name.
+        """
+        return attrgetter(n) if ((n := cls(prop).property_any.__name__) in cls.__dict__) else NotImplemented
+
+
+Attribute = namedtuple('Attribute', 'defining es field hint kind name object qual')
+InfoClsBase = namedtuple('InfoClsBase', 'attribute builtin cls es hint importable modname mro name qual super')
+
+
+# TODO: Finish with Seq and change Dict for find first. If change to Tuple instead of dict use cache.
+# TODO: Printable properties, kwargs, .... ignore infocls.
+
+
+class InfoCls(InfoClsBase):
+    # TODO: Examples: InfoCls
+    """
+    Object Class or Class Info.
+
+    Examples:
+        >>> from rc import InfoCls
+        >>> from rc import pretty_install
+        >>>
+        >>> pretty_install()
+        >>>
+    """
+    __slots__ = ()
+
+    def __new__(cls, data):
+        # TODO: Examples: __new__
+        """
+        New InfoCls Instance for Object Class or Class.
+
+        Examples:
+            >>> from rc import InfoCls
+            >>> from rc import pretty_install
+            >>>
+            >>> pretty_install()
+            >>>
+
+        Args:
+            data: object
+
+        Returns:
+            New InfoCls Instance for Object Class or Class.
+        """
+        es = Es(data)
+        fields = data.__dataclass_fields__ if es.datatype_sub or es.datatype else {}
+        data = data if es.type else data.__class__
+        hint = annotations(data, stack=2) if es.annotationstype_sub else dict()
+        attribute = dict()
+        for item in classify_class_attrs(data):
+            e = Es(item.object)
+            attribute |= {
+                item.name: Attribute(
+                    defining=item.defining_class, es=e, field=Es(fields.pop(item.name, None)),
+                    hint=hint.get(item.name), kind=Kind[item.kind.split(' ')[0].upper()], name=item.name,
+                    object=item.object, qual=Name._qual0.get(e._func, default=item.name))
+            }
+        for k, value in fields:
+            c = data
+            for C in c.__mro__:
+                if Es(C).datatype_sub and k in C.__dataclass_fields__:
+                    c = C
+            k_obj = getattr(c, k)
+            e = Es(k_obj)
+            attribute |= {
+                k: Attribute(defining=c, es=e, field=Es(value), hint=hint.get(k),
+                             kind=Kind.DATA, name=k, object=k_obj, qual=Name._qual0.get(e._func, default=k))
+            }
+        # TODO: super InfoCls()
+        # noinspection PySuperArguments
+        return super(InfoCls, cls).__new__(
+            cls, dict_sort(attribute), anyin(data.__mro__, BUILTINS_CLASSES), data, es, hint, importable_name(data),
+            data.__module__, data.__mro__,
+            data.__name__, data.__qualname__, data.__mro__[1])
+
+    # TODO: Examples: __repr__, __str__
+
+    def data(self, key=Attr.PRIVATE):
+        # TODO: Examples: data
+        """
+        Class Data Attributes.
+
+        Examples:
+            >>> from rc import InfoCls
+            >>> from rc import pretty_install
+            >>>
+            >>> pretty_install()
+            >>>
+
+        Args:
+            key: attr startswith include.
+
+        Returns:
+            Class Data Attributes filtered with attr startswith.
+        """
+        return self.member(key=key)
+
+    def defaults(self, key=Attr.PRIVATE):
+        # TODO: Examples: defaults
+        """
+        Class Defaults.
+
+        Examples:
+            >>> from rc import InfoCls
+            >>> from rc import pretty_install
+            >>>
+            >>> pretty_install()
+            >>>
+
+        Args:
+            key: attr startswith include.
+
+        Returns:
+            Class Defaults Dict filtered with attr startswith.
+        """
+        return {i.name: i.object for i in self.data(key=key).values()}
+
+    @singledispatchmethod
+    def member(self, find: Kind = Kind.DATA, key=Attr.PRIVATE):
+        # TODO: Examples: member
+        """
+        Filter Class Members based on :class:`rc.Kind`.
+
+        Examples:
+            >>> from rc import InfoCls
+            >>> from rc import pretty_install
+            >>>
+            >>> pretty_install()
+            >>>
+
+        Args:
+            find: :class:`rc.Kind` to filter.
+            key: attr startswith include.
+
+        Returns:
+            Class Members filtered based on :class:`rc.Kind` and attr startswith.
+        """
+        return {i.name: i for i in self.attribute.values() if key.include(i.name) and i.kind is find}
+
+    @member.register
+    def member_es(self, find: attrgetter = Es.memberdescriptor, key=Attr.PRIVATE):
+        # TODO: Examples: member_es
+        """
+        Filter Class Members based on return value of :class:`rc.Es` property.
+
+        Examples:
+            >>> from rc import InfoCls
+            >>> from rc import pretty_install
+            >>>
+            >>> pretty_install()
+            >>>
+
+        Args:
+            find: :class:`operator.attrgetter` with :class:`rc.ES` property name to filter.
+            key: attr startswith include.
+
+        Returns:
+            Class Members filtered based on return value :class:`rc.Es` property and attr startswith.
+        """
+        return {i.name: i for i in self.attribute.values() if key.include(i.name) and find(i.es)}
 
 
 class pproperty(property):
@@ -2989,89 +3164,6 @@ def asdict_type(data, convert=True):
     elif es.datatype_sub or es.dicttype_sub or es.namedtype_sub or es.slotstype_sub:
         rv = info(data).defaults if convert else data
     return rv
-
-
-def classify_cls(data):
-    """
-    Classify Object Class or Class.
-
-    Examples:
-        >>> from rc import classify_cls
-        >>> from rc import pretty_install
-        >>>
-        >>> pretty_install()
-        >>>
-
-    Args:
-        data: any object.
-
-    Returns:
-        Attribute.
-    """
-    def attribute(defining, kind, field, name, obj):
-        return Attribute(defining=defining, es=Es(obj), field=Es(field), hint=hints.get(name),
-                         kind=kind, name=name, object=obj)
-    es = Es(data)
-    fields = data.__dataclass_fields__ if es.datatype_sub or es.datatype else {}
-    data = data if es.type else data.__class__
-    hints = annotations(data, stack=2) if es.annotationstype_sub else dict()
-    classified = dict()
-    for item in classify_class_attrs(data):
-        classified |= {item.name: attribute(item.defining_class, Kind[item.kind.split(' ')[0].upper()],
-                                            fields.pop(item.name, None), item.name, item.object)}
-    for key, value in fields:
-        cls = data
-        for C in cls.__mro__:
-            if Es(C).datatype_sub and key in C.__dataclass_fields__:
-                cls = C
-        key_obj = getattr(cls, key)
-        classified |= {key: attribute(cls, Kind.DATA, value, key, key_obj)}
-    return dict_sort(classified)
-
-
-def clsitem(data):
-    """
-    Classify Object Class or Class.
-
-    Examples:
-        >>> from rc import classify_cls
-        >>> from rc import pretty_install
-        >>>
-        >>> pretty_install()
-        >>>
-
-    Args:
-        data: object.
-
-    Returns:
-        Attribute.
-    """
-    def attr(defining, kind, field, name, obj):
-        return ClsItem(defining=defining, es=Es(obj), field=Es(field), hint=hints.get(name),
-                       kind=kind, name=name, object=obj)
-    es = Es(data)
-    fields = data.__dataclass_fields__ if es.datatype_sub or es.datatype else {}
-    data = data if es.type else data.__class__
-    hints = annotations(data, stack=2) if es.annotationstype_sub else dict()
-    classified = dict()
-    for item in classify_class_attrs(data):
-        classified |= {item.name: attr(item.defining_class, Kind[item.kind.split(' ')[0].upper()],
-                                            fields.pop(item.name, None), item.name, item.object)}
-    for key, value in fields:
-        cls = data
-        for C in cls.__mro__:
-            if Es(C).datatype_sub and key in C.__dataclass_fields__:
-                cls = C
-        key_obj = getattr(cls, key)
-        classified |= {key: attr(cls, Kind.DATA, value, key, key_obj)}
-    return dict_sort(classified)
-
-
-def clsinfo(data):
-    es = Es(data)
-    data = data if es.type else data.__class__
-    return ClsInfo(builtin=anyin(data.__mro__, BUILTINS_CLASSES), cls=data, mro=data.__mro__, name=data.__name__,
-                   qual=data.__qualname__, super=data.__mro__[1])
 
 
 def cmd(command, exc=False, lines=True, shell=True, py=False, pysite=True):
@@ -3709,31 +3801,70 @@ def yield_last(data, split=' '):
 
 # </editor-fold>
 # <editor-fold desc="Meta">
-class ClsMeta(type):
+class BaseMeta(type):
+    # TODO: Examples: BaseMeta
     """
     Meta Base Helper Class.
 
     Examples:
-        >>> from rc import ClsMeta
+        >>> from rc import BaseMeta
         >>> from rc import pretty_install
         >>>
         >>> pretty_install()
         >>>
     """
-    clsinfo = ClsInfo(*(None, ) * len(ClsInfo._fields))
-    clsitem = dict()
+    infocls = None
 
     def __new__(mcs, *args, **kwargs):
+        # TODO: Examples: __new__
+        """
+        New BaseMeta Class Instance.
+
+        Examples:
+            >>> from rc import InfoCls
+            >>> from rc import pretty_install
+            >>>
+            >>> pretty_install()
+            >>>
+
+        Args:
+            *args:
+                name: str
+                bases: tuple[type, ...]
+                namespace: dict[str, Any])
+            **kwargs:
+
+        Returns:
+            New BaseMeta Class Instance.
+        """
         c = super().__new__(mcs, *args, **kwargs)
-        c.__class_getitem__ = classmethod(lambda cls, item: cls.clsitem.get(item, NotImplemented))
-        c.clsinfo = clsinfo(c)
-        c.clsitem = clsitem(c)
+        c.__class_getitem__ = classmethod(lambda cls, item: cls.infocls.attribute.get(item, NotImplemented))
+        # TODO: arg InfoCls()
+        c.infocls = InfoCls(c)
         return c
 
-    def __class_getitem__(mcs, item): return mcs.clsitem.get(item, NotImplemented)
+    def __class_getitem__(mcs, name):
+        # TODO: Examples: __class_getitem__
+        """
+        Class Attribute Information :class:`rc.Attribute`.
+
+        Examples:
+            >>> from rc import InfoCls
+            >>> from rc import pretty_install
+            >>>
+            >>> pretty_install()
+            >>>
+
+        Args:
+            name: attribute name.
+
+        Returns:
+            Class Attribute Information :class:`rc.Attribute`.
+        """
+        return mcs.infocls.attribute.get(name, NotImplemented)
 
 
-class Class(metaclass=ClsMeta):
+class Class(metaclass=BaseMeta):
     __slots__ = tuple()
 
 
@@ -4451,7 +4582,6 @@ x
         self.classified = dict_sort({i.name: i for i in classify_class_attrs(self.data) if self.key.include(i.name)})
         self.fields = dict(filter(lambda x: self.key.include(x[0]), dict_sort(self.data.__dataclass_fields__).items())) \
             if self.es.datatype_sub else dict()
-        self.attr
         factories = filter(lambda x: Es(x[1]).datafactory, self.fields.items())
         if self.es.datatype_sub:
             for i in sorted(self.fields):
@@ -4704,9 +4834,6 @@ x
     @property
     def has_reduce(self): return has_reduce(self.data)
 
-    @property
-    def importable_name(self): return importable_name(self.data)
-
     @functools.cache
     def is_attr(self, name):
         return name in self.dir
@@ -4874,14 +5001,6 @@ x
     def _methodwrappertype(self):
         return self.kind[self.methodwrappertype.__name__]
 
-    @property
-    def modname(self): return Name._module0.get(self.data, default=str())
-
-    @property
-    def _mro(self): return self.data.__mro__
-
-    @property
-    def _name(self): return self.data.__name__
 
     @property
     def _none(self):
