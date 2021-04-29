@@ -5834,6 +5834,58 @@ object=<function Seq.first_allin at 0x...>)
 
         Keys and Items are checked recursivily.
 
+        Examples:
+            >>> from inspect import classify_class_attrs
+            >>> from rc import BUILTINS_CLASSES
+            >>> from rc import Mro
+            >>> from rc import pretty_install
+            >>> from rc import Seq
+            >>> from rc import slist
+            >>> from rc import stuple
+            >>>
+            >>> pretty_install()
+            >>>
+            #
+            # args
+            #
+            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
+            >>> s.first_anyin('b', 'c')
+            ['b', 'd']
+            >>> s.first_anyin('d')
+            ['b', 'd']
+            >>> s.first_anyin('e', c=1)
+            {'a': {'b': {'c': 1}}, 'b': 2}
+            >>> s = stuple([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
+            >>> s.first_anyin('a', 'e')
+            {'a': 1}
+            >>> s.first_anyin('', 'e') is None
+            True
+            >>>
+            #
+            # Kwargs - __getitem__
+            #
+            >>> # noinspection PyUnresolvedReferences
+            >>> classified = slist([i._asdict() for i in classify_class_attrs(slist)])
+            >>> d_getitem = classified.first_anyin(test=None, kind='data')
+            >>> d_getitem  # doctest: +ELLIPSIS
+            {
+                'name': '__abstractmethods__',
+                'kind': 'data',
+                'defining_class': <class '....slist'>,
+                'object': frozenset()
+            }
+            >>>
+            #
+            # Kwargs - __getattribute__
+            #
+            >>> classified = slist(classify_class_attrs(slist))
+            >>> d_getattr = classified.first_anyin(test=None, kind='data')
+            >>> d_getattr  # doctest: +ELLIPSIS
+            Attribute(name='__abstractmethods__', kind='data', defining_class=<class '....slist'>, object=frozenset())
+            >>>
+            >>> d_getitem == d_getattr._asdict()
+            True
+
         Args:
             *args: keys to search in each item/row/DICT.
             **kwargs: items to search in each item/row/DICT.
