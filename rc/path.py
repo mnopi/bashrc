@@ -4,6 +4,7 @@ __all__ = (
     'AUTHORIZED_KEYS',
     'FILE_DEFAULT',
     'GITCONFIG',
+    'GITHUB_ORGANIZATION',
     'ID_RSA',
     'ID_RSA_PUB',
     'SSH_CONFIG',
@@ -72,6 +73,7 @@ from setuptools import find_packages
 AUTHORIZED_KEYS = 'authorized_keys'
 FILE_DEFAULT = True
 GITCONFIG = '.gitconfig'
+GITHUB_ORGANIZATION = getenv('GITHUB_ORGANIZATION')
 ID_RSA = 'id_rsa'
 ID_RSA_PUB = 'id_rsa.pub'
 SSH_CONFIG = dict(AddressFamily='inet', BatchMode='yes', CheckHostIP='no', ControlMaster='auto',
@@ -788,7 +790,8 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
 
 class PathGit(Enum):
     PATH = 'git rev-parse --show-toplevel'
-    URL = 'git config --get remote.origin.url'
+    ORIGIN = 'git config --get remote.origin.url'
+    ORGANIZATION = f'git config --get remote.{GITHUB_ORGANIZATION}.url'
 
     def cmd(self, path=None):
         rv = None
@@ -802,7 +805,7 @@ class PathGit(Enum):
     @classmethod
     def top(cls, path=None):
         """
-        Get Git Top Path, URL and name.
+        Get Git Top Path, ORIGIN and name.
 
         Examples:
             >>> p = Path(__file__).parent.parent

@@ -179,6 +179,8 @@ __all__ = (
     'Cls',
     'info',
     'Seq',
+    'slist',
+    'stuple',
 
     # Echo
     'black',
@@ -205,8 +207,10 @@ __all__ = (
     'TestDataDictMix',
     'TestDataDictSlotMix',
 )
+
 import _abc
 import ast
+import collections.abc
 import functools
 import json
 import re
@@ -341,6 +345,7 @@ from typing import Type
 from typing import Union
 from warnings import catch_warnings
 from warnings import filterwarnings
+
 import jsonpickle
 from box import Box
 from bson import ObjectId
@@ -351,8 +356,8 @@ from devtools import Debug
 from dpath.util import delete as dpathdelete
 from dpath.util import get as dpathget
 from dpath.util import new as dpathnew
-from dpath.util import set as dpathset
 from dpath.util import search as dpathsearch
+from dpath.util import set as dpathset
 from dpath.util import values as dpathvalues
 from environs import Env as Environs
 from git import GitConfigParser
@@ -372,8 +377,6 @@ from jsonpickle.util import is_picklable
 from jsonpickle.util import is_primitive
 from jsonpickle.util import is_reducible
 from jsonpickle.util import is_reducible_sequence_subclass
-from jsonpickle.util import is_sequence
-from jsonpickle.util import is_sequence_subclass
 from jsonpickle.util import is_unicode
 from more_itertools import bucket
 from more_itertools import collapse
@@ -385,6 +388,7 @@ from nested_lookup import nested_lookup
 from rich.console import Console as Console
 from rich.pretty import install as pretty_install
 from rich.traceback import install as traceback_install
+
 # <editor-fold desc="Constants">
 Alias = _alias
 BUILTINS = (_bltns if isinstance(_bltns := globals()['__builtins__'], dict) else vars(_bltns)).copy()
@@ -470,6 +474,7 @@ class AnnotationsType(metaclass=ABCMeta):
         >>> Es(Named(a='a')).annotationstype
         True
     """
+
     @classmethod
     def __subclasshook__(cls, C):
         if cls is AnnotationsType:
@@ -515,6 +520,7 @@ class AsDictMethodType(metaclass=ABCMeta):
         >>> Es(s).asdictmethod
         True
     """
+
     # noinspection PyUnusedLocal
     @abstractmethod
     def asdict(self, *args, **kwargs):
@@ -568,6 +574,7 @@ class AsDictPropertyType(metaclass=ABCMeta):
         >>> Es(s).asdictproperty
         False
     """
+
     @property
     @abstractmethod
     def asdict(self):
@@ -698,6 +705,7 @@ class GetAttrNoBuiltinType(metaclass=ABCMeta):
         >>> Es(n).getattrnobuiltintype
         True
         """
+
     @abstractmethod
     def __getattribute__(self, n):
         return object.__getattribute__(self, n)
@@ -758,6 +766,7 @@ class GetAttrType(metaclass=ABCMeta):
         >>> Es(n).getattrtype
         True
         """
+
     @abstractmethod
     def __getattribute__(self, n):
         return object.__getattribute__(self, n)
@@ -772,8 +781,18 @@ class GetAttrType(metaclass=ABCMeta):
 
 
 @runtime_checkable
+class GetItemSupportType(Protocol):
+    """Supports __getitem__."""
+    __slots__ = tuple()
+
+    @abstractmethod
+    def __getitem__(self, index):
+        return self[index]
+
+
+@runtime_checkable
 class GetSupportType(Protocol):
-    """An ABC with one abstract method get."""
+    """Supports get method."""
     __slots__ = tuple()
 
     @abstractmethod
@@ -815,6 +834,7 @@ class GetType(Protocol):
         >>> Es(dct).gettype
         True
     """
+
     @abstractmethod
     def get(self, name, default=None):
         pass
@@ -921,6 +941,7 @@ class SlotsType(metaclass=ABCMeta):
         >>> Es(s).slotstype
         True
     """
+
     @classmethod
     def __subclasshook__(cls, C):
         if cls is SlotsType:
@@ -1079,7 +1100,7 @@ class Kind(Enum):
 
 class _Mro(Enum):
     def _generate_next_value_(self, start, count, last_values):
-        exclude = ('_asdict', '_field_defaults', '_fields', 'asdict', 'get', )
+        exclude = ('_asdict', '_field_defaults', '_fields', 'asdict', 'get',)
         return self if self in exclude else f'__{self}__'
 
 
@@ -2460,15 +2481,22 @@ class Es:
         data: Any
             object to provide information (default: None)
         """
-    __slots__ = ('data', )
+    __slots__ = ('data',)
+
     def __init__(self, data=None): self.data = data
+
     def __call__(self, *args): return isinstance(self.data, args)
+
     # TODO: Test: __getstate__ and doc.
     def __getstate__(self): return dict(data=self.data)
+
     def __repr__(self): return f'{self.__class__.__name__}({self.data})'
+
     # TODO: Test: __setstate__ and doc.
     def __setstate__(self, state): self.data = state['data']
+
     def __str__(self): return str(self.data)
+
     _func = property(
         lambda self:
         self.data.fget if self.prop else self.data.__func__ if self(classmethod, staticmethod) else self.data)
@@ -2592,16 +2620,20 @@ class Es:
     reducible = property(lambda self: is_reducible(self.data))
     reducible_sequence_subclass = property(lambda self: is_reducible_sequence_subclass(self.data))
     routine = property(lambda self: isroutine(self.data))
-    sequence = property(lambda self: is_sequence(self.data))
-    sequence_subclass = property(lambda self: is_sequence_subclass(self.data))
+    seq = property(lambda self: self(Seq))
+    seq_sub = property(lambda self: self.subclass(Seq))
+    sequence = property(lambda self: self(Sequence))
+    sequence_sub = property(lambda self: self.subclass(Sequence))
     set = property(lambda self: self(set))
     setter = property(lambda self: self.prop and self.data.fset is not None)
     simple = property(lambda self: self(Simple))
     sized = property(lambda self: self(Sized))
+    slist = property(lambda self: self(slist))
     slotstype = property(lambda self: self(SlotsType))
     slotstype_sub = property(lambda self: self.subclass(SlotsType))
     staticmethod = property(lambda self: self(staticmethod))
     str = property(lambda self: self(str))
+    stuple = property(lambda self: self(stuple))
     subclass = lambda self, *args: self.type and issubclass(self.data, args)
     stringio = property(lambda self: self(StringIO))  # :class:`typing.TextIO`
     tracebacktype = property(lambda self: self(TracebackType))
@@ -2631,12 +2663,13 @@ class Es:
         return attrgetter(n) if ((n := cls(prop).property_any.__name__) in cls.__dict__) else NotImplemented
 
 
-Attribute = namedtuple('Attribute', 'defining es field hint kind name object qual')
-InfoClsBase = namedtuple('InfoClsBase', 'attribute builtin cls es hint importable modname mro name qual super')
+Attribute = namedtuple('Attribute', 'annotation default defining es field kind name object qual')
+InfoClsBase = namedtuple('InfoClsBase', 'annotation attribute builtin cls es importable modname mro name qual super')
 
 
 # TODO: Finish with Seq and change Dict for find first. If change to Tuple instead of dict use cache.
 # TODO: Printable properties, kwargs, .... ignore infocls.
+# TODO: Cepillar el Base y refundir con el Meta.
 
 
 class InfoCls(InfoClsBase):
@@ -2658,12 +2691,21 @@ class InfoCls(InfoClsBase):
         """
         New InfoCls Instance for Object Class or Class.
 
+        __attribute: get the defining class add to the attribute name: _Class__attribute.
+        __attribute__: do not get the defining class add to the attribute name: __attribute__.
+
         Examples:
             >>> from rc import InfoCls
             >>> from rc import pretty_install
+            >>> from rc import TestDataDictSlotMix
             >>>
             >>> pretty_install()
             >>>
+            >>> test = InfoCls(TestDataDictSlotMix)
+            >>> attr = test.attribute['_TestData__dataclass_default_factory']
+            >>> attr.default, attr.defining, attr.field.datafactory, attr.object, \
+            attr.field.data.type == attr.annotation.hint, attr.object == attr.annotation.default  # doctest: +ELLIPSIS
+            (NotImplemented, <class '....TestData'>, True, {}, True, True)
 
         Args:
             data: object
@@ -2674,33 +2716,34 @@ class InfoCls(InfoClsBase):
         es = Es(data)
         fields = data.__dataclass_fields__ if es.datatype_sub or es.datatype else {}
         data = data if es.type else data.__class__
-        hint = annotations(data, stack=2) if es.annotationstype_sub else dict()
+        annotation = annotations(data, stack=2) if es.annotationstype_sub else dict()
         attribute = dict()
         for item in classify_class_attrs(data):
             e = Es(item.object)
             attribute |= {
                 item.name: Attribute(
+                    annotation=annotation.get(item.name),
+                    default=item.object if item.name not in fields or fields[item.name].init else NotImplemented,
                     defining=item.defining_class, es=e, field=Es(fields.pop(item.name, None)),
-                    hint=hint.get(item.name), kind=Kind[item.kind.split(' ')[0].upper()], name=item.name,
-                    object=item.object, qual=Name._qual0.get(e._func, default=item.name))
+                    kind=Kind[item.kind.split(' ')[0].upper()], name=item.name,
+                    object=item.object, qual=Name._qualname0.get(e._func, default=item.name))
             }
-        for k, value in fields:
-            c = data
-            for C in c.__mro__:
-                if Es(C).datatype_sub and k in C.__dataclass_fields__:
-                    c = C
-            k_obj = getattr(c, k)
-            e = Es(k_obj)
-            attribute |= {
-                k: Attribute(defining=c, es=e, field=Es(value), hint=hint.get(k),
-                             kind=Kind.DATA, name=k, object=k_obj, qual=Name._qual0.get(e._func, default=k))
-            }
+        for k, value in fields.items():
+            defining_cls = data
+            for C in data.__mro__:
+                if not Es(C).datatype_sub or (Es(C).datatype_sub and k not in C.__dataclass_fields__):
+                    break
+                defining_cls = C
+            f = Es(value)
+            obj = value.default_factory() if f.datafactory else getattr(defining_cls, k)
+            attribute |= {k: Attribute(annotation=annotation.get(k), default=obj if value.init else NotImplemented,
+                                       defining=defining_cls, es=Es(obj), field=f, kind=Kind.DATA, name=k, object=obj,
+                                       qual=k)}
         # TODO: super InfoCls()
         # noinspection PySuperArguments
         return super(InfoCls, cls).__new__(
-            cls, dict_sort(attribute), anyin(data.__mro__, BUILTINS_CLASSES), data, es, hint, importable_name(data),
-            data.__module__, data.__mro__,
-            data.__name__, data.__qualname__, data.__mro__[1])
+            cls, annotation, dict_sort(attribute), anyin(data.__mro__, BUILTINS_CLASSES), data, es,
+            importable_name(data), data.__module__, data.__mro__, data.__name__, data.__qualname__, data.__mro__[1])
 
     # TODO: Examples: __repr__, __str__
 
@@ -2726,6 +2769,8 @@ class InfoCls(InfoClsBase):
 
     def defaults(self, key=Attr.PRIVATE):
         # TODO: Examples: defaults
+        # TODO: Examples: Aqui el __init__ si es slots!!! que le den
+        # TODO: namedtuple defaults
         """
         Class Defaults.
 
@@ -2742,7 +2787,7 @@ class InfoCls(InfoClsBase):
         Returns:
             Class Defaults Dict filtered with attr startswith.
         """
-        return {i.name: i.object for i in self.data(key=key).values()}
+        return {i.name: i.object for i in self.data(key=key).values() if i.object is not NotImplemented}
 
     @singledispatchmethod
     def member(self, find: Kind = Kind.DATA, key=Attr.PRIVATE):
@@ -3796,7 +3841,7 @@ def yield_last(data, split=' '):
     count = 0
     for i in data:
         count += 1
-        yield count == total, *(i, data.get(i) if mm else None, )
+        yield count == total, *(i, data.get(i) if mm else None,)
 
 
 # </editor-fold>
@@ -4420,6 +4465,7 @@ class Base:
     @property
     def info(self): return info(self)
 
+
 # noinspection PyDataclass
 class Cls:
     """Class Helper Class."""
@@ -4580,7 +4626,9 @@ x
         self.ignore = ignore
         self.key = key
         self.classified = dict_sort({i.name: i for i in classify_class_attrs(self.data) if self.key.include(i.name)})
-        self.fields = dict(filter(lambda x: self.key.include(x[0]), dict_sort(self.data.__dataclass_fields__).items())) \
+        self.fields = dict(filter(lambda x: self.key.include(x[0]), dict_sort(self.data.__dataclass_fields__).items(
+
+        ))) \
             if self.es.datatype_sub else dict()
         factories = filter(lambda x: Es(x[1]).datafactory, self.fields.items())
         if self.es.datatype_sub:
@@ -5000,7 +5048,6 @@ x
     @property
     def _methodwrappertype(self):
         return self.kind[self.methodwrappertype.__name__]
-
 
     @property
     def _none(self):
@@ -5448,74 +5495,446 @@ class info:
 
 
 class Seq(Sequence):
-    """
-    Sequence Helper Class.
-
-    Returns:
-
-    """
+    """Sequence Helper Class."""
+    __builtin__ = object
     __slots__ = ()
 
-    # def __new__(cls, *args, **kwargs):
-    #     ic(type(super(cls)))
-    #
-    #     return type(super()).__new__(cls)
-    #
-    # def __init__(self, *args, **kwargs):
-    #     ic(type(super(self.__class__)))
-    #     super().__init__(self)
+    @abstractmethod
+    def __new__(cls, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def __init__(self, *args, **kwargs):
+        pass
 
     @abstractmethod
     def __getitem__(self, index):
-        raise IndexError
+        return self.__builtin.__getitem__(self, index)
 
-    def __repr__(self):
-        return f'{self.__class__.__name__}({super().__repr__(self)})'
+    def all_allin(self, *args, **kwargs):
+        """
+        ROWS: Get ALL container items/rows found if ALL args and kwargs are found IN item/row.
+
+        Recursivily for MutableMapping.
+
+        Examples:
+            >>> from inspect import classify_class_attrs
+            >>> from rc import BUILTINS_CLASSES
+            >>> from rc import pretty_install
+            >>> from rc import Seq
+            >>> from rc import slist
+            >>> from rc import stuple
+            >>>
+            >>> pretty_install()
+            >>>
+            #
+            # args
+            #
+            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
+            >>> s.all_allin('b', 'c')
+            slist[{'a': {'b': {'c': 1}}, 'b': 2}]
+            >>> s.all_allin('a', 'd')
+            slist[]
+            >>>
+            >>> s = stuple([dict(e=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), *classify_class_attrs(stuple)])
+            >>> s.all_allin(kind='method', defining_class=stuple)  # doctest: +ELLIPSIS
+            stuple(Attribute(name='__init__', kind='method', defining_class=<class '....stuple'>, \
+object=<function stuple.__init__ at 0x...>), Attribute(name='__repr__', kind='method', \
+defining_class=<class '....stuple'>, object=<function stuple.__repr__ at 0x...>))
+
+        Args:
+            *args: to use __contains__ in container value/column.
+            **kwargs: to use __getattribute__ or __getitem__ in container value/column.
+
+        Returns:
+            ROWS: ALL container items/rows found if ALL args and kwargs are IN item.
+        """
+        rv = slist()
+        for item in self:
+            yes = set()
+            es = Es(item)
+            if es.container:
+                if es.mm:
+                    for arg in args:
+                        yes.add(True) if nested_lookup(arg, item) else yes.add(False)
+                    for key, value in kwargs.items():
+                        yes.add(True) if in_dict(item, {key: value}) else yes.add(False)
+                    if yes == {True}:
+                        rv.append(item)
+                else:
+                    for arg in args:
+                        yes.add(True) if arg in item else yes.add(False)
+                    for key, value in kwargs.items():
+                        yes.add(True) if value == noexception(Exception, object.__getattribute__, item, key,
+                                                              default_=NotImplemented) else yes.add(False)
+                    if yes == {True}:
+                        rv.append(item)
+        return rv if Es(self.__class__).slist else self.__class__(rv)
+
+    def all_anyin(self, *args, **kwargs):
+        """
+        ROWS: Get ALL container items/rows found if ANY arg or kwarg are found IN item/row.
+
+        Recursivily for MutableMapping.
+
+        Examples:
+            >>> from inspect import classify_class_attrs
+            >>> from rc import BUILTINS_CLASSES
+            >>> from rc import pretty_install
+            >>> from rc import Seq
+            >>> from rc import slist
+            >>> from rc import stuple
+            >>>
+            >>> pretty_install()
+            >>>
+            #
+            # args
+            #
+            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
+            >>> s.all_anyin('b', c=1)
+            slist[['b', 'd'], {'a': {'b': {'c': 1}}, 'b': 2}, {'a': {'b': {'c': 1}}, 'b': 2}]
+            >>> s.all_anyin('a', 'd')
+            slist[{'a': 1}, ['b', 'd'], {'a': {'b': {'c': 1}}, 'b': 2}]
+            >>>
+            >>> s = stuple([dict(e=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), *classify_class_attrs(slist)])
+            >>> s.all_anyin('d', e=1)
+            stuple({'e': 1}, ['b', 'd'])
+            >>> s.all_anyin('j', e=3)
+            stuple()
+            >>> s.all_anyin('b', kind='data')  # doctest: +ELLIPSIS
+            stuple(['b', 'd'], {'a': {'b': {'c': 1}}, 'b': 2}, Attribute(name='__abstractmethods__', kind='data', ...)
+
+        Args:
+            *args: to use __contains__ in container value/column.
+            **kwargs: to use __getattribute__ or __getitem__ in container value/column.
+
+        Returns:
+            ROWS: ALL container items/rows found if ANY arg or kwarg are IN item/row.
+        """
+        rv = slist()
+        for item in self:
+            es = Es(item)
+            if es.container:
+                if es.mm:
+                    for arg in args:
+                        if nested_lookup(arg, item):
+                            rv.append(item)
+                    for key, value in kwargs.items():
+                        if in_dict(item, {key: value}):
+                            rv.append(item)
+                else:
+                    for arg in args:
+                        if arg in item:
+                            rv.append(item)
+                    for key, value in kwargs.items():
+                        if value == noexception(Exception, object.__getattribute__, item, key,
+                                                default_=NotImplemented):
+                            rv.append(item)
+        return rv if Es(self.__class__).slist else self.__class__(rv)
 
     def first_allin(self, *args, **kwargs):
         """
-        Get first item when all args or kwargs are found in self.
+        ROW: Get FIRST container item/row found if ALL args and kwargs are IN item/row.
+
+        Recursivily for MutableMapping.
+
+        Examples:
+            >>> from inspect import classify_class_attrs
+            >>> from rc import BUILTINS_CLASSES
+            >>> from rc import pretty_install
+            >>> from rc import Seq
+            >>> from rc import slist
+            >>> from rc import stuple
+            >>>
+            >>> pretty_install()
+            >>>
+            #
+            # args
+            #
+            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
+            >>> s.first_allin('b', c=1)
+            {'a': {'b': {'c': 1}}, 'b': 2}
+            >>> s.first_allin('b', 'd')
+            ['b', 'd']
+            >>> s = stuple([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
+            >>> s.first_allin('a', 'b')
+            {'a': {'b': {'c': 1}}, 'b': 2}
+            >>> s.first_allin('a', 'e') is None
+            True
+            >>>
+            #
+            # Kwargs - __getattribute__
+            #
+            >>> classified = slist(classify_class_attrs(slist))
+            >>> d_getattr = classified.first_allin(kind='method', name='first_allin')
+            >>> d_getattr  # doctest: +ELLIPSIS
+            Attribute(name='first_allin', kind='method', defining_class=<class '....Seq'>, \
+object=<function Seq.first_allin at 0x...>)
+            >>>
+            #
+            # Kwargs - __getitem__
+            #
+            >>> # noinspection PyUnresolvedReferences
+            >>> classified = stuple([i._asdict() for i in classify_class_attrs(slist)])
+            >>> d_getitem = classified.first_allin(kind='method', name='first_allin')
+            >>> d_getitem  # doctest: +ELLIPSIS
+            {
+                'name': 'first_allin',
+                'kind': 'method',
+                'defining_class': <class '....Seq'>,
+                'object': <function Seq.first_allin at 0x...>
+            }
+            >>> classified.first_allin(name='test', kind='data') is None
+            True
+            >>>
+            >>> d_getattr._asdict() == d_getitem
+            True
 
         Args:
-            *args: to use __contains__ in Sequence.
-            **kwargs: to use __getattribute__ or __getitem__in Sequence.
+            *args: to use __contains__ in container value/column.
+            **kwargs: to use __getattribute__ or __getitem__ in container value/column.
 
         Returns:
-            First item found.
+           ROW: FIRST container item/row found if ALL args and kwargs are IN item/row.
         """
-        if args:
-            return first_true(args, pred=lambda x: x in self)
+        for item in self:
+            yes = set()
+            es = Es(item)
+            if es.container:
+                if es.mm:
+                    for arg in args:
+                        yes.add(True) if nested_lookup(arg, item) else yes.add(False)
+                    for key, value in kwargs.items():
+                        yes.add(True) if in_dict(item, {key: value}) else yes.add(False)
+                    if yes == {True}:
+                        return item
+                else:
+                    for arg in args:
+                        yes.add(True) if arg in item else yes.add(False)
+                    for key, value in kwargs.items():
+                        yes.add(True) if value == noexception(Exception, object.__getattribute__, item, key,
+                                                              default_=NotImplemented) else yes.add(False)
+                    if yes == {True}:
+                        return item
 
     def first_anyin(self, *args, **kwargs):
         """
-        Get first item when any of args or kwargs are found in self.
+        ROW: Get FIRST container item/row when ANY args or kwargs are found IN item/row.
+
+        Recursivily for MutableMapping.
 
         Examples:
+            >>> from inspect import classify_class_attrs
             >>> from rc import BUILTINS_CLASSES
+            >>> from rc import Mro
+            >>> from rc import pretty_install
             >>> from rc import Seq
+            >>> from rc import slist
+            >>> from rc import stuple
             >>>
-            >>> class tupleseq(tuple, Seq):
-            ...     pass
-            >>> t = tupleseq(BUILTINS_CLASSES)
-            >>> t  # doctest: +ELLIPSIS
-            (..., <class 'TimeoutError'>)
-            >>> assert t.first_anyin('tuple', 'int') is None
-            >>> t = tupleseq(['bool', 'dict', 'int'])
-            >>> t
-            ('bool', 'dict', 'int')
-            >>> t.first_anyin('tuple', 'int')
-            'int'
-            >>> repr(t)
+            >>> pretty_install()
+            >>>
+            #
+            # args
+            #
+            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
+            >>> s.first_anyin('b', 'c')
+            ['b', 'd']
+            >>> s.first_anyin('d')
+            ['b', 'd']
+            >>> s.first_anyin('e', c=1)
+            {'a': {'b': {'c': 1}}, 'b': 2}
+            >>> s = stuple([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
+            >>> s.first_anyin('a', 'e')
+            {'a': 1}
+            >>> s.first_anyin('', 'e') is None
+            True
+            >>>
+            #
+            # Kwargs - __getitem__
+            #
+            >>> # noinspection PyUnresolvedReferences
+            >>> classified = slist([i._asdict() for i in classify_class_attrs(slist)])
+            >>> d_getitem = classified.first_anyin(test=None, kind='data')
+            >>> d_getitem  # doctest: +ELLIPSIS
+            {
+                'name': '__abstractmethods__',
+                'kind': 'data',
+                'defining_class': <class '....slist'>,
+                'object': frozenset()
+            }
+            >>>
+            #
+            # Kwargs - __getattribute__
+            #
+            >>> classified = slist(classify_class_attrs(slist))
+            >>> d_getattr = classified.first_anyin(test=None, kind='data')
+            >>> d_getattr  # doctest: +ELLIPSIS
+            Attribute(name='__abstractmethods__', kind='data', defining_class=<class '....slist'>, object=frozenset())
+            >>>
+            >>> d_getitem == d_getattr._asdict()
+            True
 
         Args:
-            *args: to use __contains__ in Sequence.
-            **kwargs: to use __getattribute__ or __getitem__in Sequence.
+            *args: to use __contains__ in container value/column.
+            **kwargs: to use __getattribute__ or __getitem__ in container value/column.
 
         Returns:
-            First item found.
+            ROW: FIRST container item/row found where ANY arg or kwarg are IN item/row.
         """
-        if args:
-            return first_true(args, pred=lambda x: x in self)
+        for item in self:
+            es = Es(item)
+            if es.container:
+                if es.mm:
+                    for arg in args:
+                        if nested_lookup(arg, item):
+                            return item
+                    for key, value in kwargs.items():
+                        if in_dict(item, {key: value}):
+                            return item
+                else:
+                    for arg in args:
+                        if arg in item:
+                            return item
+                    for key, value in kwargs.items():
+                        if value == noexception(Exception, object.__getattribute__, item, key,
+                                                default_=NotImplemented):
+                            return item
+
+    def get_allin_dict(self, *args, **kwargs):
+        """
+        COLUMNS: GET items/columns when ALL args/keys and kwargs/items are found IN each container item/row/DICT.
+
+        Keys and Items are checked recursivily.
+
+        Args:
+            *args: keys to search in each item/row/DICT.
+            **kwargs: items to search in each item/row/DICT.
+
+        Returns:
+            COLUMNS: Items/columns when ALL args/keys and kwargs/items are found IN each container item/row/DICT.
+        """
+        rv = slist()
+        for item in self:
+            es = Es(item)
+            if es.mm:
+                for i in item:
+                    yes = set()
+                    for arg in args:
+                        yes.add(True) if nested_lookup(arg, i) else yes.add(False)
+                    for key, value in kwargs.items():
+                        yes.add(True) if in_dict(i, {key: value}) else yes.add(False)
+                    if yes == {True}:
+                        rv.append(i)
+        return rv if Es(self.__class__).slist else self.__class__(rv)
+
+    def get_anyin_dict(self, *args, **kwargs):
+        """
+        COLUMNS: GET items/columns when ANY args/keys or kwargs/items are found IN each container item/row/DICT.
+
+        Keys and Items are checked recursivily.
+
+        Args:
+            *args: keys to search in each item/row/DICT.
+            **kwargs: items to search in each item/row/DICT.
+
+        Returns:
+            COLUMNS: Items/columns when ANY args/keys or kwargs/items are found IN each container item/row/DICT.
+        """
+        rv = slist()
+        for item in self:
+            es = Es(item)
+            if es.mm:
+                for i in item:
+                    for arg in args:
+                        if nested_lookup(arg, i):
+                            rv.append(i)
+                            break
+                    for key, value in kwargs.items():
+                        if in_dict(item, {key: value}):
+                            rv.append(i)
+                            break
+        return rv if Es(self.__class__).slist else self.__class__(rv)
+
+    def get_attr(self, *args):
+        """
+        COLUMNS: Get attr/args values/columns for each item/row if ANY attr/arg is found.
+
+        Args:
+            *args: attribute names to get values.
+
+        Returns:
+            COLUMNS: Values for attrs/args found.
+        """
+        rv = slist()
+        for item in self:
+            yes = set()
+            one = len(args) == 1
+            rv_sub = slist()
+            for arg in args:
+                if arg in dir(item):
+                    value = rv.append(object.__getattribute__(item, arg))
+                    rv.append(value) if one else rv_sub.append(value)
+            if not one and rv_sub:
+                rv.append(rv_sub if Es(self.__class__).slist else self.__class__(rv_sub))
+        return rv if Es(self.__class__).slist else self.__class__(rv)
+
+
+class slist(list, Seq):
+    """
+    List Seq Sequence Helper Class.
+
+    Examples:
+        >>> from rc import pretty_install
+        >>> from rc import slist
+        >>>
+        >>> pretty_install()
+        >>>
+        >>> s = slist(['bool', 'dict', 'int'])
+        >>> s
+        slist['bool', 'dict', 'int']
+        >>> repr(s)
+        "slist['bool', 'dict', 'int']"
+    """
+
+    def __new__(cls, *args, **kwargs): return list.__new__(cls)
+
+    def __init__(self, seq=()): list.__init__(self, seq)
+
+    def __repr__(self): return f'{self.__class__.__name__}{super().__repr__()}'
+
+
+collections.abc.Sequence.register(slist)
+
+
+class stuple(tuple, Seq):
+    """
+    Tuple Seq Sequence Helper Class.
+
+    Examples:
+        >>> from rc import pretty_install
+        >>> from rc import stuple
+        >>>
+        >>> pretty_install()
+        >>>
+        >>> s = stuple(['bool', 'dict', 'int'])
+        >>> s
+        stuple('bool', 'dict', 'int')
+        >>> repr(s)
+        "stuple('bool', 'dict', 'int')"
+    """
+    __slots__ = ()
+
+    def __new__(cls, *args, **kwargs): return tuple.__new__(stuple, *args, **kwargs)
+
+    def __init__(self, *args, **kwargs): tuple.__init__(*args, **kwargs)
+
+    def __repr__(self): return f'{self.__class__.__name__}{super().__repr__()}'
+
+
+collections.abc.Sequence.register(stuple)
+
+
 # </editor-fold>
 # <editor-fold desc="Echo">
 def black(msg, bold=False, nl=True, underline=False,
@@ -5844,6 +6263,8 @@ def byellow(msg, bold=False, nl=True, underline=False,
           reset=reset)
     if rc is not None:
         Exit(rc)
+
+
 # </editor-fold>
 # <editor-fold desc="Test">
 class TestAsync:
@@ -5897,9 +6318,9 @@ class TestAsync:
 class TestBase(Base):
     classvar: ClassVar[int] = 1
     initvar: InitVar[int] = 1
-    __slots__ = ('_hash', '_prop', '_repr', '_slot', )
-    __hash_exclude__ = ('_slot', )
-    __repr_exclude__ = ('_repr', )
+    __slots__ = ('_hash', '_prop', '_repr', '_slot',)
+    __hash_exclude__ = ('_slot',)
+    __repr_exclude__ = ('_repr',)
     prop = newprop()
 
     async def method_async(self):
@@ -5924,6 +6345,11 @@ class TestBase(Base):
 
 @dataclass
 class TestData:
+    __data = varname(1)
+    __dataclass_classvar__: ClassVar[str] = '__dataclass_classvar__'
+    __dataclass_classvar: ClassVar[str] = '__dataclass_classvar'
+    __dataclass_default_factory: Union[dict, str] = datafield(default_factory=dict, init=False)
+    __dataclass_default_factory_init: Union[dict, str] = datafield(default_factory=dict)
     dataclass_classvar: ClassVar[str] = 'dataclass_classvar'
     dataclass_default_factory: Union[dict, str] = datafield(default_factory=dict, init=False)
     dataclass_default_factory_init: Union[dict, str] = datafield(default_factory=dict)
@@ -5931,7 +6357,9 @@ class TestData:
     dataclass_default_init: str = datafield(default='dataclass_default_init')
     dataclass_initvar: InitVar[str] = 'dataclass_initvar'
     dataclass_str: str = 'dataclass_integer'
+
     def __post_init__(self, dataclass_initvar): pass
+
     __class_getitem__ = classmethod(GenericAlias)
 
 
@@ -5947,8 +6375,9 @@ class TestDataDictMix(TestData):
 
 
 class TestDataDictSlotMix(TestDataDictMix):
-    __slots__ = ('_slot_property', 'slot', )
+    __slots__ = ('_slot_property', 'slot',)
 
+    # Add init=True dataclass attrs if it subclassed and not @dataclass
     def __init__(self, dataclass_initvar='dataclass_initvar_2', slot_property='slot_property', slot='slot'):
         super().__init__()
         super().__post_init__(dataclass_initvar=dataclass_initvar)

@@ -31,6 +31,7 @@ __all__: tuple
 AUTHORIZED_KEYS: str
 FILE_DEFAULT: bool
 GITCONFIG: str
+GITHUB_ORGANIZATION: str
 ID_RSA: str
 ID_RSA_PUB: str
 SSH_CONFIG: dict[str, str]
