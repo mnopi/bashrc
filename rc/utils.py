@@ -47,6 +47,8 @@ __all__ = (
     'Simple',
 
     # Imports PyPi
+    'np',
+    'pd',
     'Exit',
     'dpathdelete',
     'dpathget',
@@ -105,10 +107,11 @@ __all__ = (
     'GetAttrType',
     'GetSupportType',
     'GetType',
+    # 'MetaType',
     'NamedType',
     'NamedAnnotationsType',
     'SlotsType',
-    'Types',
+    # 'Types',
 
     # Enums
     'Attr',
@@ -117,20 +120,29 @@ __all__ = (
     'EnumDictAlias',
     'Executor',
     'Kind',
+    'MroGenValue',
     'Mro',
+    'NameGenValue',
     'Name',
 
-    # NamedTuples
-    'Annotation',
-
     # Bases
+    'Annotation',
     'BoxKeys',
     'Chain',
     'Es',
-    'Attribute',
-    'InfoClsBase',
-    'InfoCls',
+    # 'InfoCls',
     'pproperty',
+    # 'Meta',
+    # 'MetaType',
+    # 'RV',
+    # 'Seq',
+    # 'slist',
+    # 'stuple',
+
+    # Inspect
+    # 'Attribute',
+    # 'InfoClsBase',
+    # 'InfoCls1',
 
     # Functions
     'aioloop',
@@ -139,8 +151,8 @@ __all__ = (
     'annotations_init',
     'anyin',
     'cmd',
-    'asdict',
-    'asdict_props',
+    # 'asdict',
+    # 'asdict_props',
     'cmdname',
     'current_task_name',
     'delete',
@@ -170,17 +182,14 @@ __all__ = (
     'yield_last',
 
     # Meta
-    'BaseMeta',
-    'Class',
+    # 'BaseMeta',
+    # 'Class',
 
     # Classes
-    'AsDict',
-    'Base',
-    'Cls',
-    'info',
-    'Seq',
-    'slist',
-    'stuple',
+    # 'AsDict',
+    # 'Base',
+    # 'Cls',
+    # 'info',
 
     # Echo
     'black',
@@ -202,17 +211,15 @@ __all__ = (
 
     # Test
     'TestAsync',
-    'TestBase',
-    'TestData',
-    'TestDataDictMix',
-    'TestDataDictSlotMix',
+    # 'TestBase',
+    # 'TestData',
+    # 'TestDataDictMix',
+    # 'TestDataDictSlotMix',
 )
 
-import _abc
 import ast
 import collections.abc
 import functools
-import json
 import re
 import subprocess
 import sys
@@ -238,7 +245,6 @@ from ast import walk as walk
 from asyncio import current_task
 from asyncio import get_running_loop
 from asyncio import iscoroutine
-from asyncio import Semaphore
 from asyncio.events import _RunningLoop
 from collections import ChainMap
 from collections import defaultdict
@@ -275,7 +281,6 @@ from contextlib import suppress
 from dataclasses import _FIELDS
 from dataclasses import _MISSING_TYPE
 from dataclasses import _POST_INIT_NAME
-from dataclasses import dataclass
 from dataclasses import Field
 from dataclasses import field as datafield
 from dataclasses import fields as datafields
@@ -289,7 +294,6 @@ from functools import singledispatchmethod
 from inspect import classify_class_attrs
 from inspect import FrameInfo
 from inspect import getfile
-from inspect import getmodule
 from inspect import getsource
 from inspect import getsourcefile
 from inspect import getsourcelines
@@ -304,7 +308,6 @@ from inspect import stack as insstack
 from io import BytesIO
 from io import FileIO
 from io import StringIO
-from logging import Logger
 from operator import attrgetter
 from pathlib import Path as PathLib
 from subprocess import CompletedProcess
@@ -318,7 +321,6 @@ from types import DynamicClassAttribute
 from types import FrameType
 from types import FunctionType
 from types import GeneratorType
-from types import GenericAlias
 from types import GetSetDescriptorType
 from types import LambdaType
 from types import MappingProxyType
@@ -341,12 +343,12 @@ from typing import NamedTuple
 from typing import Optional
 from typing import Protocol
 from typing import runtime_checkable
-from typing import Type
 from typing import Union
 from warnings import catch_warnings
 from warnings import filterwarnings
 
-import jsonpickle
+import numpy as np
+import pandas as pd
 from box import Box
 from bson import ObjectId
 from click import secho
@@ -365,9 +367,6 @@ from git import Remote
 from git import Repo as GitRepo
 from git.refs import SymbolicReference as GitSymbolicReference
 from icecream import IceCreamDebugger
-from jsonpickle.util import has_method
-from jsonpickle.util import has_reduce
-from jsonpickle.util import importable_name
 from jsonpickle.util import is_collections
 from jsonpickle.util import is_installed
 from jsonpickle.util import is_module_function
@@ -378,7 +377,6 @@ from jsonpickle.util import is_primitive
 from jsonpickle.util import is_reducible
 from jsonpickle.util import is_reducible_sequence_subclass
 from jsonpickle.util import is_unicode
-from more_itertools import bucket
 from more_itertools import collapse
 from more_itertools import consume
 from more_itertools import first_true
@@ -458,9 +456,6 @@ class AnnotationsType(metaclass=ABCMeta):
     Annotations Type.
 
     Examples:
-        >>> from collections import namedtuple
-        >>> from typing import NamedTuple
-        >>>
         >>> named = namedtuple('named', 'a', defaults=('a', ))
         >>> Named = NamedTuple('Named', a=str)
         >>>
@@ -487,9 +482,6 @@ class AsDictMethodType(metaclass=ABCMeta):
     AsDict Method Support (Class, Static and Method).
 
     Examples:
-        >>> from rc import AsDictMethodType
-        >>> from rc import info
-        >>>
         >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
         >>> class AsDictM: asdict = lambda self, *args, **kwargs: dict()
         >>> class AsDictP: asdict = property(lambda self: dict())
@@ -541,9 +533,6 @@ class AsDictPropertyType(metaclass=ABCMeta):
     AsDict Property Type.
 
     Examples:
-        >>> from rc import AsDictPropertyType
-        >>> from rc import info
-        >>>
         >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
         >>> class AsDictM: asdict = lambda self, *args, **kwargs: dict()
         >>> class AsDictP: asdict = property(lambda self: dict())
@@ -592,10 +581,9 @@ class DataType(metaclass=ABCMeta):
     Data Type.
 
     Examples:
-        >>> from dataclasses import field
         >>> from dataclasses import make_dataclass
         >>>
-        >>> Data = make_dataclass('C', [('a', int, field(default=1))])
+        >>> Data = make_dataclass('C', [('a', int, datafield(default=1))])
         >>> class Dict: a = 1
         >>>
         >>> data = Data()
@@ -664,7 +652,6 @@ class GetAttrNoBuiltinType(metaclass=ABCMeta):
     Get Attr Type (Everything but builtins, except: object and errors)
 
     Examples:
-        >>> from collections import namedtuple
         >>> class Dict: a = 1
         >>> class Get: a = 1; get = lambda self, item: self.__getattribute__(item)
         >>> Named = namedtuple('Named', 'a')
@@ -725,7 +712,6 @@ class GetAttrType(metaclass=ABCMeta):
     Get Attr Type (Everything but GetType)
 
     Examples:
-        >>> from collections import namedtuple
         >>> class Dict: a = 1
         >>> class Get: a = 1; get = lambda self, item: self.__getattribute__(item)
         >>> Named = namedtuple('Named', 'a')
@@ -845,8 +831,6 @@ class NamedType(metaclass=ABCMeta):
     named Type.
 
     Examples:
-        >>> from collections import namedtuple
-        >>>
         >>> named = namedtuple('named', 'a', defaults=('a', ))
         >>>
         >>> Es(named()).namedtype
@@ -881,9 +865,6 @@ class NamedAnnotationsType(metaclass=ABCMeta):
     named Type.
 
     Examples:
-        >>> from collections import namedtuple
-        >>> from typing import NamedTuple
-        >>>
         >>> named = namedtuple('named', 'a', defaults=('a', ))
         >>> Named = NamedTuple('Named', a=str)
         >>>
@@ -947,12 +928,6 @@ class SlotsType(metaclass=ABCMeta):
         if cls is SlotsType:
             return Mro.slots.firstdict_object(C) is not NotImplemented
         return NotImplemented
-
-
-Types = Union[Type[AnnotationsType], Type[AsDictMethodType], Type[AsDictPropertyType],
-              Type[DataType], Type[DictType], Type[GetAttrType],
-              Type[GetAttrNoBuiltinType], Type[GetType], Type[NamedType], Type[NamedAnnotationsType],
-              Type[SlotsType], Type[type]]
 
 
 # </editor-fold>
@@ -1098,13 +1073,13 @@ class Kind(Enum):
     STATIC = 'static method'
 
 
-class _Mro(Enum):
+class MroGenValue(Enum):
     def _generate_next_value_(self, start, count, last_values):
         exclude = ('_asdict', '_field_defaults', '_fields', 'asdict', 'get',)
         return self if self in exclude else f'__{self}__'
 
 
-class Mro(_Mro):
+class Mro(MroGenValue):
     """
     MRO Helper Calls.
 
@@ -1166,9 +1141,6 @@ class Mro(_Mro):
         Get attrs tuple with private converted to real names.
 
         Examples:
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> Mro.attrs()  # doctest: +ELLIPSIS
@@ -1189,9 +1161,6 @@ class Mro(_Mro):
         Object Class MRO.
 
         Examples:
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> Mro.cls(dict(a=1))
@@ -1212,23 +1181,12 @@ class Mro(_Mro):
         Default ignore values from Type
 
         Examples:
-            >>> from rc import CRLock
-            >>> from rc import IgnoreAttr
-            >>> from rc import IgnoreCopy
-            >>> from rc import Mro
-            >>>
             >>> Mro.ignore_attr.default  # doctest: +ELLIPSIS
-            (
-                'asdict',
-                ...
-            )
+            ('asdict', ...)
             >>> Mro.ignore_attr.default == IgnoreAttr.__args__
             True
             >>> Mro.ignore_copy.default  # doctest: +ELLIPSIS
-            (
-                <class '_thread.RLock'>,
-                ...
-            )
+            (<class '_thread.RLock'>, ...)
             >>> Mro.ignore_copy.default == IgnoreCopy.__args__
             True
             >>> Mro.getattribute.default
@@ -1244,9 +1202,6 @@ class Mro(_Mro):
         First value of attr found in mro and instance if obj is instance.
 
         Examples:
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> class Test:
@@ -1282,10 +1237,6 @@ class Mro(_Mro):
         First value of attr in obj.__class__.__dict__ found in mro.
 
         Examples:
-            >>> from collections import namedtuple
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> class Test:
@@ -1318,10 +1269,6 @@ class Mro(_Mro):
         First value of attr in obj.__class__.__dict__ found in mro excluding object.
 
         Examples:
-            >>> from collections import namedtuple
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> class Test:
@@ -1362,7 +1309,6 @@ class Mro(_Mro):
 
         Examples:
             >>> import rc.utils
-            >>> from rc import Mro
             >>>
             >>> Mro.module.getter(tuple)
             'builtins'
@@ -1381,9 +1327,6 @@ class Mro(_Mro):
         Checks if Object has attr.
 
         Examples:
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> class Test:
@@ -1406,9 +1349,6 @@ class Mro(_Mro):
         Names and real names.
 
         Examples:
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> Mro.members()  # doctest: +ELLIPSIS
@@ -1431,9 +1371,6 @@ class Mro(_Mro):
         Object and Class MRO tuple.
 
         Examples:
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> Mro.obj(dict(a=1))
@@ -1453,9 +1390,6 @@ class Mro(_Mro):
         Is attribute in slots?
 
         Examples:
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> class First:
@@ -1485,9 +1419,6 @@ class Mro(_Mro):
         Accumulated values from slots - Accumulated values from mro attr name.
 
         Examples:
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> class First:
@@ -1523,9 +1454,6 @@ class Mro(_Mro):
         All/accumulated values of attr in mro and obj if instance.
 
         Examples:
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> class First:
@@ -1566,37 +1494,43 @@ class Mro(_Mro):
         return {*(value for item in self.obj(obj) for value in getattr(item, self.value, tuple())), *self.default}
 
 
-class Name(Enum):
-    _all0 = auto()
-    _class0 = auto()
-    _annotations0 = auto()
-    _builtins0 = auto()
-    _cached0 = auto()
-    _code0 = auto()
-    _contains0 = auto()
-    _dataclass_fields0 = auto()
-    _dataclass_params0 = auto()
-    _delattr0 = auto()
-    _dict0 = auto()
-    _dir0 = auto()
-    _doc0 = auto()
-    _eq0 = auto()
-    _file0 = auto()
-    _getattribute0 = auto()
-    _len0 = auto()
-    _loader0 = auto()
-    _members0 = auto()
-    _module0 = auto()
-    _mro0 = auto()
-    _name0 = auto()
-    _package0 = auto()
-    _qualname0 = auto()
-    _reduce0 = auto()
-    _repr0 = auto()
-    _setattr0 = auto()
-    _slots0 = auto()
-    _spec0 = auto()
-    _str0 = auto()
+class NameGenValue(Enum):
+    def _generate_next_value_(self, start, count, last_values):
+        return f'__{self}' if self.endswith('__') else self.removesuffix('_')
+
+
+class Name(NameGenValue):
+    """Name Enum Class."""
+    all__ = auto()
+    class__ = auto()
+    annotations__ = auto()
+    builtins__ = auto()
+    cached__ = auto()
+    code__ = auto()
+    contains__ = auto()
+    dataclass_fields__ = auto()
+    dataclass_params__ = auto()
+    delattr__ = auto()
+    dict__ = auto()
+    dir__ = auto()
+    doc__ = auto()
+    eq__ = auto()
+    file__ = auto()
+    getattribute__ = auto()
+    len__ = auto()
+    loader__ = auto()
+    members__ = auto()
+    module__ = auto()
+    mro__ = auto()
+    name__ = auto()
+    package__ = auto()
+    qualname__ = auto()
+    reduce__ = auto()
+    repr__ = auto()
+    setattr__ = auto()
+    slots__ = auto()
+    spec__ = auto()
+    str__ = auto()
     _asdict = auto()
     add = auto()
     append = auto()
@@ -1656,10 +1590,6 @@ class Name(Enum):
         Get map_reduce (dict) attrs lists converted to real names.
 
         Examples:
-            >>> from rc import Name
-            >>> from rc import pretty_install
-            >>>
-            >>> pretty_install()
             >>> Name._attrs().keys()
             dict_keys([True, False])
             >>> Name._attrs().values()  # doctest: +ELLIPSIS
@@ -1669,7 +1599,7 @@ class Name(Enum):
             [True]: private attrs.
             [False[: public attrs.
         """
-        return map_reduce(cls.__members__, lambda x: x.endswith('0'), lambda x: cls._real(x))
+        return map_reduce(cls.__members__, lambda x: x.endswith('__'), lambda x: cls[x].value)
 
     @classmethod
     @functools.cache
@@ -1678,9 +1608,6 @@ class Name(Enum):
         Get attrs tuple with private converted to real names.
 
         Examples:
-            >>> from rc import Name
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>> Name.attrs()  # doctest: +ELLIPSIS
             (
@@ -1691,7 +1618,7 @@ class Name(Enum):
             )
 
         Returns:
-            Tuple of attributes wit private converted to real names.
+            Tuple of attributes and values.
         """
         return tuple(collapse(Name._attrs().values()))
 
@@ -1702,11 +1629,7 @@ class Name(Enum):
 
         Examples:
             >>> from ast import unparse
-            >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
-            >>> from rc import insstack
-            >>> from rc import Name
-            >>> from rc import pretty_install
             >>>
             >>> pretty_install()
             >>> f = insstack()[0]
@@ -1718,10 +1641,10 @@ class Name(Enum):
                 'f = insstack()[0]\\n',
                 'f = insstack()[0]\\n'
             )
-            >>> Name._file0.get(globs_locs)  # doctest: +ELLIPSIS
+            >>> Name.file__.get(globs_locs)  # doctest: +ELLIPSIS
             PosixPath('/Users/jose/....py')
-            >>> assert Name._file0.get(globs_locs) == PathLib(__file__) == PathLib(Name._spec0.get(globs_locs).origin)
-            >>> assert Name._name0.get(globs_locs) == getmodulename(__file__) == Name._spec0.get(globs_locs).name
+            >>> assert Name.file__.get(globs_locs) == PathLib(__file__) == PathLib(Name.spec__.get(globs_locs).origin)
+            >>> assert Name.name__.get(globs_locs) == getmodulename(__file__) == Name.spec__.get(globs_locs).name
             >>> Name.source(globs_locs)  # doctest: +ELLIPSIS
             '# -*- coding: utf-8 -*-\\n...
             >>> Name.source(__file__)  # doctest: +ELLIPSIS
@@ -1741,9 +1664,9 @@ class Name(Enum):
         Returns:
             Value from get() method
         """
-        if self is Name._file0:
+        if self is Name.file__:
             return self.path(obj)
-        return obj.get(self.real, default)
+        return obj.get(self.value, default)
 
     @get.register
     def get_getattrtype(self, obj: GetAttrType, default=None):
@@ -1752,31 +1675,27 @@ class Name(Enum):
 
         Examples:
             >>> from ast import unparse
-            >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
             >>> import rc.utils
-            >>> from rc import insstack
-            >>> from rc import Name
-            >>> from rc import pretty_install
             >>>
             >>> pretty_install()
             >>> f = insstack()[0]
             >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
-            >>> Name._file0.get(globs_locs)  # doctest: +ELLIPSIS
+            >>> Name.file__.get(globs_locs)  # doctest: +ELLIPSIS
             PosixPath('/Users/jose/....py')
-            >>> Name._file0.get(rc.utils)  # doctest: +ELLIPSIS
+            >>> Name.file__.get(rc.utils)  # doctest: +ELLIPSIS
             PosixPath('/Users/jose/....py')
-            >>> PathLib(Name._spec0.get(globs_locs).origin)  # doctest: +ELLIPSIS
+            >>> PathLib(Name.spec__.get(globs_locs).origin)  # doctest: +ELLIPSIS
             PosixPath('/Users/jose/....py')
-            >>> PathLib(Name._spec0.get(rc.utils).origin)  # doctest: +ELLIPSIS
+            >>> PathLib(Name.spec__.get(rc.utils).origin)  # doctest: +ELLIPSIS
             PosixPath('/Users/jose/....py')
-            >>> Name._spec0.get(rc.utils).name == rc.utils.__name__
+            >>> Name.spec__.get(rc.utils).name == rc.utils.__name__
             True
-            >>> Name._spec0.get(rc.utils).name.split('.')[0] == rc.utils.__package__
+            >>> Name.spec__.get(rc.utils).name.split('.')[0] == rc.utils.__package__
             True
-            >>> Name._name0.get(rc.utils) == rc.utils.__name__
+            >>> Name.name__.get(rc.utils) == rc.utils.__name__
             True
-            >>> Name._package0.get(rc.utils) == rc.utils.__package__
+            >>> Name.package__.get(rc.utils) == rc.utils.__package__
             True
 
         Args:
@@ -1786,14 +1705,14 @@ class Name(Enum):
         Returns:
             Value from __getattribute__ method.
         """
-        if self is Name._file0:
+        if self is Name.file__:
             try:
-                p = object.__getattribute__(obj, Name._file0.real)
+                p = object.__getattribute__(obj, Name.file__.value)
                 return PathLib(p)
             except AttributeError:
                 return self.path(obj)
         try:
-            return object.__getattribute__(obj, self.real)
+            return object.__getattribute__(obj, self.value)
         except AttributeError:
             return default
 
@@ -1804,28 +1723,25 @@ class Name(Enum):
 
         Examples:
             >>> from ast import unparse
-            >>> from inspect import FrameInfo
-            >>> from rc import insstack
-            >>> from rc import Name
             >>>
             >>> f = insstack()[0]
             >>> assert f == FrameInfo(Name.frame.get(f), str(Name.filename.get(f)), Name.lineno.get(f),\
             Name.function.get(f), Name.code_context.get(f), Name.index.get(f))
-            >>> assert Name.filename.get(f) == Name._file0.get(f)
+            >>> assert Name.filename.get(f) == Name.file__.get(f)
             >>> Name.source(f)
             'f = insstack()[0]\\n'
             >>> unparse(Name.node(f))
             'f = insstack()[0]'
             >>> unparse(Name.node('pass'))
             'pass'
-            >>> assert str(Name._file0.get(f)) == str(Name.filename.get(f))
-            >>> assert Name._name0.get(f) == Name.co_name.get(f) == Name.function.get(f)
+            >>> assert str(Name.file__.get(f)) == str(Name.filename.get(f))
+            >>> assert Name.name__.get(f) == Name.co_name.get(f) == Name.function.get(f)
             >>> assert Name.lineno.get(f) == Name.f_lineno.get(f) == Name.tb_lineno.get(f)
             >>> assert Name.vars.get(f) == (f.frame.f_globals | f.frame.f_locals).copy()
             >>> assert Name.vars.get(f) == (Name.f_globals.get(f) | Name.f_locals.get(f)).copy()
             >>> assert Name.vars.get(f) == (Name.globals.get(f) | Name.locals.get(f)).copy()
             >>> assert unparse(Name.node(f)) in Name.code_context.get(f)[0]
-            >>> assert Name._spec0.get(f).origin == __file__
+            >>> assert Name.spec__.get(f).origin == __file__
 
         Args:
             obj: object
@@ -1834,9 +1750,9 @@ class Name(Enum):
         Returns:
             Value from FrameInfo method
         """
-        if self in [Name._file0, Name.filename]:
+        if self in [Name.file__, Name.filename]:
             return PathLib(obj.filename)
-        if self in [Name._name0, Name.co_name, Name.function]:
+        if self in [Name.name__, Name.co_name, Name.function]:
             return obj.function
         if self in [Name.lineno, Name.f_lineno, Name.tb_lineno]:
             return obj.lineno
@@ -1848,7 +1764,7 @@ class Name(Enum):
             return obj.frame
         if self is Name.vars:
             return (obj.frame.f_globals | obj.frame.f_locals).copy()
-        if self in [Name._code0, Name.f_code]:
+        if self in [Name.code__, Name.f_code]:
             return obj.frame.f_code
         if self in [Name.f_back, Name.tb_next]:
             return obj.frame.f_back
@@ -1866,9 +1782,6 @@ class Name(Enum):
 
         Examples:
             >>> from ast import unparse
-            >>> from inspect import FrameInfo
-            >>> from rc import insstack
-            >>> from rc import Name
             >>>
             >>> frameinfo = insstack()[0]
             >>> f = frameinfo.frame
@@ -1878,21 +1791,21 @@ class Name(Enum):
             >>> assert Name.function.get(f) == Name.function.get(frameinfo)
             >>> assert frameinfo == FrameInfo(Name.frame.get(f), str(Name.filename.get(f)), Name.lineno.get(f),\
             Name.function.get(f), frameinfo.code_context, frameinfo.index)
-            >>> assert Name.filename.get(f) == Name._file0.get(f)
+            >>> assert Name.filename.get(f) == Name.file__.get(f)
             >>> Name.source(f)
             'frameinfo = insstack()[0]\\n'
             >>> unparse(Name.node(f))
             'frameinfo = insstack()[0]'
             >>> unparse(Name.node('pass'))
             'pass'
-            >>> assert str(Name._file0.get(f)) == str(Name.filename.get(f))
-            >>> assert Name._name0.get(f) == Name.co_name.get(f) == Name.function.get(f)
+            >>> assert str(Name.file__.get(f)) == str(Name.filename.get(f))
+            >>> assert Name.name__.get(f) == Name.co_name.get(f) == Name.function.get(f)
             >>> assert Name.lineno.get(f) == Name.f_lineno.get(f) == Name.tb_lineno.get(f)
             >>> assert Name.vars.get(f) == (f.f_globals | f.f_locals).copy()
             >>> assert Name.vars.get(f) == (Name.f_globals.get(f) | Name.f_locals.get(f)).copy()
             >>> assert Name.vars.get(f) == (Name.globals.get(f) | Name.locals.get(f)).copy()
             >>> assert unparse(Name.node(f)) in Name.code_context.get(frameinfo)[0]
-            >>> assert Name._spec0.get(f).origin == __file__
+            >>> assert Name.spec__.get(f).origin == __file__
 
         Args:
             obj: object
@@ -1901,9 +1814,9 @@ class Name(Enum):
         Returns:
             Value from FrameType method
         """
-        if self in [Name._file0, Name.filename]:
+        if self in [Name.file__, Name.filename]:
             return self.path(obj)
-        if self in [Name._name0, Name.co_name, Name.function]:
+        if self in [Name.name__, Name.co_name, Name.function]:
             return obj.f_code.co_name
         if self in [Name.lineno, Name.f_lineno, Name.tb_lineno]:
             return obj.f_lineno
@@ -1915,7 +1828,7 @@ class Name(Enum):
             return obj
         if self is Name.vars:
             return (obj.f_globals | obj.f_locals).copy()
-        if self in [Name._code0, Name.f_code]:
+        if self in [Name.code__, Name.f_code]:
             return obj.f_code
         if self in [Name.f_back, Name.tb_next]:
             return obj.f_back
@@ -1934,9 +1847,9 @@ class Name(Enum):
         Returns:
             Value from TracebackType method
         """
-        if self in [Name._file0, Name.filename]:
+        if self in [Name.file__, Name.filename]:
             return self.path(obj)
-        if self in [Name._name0, Name.co_name, Name.function]:
+        if self in [Name.name__, Name.co_name, Name.function]:
             return obj.tb_frame.f_code.co_name
         if self in [Name.lineno, Name.f_lineno, Name.tb_lineno]:
             return obj.tb_lineno
@@ -1948,7 +1861,7 @@ class Name(Enum):
             return obj.tb_frame
         if self is Name.vars:
             return (obj.tb_frame.f_globals | obj.tb_frame.f_locals).copy()
-        if self in [Name._code0, Name.f_code]:
+        if self in [Name.code__, Name.f_code]:
             return obj.tb_frame.f_code
         if self in [Name.f_back, Name.tb_next]:
             return obj.tb_next
@@ -1961,19 +1874,18 @@ class Name(Enum):
 
         Examples:
             >>> import rc.utils
-            >>> from rc import Name
             >>>
-            >>> Name._module0.getter(tuple)
+            >>> Name.module__.getter(tuple)
             'builtins'
-            >>> Name._name0.getter(tuple)
+            >>> Name.name__.getter(tuple)
             'tuple'
-            >>> Name._file0.getter(rc.utils)  # doctest: +ELLIPSIS
+            >>> Name.file__.getter(rc.utils)  # doctest: +ELLIPSIS
             '/Users/jose/....py'
 
         Returns:
             Attr getter with real name for private and public which conflicts with Enum.
         """
-        return attrgetter(self.real)
+        return attrgetter(self.value)
 
     def has(self, obj):
         """
@@ -1981,21 +1893,20 @@ class Name(Enum):
 
         Examples:
             >>> import rc.utils
-            >>> from rc import Name
             >>>
-            >>> Name._module0.has(tuple)
+            >>> Name.module__.has(tuple)
             True
-            >>> Name._name0.has(tuple)
+            >>> Name.name__.has(tuple)
             True
-            >>> Name._file0.has(tuple)
+            >>> Name.file__.has(tuple)
             False
-            >>> Name._file0.has(rc.utils)
+            >>> Name.file__.has(rc.utils)
             True
 
         Returns:
             Checks if has attr with real name for private and public which conflicts with Enum.
         """
-        return hasattr(obj, self.real)
+        return hasattr(obj, self.value)
 
     @classmethod
     def node(cls, obj, complete=False, line=False):
@@ -2004,11 +1915,7 @@ class Name(Enum):
 
         Examples:
             >>> from ast import unparse
-            >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
-            >>> from rc import insstack
-            >>> from rc import Name
-            >>> from rc import pretty_install
             >>>
             >>> pretty_install()
             >>> f = insstack()[0]
@@ -2016,15 +1923,15 @@ class Name(Enum):
             >>> Name.filename.get(f), Name.function.get(f), Name.code_context.get(f)[0], Name.source(f) \
              # doctest: +ELLIPSIS
             (
-                PosixPath('<doctest ...node[7]>'),
+                PosixPath('<doctest ...node[...]>'),
                 '<module>',
                 'f = insstack()[0]\\n',
                 'f = insstack()[0]\\n'
             )
-            >>> Name._file0.get(globs_locs)  # doctest: +ELLIPSIS
+            >>> Name.file__.get(globs_locs)  # doctest: +ELLIPSIS
             PosixPath('/Users/jose/....py')
-            >>> assert Name._file0.get(globs_locs) == PathLib(__file__) == PathLib(Name._spec0.get(globs_locs).origin)
-            >>> assert Name._name0.get(globs_locs) == getmodulename(__file__) == Name._spec0.get(globs_locs).name
+            >>> assert Name.file__.get(globs_locs) == PathLib(__file__) == PathLib(Name.spec__.get(globs_locs).origin)
+            >>> assert Name.name__.get(globs_locs) == getmodulename(__file__) == Name.spec__.get(globs_locs).name
             >>> Name.source(globs_locs)  # doctest: +ELLIPSIS
             '# -*- coding: utf-8 -*-\\n...
             >>> Name.source(__file__)  # doctest: +ELLIPSIS
@@ -2055,12 +1962,7 @@ class Name(Enum):
 
         Examples:
             >>> from ast import unparse
-            >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
-            >>> from rc import allin
-            >>> from rc import insstack
-            >>> from rc import Name
-            >>> from rc import pretty_install
             >>>
             >>> pretty_install()
             >>> frameinfo = insstack()[0]
@@ -2082,7 +1984,7 @@ class Name(Enum):
         """
         es = Es(obj)
         if es.mm:
-            f = obj.get(Name._file0.real)
+            f = obj.get(Name.file__.value)
         elif es.frameinfo:
             f = obj.filename
         else:
@@ -2099,9 +2001,6 @@ class Name(Enum):
         Get private attrs tuple converted to real names.
 
         Examples:
-            >>> from rc import Name
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>> Name.private()  # doctest: +ELLIPSIS
             (
@@ -2121,9 +2020,6 @@ class Name(Enum):
         Get public attrs tuple.
 
         Examples:
-            >>> from rc import Name
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>> Name.public()  # doctest: +ELLIPSIS
             (
@@ -2137,40 +2033,8 @@ class Name(Enum):
         return tuple(cls._attrs()[False])
 
     @classmethod
-    @functools.cache
-    def _real(cls, name):
-        return f'_{name.replace("0", "_")}_' if name.startswith('_') and name.endswith('0') else name.removesuffix('_')
-
-    @property
-    def real(self):
-        """
-        Get real attr name converted for private and attrs that conflict with Enum.
-
-        Examples:
-            >>> from rc import Name
-            >>> Name._file0.real
-            '__file__'
-            >>> Name._asdict.real
-            '_asdict'
-            >>> Name.cls_.real
-            'cls'
-            >>> Name.get_.real
-            'get'
-            >>> Name.name_.real
-            'name'
-            >>> Name.self_.real
-            'self'
-            >>> Name.value_.real
-            'value'
-
-        Returns:
-            Real attribute name converted for private and attrs that conflict with Enum.
-        """
-        return self._real(self.name)
-
-    @classmethod
     def _source(cls, obj, line=False):
-        f = cls._file0.get(obj) or obj
+        f = cls.file__.get(obj) or obj
         if (p := PathLib(f)).is_file():
             if s := token_open(p):
                 if line:
@@ -2184,13 +2048,8 @@ class Name(Enum):
 
         Examples:
             >>> from ast import unparse
-            >>> from inspect import FrameInfo
             >>> from inspect import getmodulename
             >>> import rc.utils
-            >>> from rc import insstack
-            >>> from rc import Name
-            >>> from rc import allin
-            >>> from rc import pretty_install
             >>>
             >>> pretty_install()
             >>>
@@ -2279,13 +2138,11 @@ class Name(Enum):
 
 
 # </editor-fold>
-# <editor-fold desc="NamedTuples">
+# <editor-fold desc="Bases">
 Annotation = namedtuple('Annotation', 'any args classvar cls default final hint initvar literal name optional '
                                       'origin union')
 
 
-# </editor-fold>
-# <editor-fold desc="Bases">
 class BoxKeys(Box):
     """
     Creates a Box with values from keys.
@@ -2296,9 +2153,6 @@ class BoxKeys(Box):
         Creates Box instance.
 
         Examples:
-            >>> from rc import BoxKeys
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
             >>> BoxKeys('a b', value=None)
@@ -2426,10 +2280,6 @@ class Es:
         Is Instance, Subclass, etc. Helper Class
 
         Examples:
-            >>> from rc import Es
-            >>> from rc import pretty_install
-            >>> from rc import TestAsync
-            >>>
             >>> pretty_install()
             >>>
             >>> es = Es(2)
@@ -2503,7 +2353,8 @@ class Es:
     annotation = property(lambda self: self(Annotation))
     annotationstype = property(lambda self: self(AnnotationsType))
     annotationstype_sub = property(lambda self: self.subclass(AnnotationsType))
-    asdict = property(lambda self: dict(data=self.data) | asdict_props(self))
+    # TODO: asdict_props
+    # asdict = property(lambda self: dict(data=self.data) | asdict_props(self))
     asdictmethod = property(lambda self: self(AsDictMethodType))
     asdictmethod_sub = property(lambda self: self.subclass(AsDictMethodType))
     asdictproperty = property(lambda self: self(AsDictPropertyType))
@@ -2514,7 +2365,8 @@ class Es:
     asyncgen = property(lambda self: isinstance(self._func, AsyncGeneratorType))
     asyncgenfunction = property(lambda self: isasyncgenfunction(self._func))
     asyncwith = property(lambda self: isinstance(self._func, AsyncWith))
-    attribute = property(lambda self: self(Attribute))
+    # TODO: Attribute
+    # attribute = property(lambda self: self(Attribute))
     await_ast = property(lambda self: isinstance(self._func, Await))
     awaitable = property(lambda self: isawaitable(self._func))
     bool = property(lambda self: self(int) and self(bool))
@@ -2593,6 +2445,11 @@ class Es:
     mappingproxytype_sub = property(lambda self: self.subclass(MappingProxyType))
     memberdescriptor = property(lambda self: ismemberdescriptor(self.data))
     memberdescriptortype = property(lambda self: self(MemberDescriptorType))
+    # TODO: Meta
+    # meta = property(lambda self: self(Meta))
+    # meta_sub = property(lambda self: self.subclass(Meta))
+    # metatype = property(lambda self: self(MetaType))
+    # metatype_sub = property(lambda self: self.subclass(MetaType))
     method = property(lambda self: self.methodtype and not self(classmethod, property, staticmethod))
     methoddescriptor = property(lambda self: ismethoddescriptor(self.data))
     methoddescriptortype = property(lambda self: self(types.MethodDescriptorType))
@@ -2620,20 +2477,20 @@ class Es:
     reducible = property(lambda self: is_reducible(self.data))
     reducible_sequence_subclass = property(lambda self: is_reducible_sequence_subclass(self.data))
     routine = property(lambda self: isroutine(self.data))
-    seq = property(lambda self: self(Seq))
-    seq_sub = property(lambda self: self.subclass(Seq))
     sequence = property(lambda self: self(Sequence))
     sequence_sub = property(lambda self: self.subclass(Sequence))
     set = property(lambda self: self(set))
     setter = property(lambda self: self.prop and self.data.fset is not None)
     simple = property(lambda self: self(Simple))
     sized = property(lambda self: self(Sized))
-    slist = property(lambda self: self(slist))
+    # TODO: slist
+    # slist = property(lambda self: self(slist))
     slotstype = property(lambda self: self(SlotsType))
     slotstype_sub = property(lambda self: self.subclass(SlotsType))
     staticmethod = property(lambda self: self(staticmethod))
     str = property(lambda self: self(str))
-    stuple = property(lambda self: self(stuple))
+    # TODO: stuple
+    # stuple = property(lambda self: self(stuple))
     subclass = lambda self, *args: self.type and issubclass(self.data, args)
     stringio = property(lambda self: self(StringIO))  # :class:`typing.TextIO`
     tracebacktype = property(lambda self: self(TracebackType))
@@ -2648,9 +2505,6 @@ class Es:
         Getter with Property Name.
 
         Examples:
-            >>> from rc import Es
-            >>> from rc import pretty_install
-            >>>
             >>> pretty_install()
             >>>
 
@@ -2663,187 +2517,11 @@ class Es:
         return attrgetter(n) if ((n := cls(prop).property_any.__name__) in cls.__dict__) else NotImplemented
 
 
-Attribute = namedtuple('Attribute', 'annotation default defining es field kind name object qual')
-InfoClsBase = namedtuple('InfoClsBase', 'annotation attribute builtin cls es importable modname mro name qual super')
-
-
-# TODO: Finish with Seq and change Dict for find first. If change to Tuple instead of dict use cache.
-# TODO: Printable properties, kwargs, .... ignore infocls.
-# TODO: Cepillar el Base y refundir con el Meta.
-
-
-class InfoCls(InfoClsBase):
-    # TODO: Examples: InfoCls
-    """
-    Object Class or Class Info.
-
-    Examples:
-        >>> from rc import InfoCls
-        >>> from rc import pretty_install
-        >>>
-        >>> pretty_install()
-        >>>
-    """
-    __slots__ = ()
-
-    def __new__(cls, data):
-        # TODO: Examples: __new__
-        """
-        New InfoCls Instance for Object Class or Class.
-
-        __attribute: get the defining class add to the attribute name: _Class__attribute.
-        __attribute__: do not get the defining class add to the attribute name: __attribute__.
-
-        Examples:
-            >>> from rc import InfoCls
-            >>> from rc import pretty_install
-            >>> from rc import TestDataDictSlotMix
-            >>>
-            >>> pretty_install()
-            >>>
-            >>> test = InfoCls(TestDataDictSlotMix)
-            >>> attr = test.attribute['_TestData__dataclass_default_factory']
-            >>> attr.default, attr.defining, attr.field.datafactory, attr.object, \
-            attr.field.data.type == attr.annotation.hint, attr.object == attr.annotation.default  # doctest: +ELLIPSIS
-            (NotImplemented, <class '....TestData'>, True, {}, True, True)
-
-        Args:
-            data: object
-
-        Returns:
-            New InfoCls Instance for Object Class or Class.
-        """
-        es = Es(data)
-        fields = data.__dataclass_fields__ if es.datatype_sub or es.datatype else {}
-        data = data if es.type else data.__class__
-        annotation = annotations(data, stack=2) if es.annotationstype_sub else dict()
-        attribute = dict()
-        for item in classify_class_attrs(data):
-            e = Es(item.object)
-            attribute |= {
-                item.name: Attribute(
-                    annotation=annotation.get(item.name),
-                    default=item.object if item.name not in fields or fields[item.name].init else NotImplemented,
-                    defining=item.defining_class, es=e, field=Es(fields.pop(item.name, None)),
-                    kind=Kind[item.kind.split(' ')[0].upper()], name=item.name,
-                    object=item.object, qual=Name._qualname0.get(e._func, default=item.name))
-            }
-        for k, value in fields.items():
-            defining_cls = data
-            for C in data.__mro__:
-                if not Es(C).datatype_sub or (Es(C).datatype_sub and k not in C.__dataclass_fields__):
-                    break
-                defining_cls = C
-            f = Es(value)
-            obj = value.default_factory() if f.datafactory else getattr(defining_cls, k)
-            attribute |= {k: Attribute(annotation=annotation.get(k), default=obj if value.init else NotImplemented,
-                                       defining=defining_cls, es=Es(obj), field=f, kind=Kind.DATA, name=k, object=obj,
-                                       qual=k)}
-        # TODO: super InfoCls()
-        # noinspection PySuperArguments
-        return super(InfoCls, cls).__new__(
-            cls, annotation, dict_sort(attribute), anyin(data.__mro__, BUILTINS_CLASSES), data, es,
-            importable_name(data), data.__module__, data.__mro__, data.__name__, data.__qualname__, data.__mro__[1])
-
-    # TODO: Examples: __repr__, __str__
-
-    def data(self, key=Attr.PRIVATE):
-        # TODO: Examples: data
-        """
-        Class Data Attributes.
-
-        Examples:
-            >>> from rc import InfoCls
-            >>> from rc import pretty_install
-            >>>
-            >>> pretty_install()
-            >>>
-
-        Args:
-            key: attr startswith include.
-
-        Returns:
-            Class Data Attributes filtered with attr startswith.
-        """
-        return self.member(key=key)
-
-    def defaults(self, key=Attr.PRIVATE):
-        # TODO: Examples: defaults
-        # TODO: Examples: Aqui el __init__ si es slots!!! que le den
-        # TODO: namedtuple defaults
-        """
-        Class Defaults.
-
-        Examples:
-            >>> from rc import InfoCls
-            >>> from rc import pretty_install
-            >>>
-            >>> pretty_install()
-            >>>
-
-        Args:
-            key: attr startswith include.
-
-        Returns:
-            Class Defaults Dict filtered with attr startswith.
-        """
-        return {i.name: i.object for i in self.data(key=key).values() if i.object is not NotImplemented}
-
-    @singledispatchmethod
-    def member(self, find: Kind = Kind.DATA, key=Attr.PRIVATE):
-        # TODO: Examples: member
-        """
-        Filter Class Members based on :class:`rc.Kind`.
-
-        Examples:
-            >>> from rc import InfoCls
-            >>> from rc import pretty_install
-            >>>
-            >>> pretty_install()
-            >>>
-
-        Args:
-            find: :class:`rc.Kind` to filter.
-            key: attr startswith include.
-
-        Returns:
-            Class Members filtered based on :class:`rc.Kind` and attr startswith.
-        """
-        return {i.name: i for i in self.attribute.values() if key.include(i.name) and i.kind is find}
-
-    @member.register
-    def member_es(self, find: attrgetter = Es.memberdescriptor, key=Attr.PRIVATE):
-        # TODO: Examples: member_es
-        """
-        Filter Class Members based on return value of :class:`rc.Es` property.
-
-        Examples:
-            >>> from rc import InfoCls
-            >>> from rc import pretty_install
-            >>>
-            >>> pretty_install()
-            >>>
-
-        Args:
-            find: :class:`operator.attrgetter` with :class:`rc.ES` property name to filter.
-            key: attr startswith include.
-
-        Returns:
-            Class Members filtered based on return value :class:`rc.Es` property and attr startswith.
-        """
-        return {i.name: i for i in self.attribute.values() if key.include(i.name) and find(i.es)}
-
-
 class pproperty(property):
     """
     Print property.
 
     Examples:
-        >>> from functools import cache
-        >>> from rc import Es
-        >>> from rc import pproperty
-        >>> from rc import pretty_install
-        >>>
         >>> pretty_install()
         >>> class Test:
         ...     _pp = 0
@@ -2874,10 +2552,6 @@ def allin(origin, destination):
     Checks all items in origin are in destination iterable.
 
     Examples:
-        >>> from rc import allin
-        >>> from rc import BUILTINS_CLASSES
-        >>> from rc import Es
-        >>>
         >>> class Int(int):
         ...     pass
         >>> allin(tuple.__mro__, BUILTINS_CLASSES)
@@ -2909,10 +2583,6 @@ def annotations(obj, stack=1):
 
     Examples:
         >>> from dataclasses import dataclass
-        >>> from dataclasses import InitVar
-        >>> from typing import ClassVar
-        >>> from rc import annotations
-        >>> from rc import pretty_install
         >>>
         >>> pretty_install()
         >>>
@@ -2993,7 +2663,8 @@ def annotations(obj, stack=1):
         _any = _hint == Any
         union = origin == Union
         classvar = origin == ClassVar
-        initvar = Es(cls).initvar  # TODO: Mirar porque el origin debe ser InitVar y entonces ...
+        # TODO: Look because origin must be InitVar and then  ...
+        initvar = Es(cls).initvar
         optional = type(None) in args
         if initvar:
             if isinstance(_hint.type, type):
@@ -3044,14 +2715,9 @@ def annotations_init(cls, stack=2, optional=True, **kwargs):
     Init with defaults or kwargs an annotated class.
 
     Examples:
-        >>> from pathlib import Path
-        >>> from typing import NamedTuple
-        >>>
-        >>> from rc import annotations_init
-        >>>
         >>> NoInitValue = NamedTuple('NoInitValue', var=str)
 
-        >>> A = NamedTuple('A', module=str, path=Optional[Path], test=Optional[NoInitValue])
+        >>> A = NamedTuple('A', module=str, path=Optional[PathLib], test=Optional[NoInitValue])
         >>> annotations_init(A, optional=False)
         A(module='', path=None, test=None)
         >>> annotations_init(A)
@@ -3100,10 +2766,6 @@ def anyin(origin, destination):
     Checks any item in origin are in destination iterable and return the first found.
 
     Examples:
-        >>> from rc import anyin
-        >>> from rc import BUILTINS_CLASSES
-        >>> from rc import Es
-        >>>
         >>> class Int(int):
         ...     pass
         >>> anyin(tuple.__mro__, BUILTINS_CLASSES)
@@ -3126,89 +2788,6 @@ def anyin(origin, destination):
     origin = to_iter(origin)
     destination = to_iter(destination)
     return first_true(origin, pred=lambda x: x in destination)
-
-
-@singledispatchmethod
-def asdict(data: Semaphore, convert=True):
-    return dict(locked=data.locked(), value=data._value) if convert else data
-
-
-@asdict.register
-def asdict_chain(data: Chain, convert=True):
-    data.rv = ChainRV.FIRST
-    return dict(data) if convert else data
-
-
-@asdict.register
-def asdict_enum(data: Enum, convert=True):
-    return {data.name: data.value} if convert else data
-
-
-@asdict.register
-def asdict_environs(data: Environs, convert=True):
-    return data.dump() if convert else data
-
-
-@asdict.register
-def asdict_gettype(data: GetType, convert=True):
-    return data if convert else data
-
-
-@asdict.register
-def asdict_gitsymbolic(data: GitSymbolicReference, convert=True):
-    return dict(repo=data.repo, path=data.path) if convert else data
-
-
-@asdict.register
-def asdict_logger(data: Logger, convert=True):
-    return dict(name=data.name, level=data.level) if convert else data
-
-
-@asdict.register
-def asdict_namedtype(data: NamedType, convert=True):
-    return data._asdict() if convert else data
-
-
-@asdict.register
-def asdict_remote(data: Remote, convert=True):
-    return dict(repo=data.repo, name=data.name) if convert else data
-
-
-def asdict_ignorestr(data, convert=True):
-    return str(data) if convert else data
-
-
-def asdict_props(data, key=Attr.PUBLIC, pprop=False):
-    """
-    Properties to dict.
-
-    Examples:
-        >>> from rc import asdict_props
-        >>> from rc import Es
-        >>> from rc import pretty_install
-        >>>
-        >>> pretty_install()
-        >>>
-
-    Args:
-        data: object to get properties.
-        key: startswith to include.
-        pprop: convert only :class:`rc.pproperty` or all properties excluding __ignore_attr__.
-
-    Returns:
-        Dict with names and values for properties.
-    """
-    pass
-
-
-def asdict_type(data, convert=True):
-    rv = data
-    es = Es(data)
-    if es.enum_sub:
-        rv = {key: value._value_ for key, value in data.__members__.items()} if convert else data
-    elif es.datatype_sub or es.dicttype_sub or es.namedtype_sub or es.slotstype_sub:
-        rv = info(data).defaults if convert else data
-    return rv
 
 
 def cmd(command, exc=False, lines=True, shell=True, py=False, pysite=True):
@@ -3340,10 +2919,6 @@ def effect(apply, data):
     Perform function on iterable.
 
     Examples:
-        >>> from rc import effect
-        >>> from rc import pretty_install
-        >>> from rc import Simple
-        >>>
         >>> pretty_install()
         >>>
         >>> simple = Simple()
@@ -3367,8 +2942,6 @@ def get(data: GetType, name, default=None):
     Get value of name in Mutabble Mapping/GetType or object.
 
     Examples:
-        >>> from rc import get
-        >>>
         >>> get(dict(a=1), 'a')
         1
         >>> get(dict(a=1), 'b')
@@ -3392,8 +2965,6 @@ def get_getattrtype(data: GetAttrType, name, default=None):
     Get value of name in Mutabble Mapping or object.
 
     Examples:
-        >>> from rc import get
-        >>>
         >>> get(dict, '__module__')
         'builtins'
         >>> get(dict, '__file__')
@@ -3479,9 +3050,6 @@ def in_dict(data, items=None, **kwargs):
     Is Item in Dict?.
 
     Examples:
-        >>> from rc import BUILTINS
-        >>> from rc import Es
-        >>> from rc import in_dict
         >>> in_dict(globals(), {'True': True, 'False': False})
         True
         >>> in_dict(globals()['__builtins__'], {'True': True, 'False': False}, __name__='builtins')
@@ -3521,8 +3089,6 @@ def map_with_args(data, func, /, *args, pred=lambda x: True if x else False, spl
     Apply pred/filter to data and map with args and kwargs.
 
     Examples:
-        >>> from rc import map_with_args
-        >>> from rc import pretty_install
         >>> pretty_install()
         >>> # noinspection PyUnresolvedReferences
         >>> def f(i, *ar, **kw):
@@ -3549,7 +3115,6 @@ def newprop(name=None, default=None, pprop=False):
     Get a new property with getter, setter and deleter.
 
     Examples:
-        >>> from rc import newprop
         >>> class Test:
         ...     prop = newprop()
         ...     callable = newprop(default=str)
@@ -3609,8 +3174,6 @@ def noexception(exception, func, *args, default_=None, **kwargs):
     Execute function suppressing exceptions.
 
     Examples:
-        >>> from rc import noexception
-        >>>
         >>> noexception(KeyError, dict(a=1).pop, 'b', default_=2)
         2
 
@@ -3668,9 +3231,6 @@ def to_camel(text, replace=True):
     Convert to Camel
 
     Examples:
-        >>> from rc import Mro
-        >>> from rc import to_camel
-        >>>
         >>> to_camel(Mro.ignore_attr.name)
         'IgnoreAttr'
         >>> to_camel(Mro.ignore_attr.name, replace=False)
@@ -3694,8 +3254,6 @@ def to_iter(data, always=False, split=' '):
     To iter.
 
     Examples:
-        >>> from rc import pretty_install
-        >>> from rc import to_iter
         >>> pretty_install()
         >>> to_iter('test1')
         ['test1']
@@ -3780,8 +3338,6 @@ def yield_if(data, pred=lambda x: True if x else False, split=' ', apply=None):
     Yield value if condition is met and apply function if predicate.
 
     Examples:
-        >>> from rc import pretty_install
-        >>> from rc import yield_if
         >>> pretty_install()
         >>> list(yield_if([True, None]))
         [True]
@@ -3816,8 +3372,6 @@ def yield_last(data, split=' '):
     Yield value if condition is met and apply function if predicate.
 
     Examples:
-        >>> from rc import pretty_install
-        >>> from rc import yield_if
         >>> pretty_install()
         >>> list(yield_last([True, None]))
         [(False, True, None), (True, None, None)]
@@ -3842,2149 +3396,6 @@ def yield_last(data, split=' '):
     for i in data:
         count += 1
         yield count == total, *(i, data.get(i) if mm else None,)
-
-
-# </editor-fold>
-# <editor-fold desc="Meta">
-class BaseMeta(type):
-    # TODO: Examples: BaseMeta
-    """
-    Meta Base Helper Class.
-
-    Examples:
-        >>> from rc import BaseMeta
-        >>> from rc import pretty_install
-        >>>
-        >>> pretty_install()
-        >>>
-    """
-    infocls = None
-
-    def __new__(mcs, *args, **kwargs):
-        # TODO: Examples: __new__
-        """
-        New BaseMeta Class Instance.
-
-        Examples:
-            >>> from rc import InfoCls
-            >>> from rc import pretty_install
-            >>>
-            >>> pretty_install()
-            >>>
-
-        Args:
-            *args:
-                name: str
-                bases: tuple[type, ...]
-                namespace: dict[str, Any])
-            **kwargs:
-
-        Returns:
-            New BaseMeta Class Instance.
-        """
-        c = super().__new__(mcs, *args, **kwargs)
-        c.__class_getitem__ = classmethod(lambda cls, item: cls.infocls.attribute.get(item, NotImplemented))
-        # TODO: arg InfoCls()
-        c.infocls = InfoCls(c)
-        return c
-
-    def __class_getitem__(mcs, name):
-        # TODO: Examples: __class_getitem__
-        """
-        Class Attribute Information :class:`rc.Attribute`.
-
-        Examples:
-            >>> from rc import InfoCls
-            >>> from rc import pretty_install
-            >>>
-            >>> pretty_install()
-            >>>
-
-        Args:
-            name: attribute name.
-
-        Returns:
-            Class Attribute Information :class:`rc.Attribute`.
-        """
-        return mcs.infocls.attribute.get(name, NotImplemented)
-
-
-class Class(metaclass=BaseMeta):
-    __slots__ = tuple()
-
-
-# </editor-fold>
-# <editor-fold desc="Classes">
-class AsDict:
-    """
-    Dict and Attributes Class.
-
-    Examples:
-
-        .. code-block:: python
-
-            json = jsonpickle.encode(col)
-            obj = jsonpickle.decode(obj)
-            col.to_file(name=col.col_name)
-            assert (Path.cwd() / f'{col.col_name}.json').is_file()
-            col.to_file(directory=tmpdir, name=col.col_name, regenerate=True)
-            obj = col.from_file(directory=tmpdir, name=col.col_name)
-            assert obj == col
-    """
-    __ignore_attr__ = ['asdict', 'attrs', 'keys', 'kwargs', 'kwargs_dict', 'public', 'values', 'values_dict', ]
-
-    @property
-    def asdict(self):
-        """
-        Dict including properties without routines and recursive.
-
-        Returns:
-            dict:
-        """
-        return info(self).asdict()
-
-    @property
-    def attrs(self):
-        """
-        Attrs including properties.
-
-        Excludes:
-            __ignore_attr__
-            __ignore_copy__ instances.
-            __ignore_kwarg__
-
-        Returns:
-            list:
-        """
-        return info(self).attrs
-
-    def attrs_get(self, *args, default=None):
-        """
-        Get One or More Attributes.
-
-        Examples:
-            >>> from rc import AsDict
-            >>> a = AsDict()
-            >>> a.d1 = 1
-            >>> a.d2 = 2
-            >>> a.d3 = 3
-            >>> assert a.attrs_get('d1') == {'d1': 1}
-            >>> assert a.attrs_get('d1', 'd3') == {'d1': 1, 'd3': 3}
-            >>> assert a.attrs_get('d1', 'd4', default=False) == {'d1': 1, 'd4': False}
-
-        Raises:
-            ValueError: ValueError
-
-        Args:
-            *args: attr(s) name(s).
-            default: default.
-
-        Returns:
-            dict:
-        """
-        if not args:
-            raise ValueError(f'args must be provided.')
-        return {item: getattr(self, item, default) for item in args}
-
-    def attrs_set(self, *args, **kwargs):
-        """
-        Sets one or more attributes.
-
-        Examples:
-            >>> from rc import AsDict
-            >>> a = AsDict()
-            >>> a.attrs_set(d_1=31, d_2=32)
-            >>> a.attrs_set('d_3', 33)
-            >>> d_4_5 = dict(d_4=4, d_5=5)
-            >>> a.attrs_set(d_4_5)
-            >>> a.attrs_set('c_6', 36, c_7=37)
-
-
-        Raises:
-            ValueError: ValueError
-
-        Args:
-            *args: attr name and value.
-            **kwargs: attrs names and values.
-        """
-        if args:
-            if len(args) > 2 or (len(args) == 1 and not isinstance(args[0], dict)):
-                raise ValueError(f'args, invalid args length: {args}. One dict or two args (var name and value.')
-            kwargs.update({args[0]: args[1]} if len(args) == 2 else args[0])
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    @classmethod
-    def defaults(cls, nested=True):
-        """
-        Return a dict with class attributes names and values.
-
-        Returns:
-            list:
-        """
-        return info(cls, depth=None if nested else 1).asdict(defaults=True)
-
-    def from_file(self, directory=None, name=None, keys=True):
-        name = name if name else self.__class__.__name__
-        directory = PathLib(directory) if directory else PathLib.cwd()
-        with (PathLib(directory) / f'{name}.json').open() as f:
-            return jsonpickle.decode(json.load(f), keys=keys)
-
-    @property
-    def keys(self):
-        """
-        Keys from kwargs to init class (not InitVars), exclude __ignore_kwarg__ and properties.
-
-        Returns:
-            list:
-        """
-        return info(self).keys
-
-    @property
-    def kwargs(self):
-        """
-        Kwargs to init class with python objects no recursive, exclude __ignore_kwarg__ and properties.
-
-        Example: Mongo binary.
-
-        Returns:
-            dict:
-        """
-        return info(self).kwargs
-
-    @property
-    def kwargs_dict(self):
-        """
-        Kwargs recursive to init class with python objects as dict, asdict excluding __ignore_kwarg__ and properties.
-
-        Example: Mongo asdict.
-
-        Returns:
-            dict:
-        """
-        return info(self).kwargs_dict
-
-    @property
-    def public(self):
-        """
-        Dict including properties without routines.
-
-        Returns:
-            dict:
-        """
-        return info(self).public
-
-    def to_file(self, directory=None, name=None, regenerate=False, **kwargs):
-        name = name if name else self.__class__.__name__
-        directory = PathLib(directory) if directory else PathLib.cwd()
-        with (PathLib(directory) / f'{name}.json').open(mode='w') as f:
-            json.dump(obj=info(self).to_json(regenerate=regenerate, **kwargs), fp=f, indent=4, sort_keys=True)
-
-    def to_json(self, regenerate=True, indent=4, keys=True, max_depth=-1):
-        return info(self).to_json(regenerate=regenerate, indent=indent, keys=keys, max_depth=max_depth)
-
-    def to_obj(self, keys=True):
-        return info(self).to_obj(keys=keys)
-
-    @property
-    def values(self):
-        """
-        Init python objects kwargs values no properties and not __ignore_kwarg__.
-
-        Returns:
-            list:
-        """
-        return info(self).values
-
-    @property
-    def values_dict(self):
-        """
-        Init python objects kwargs values no properties and not __ignore_kwarg__.
-
-        Returns:
-            list:
-        """
-        return info(self).values_dict
-
-
-class Base:
-    """
-    Base Helper Class.
-
-    Attributes:
-    -----------
-        __slots__: tuple[str]
-            slots (default: tuple()).
-        __hash_exclude__: tuple[str]
-            Exclude slot attr for hash (default: tuple()).
-        __ignore_attr__: tuple[str]
-            Exclude instance attribute (default: tuple()).
-        __ignore_copy__: tuple[Type, ...]
-            True or class for repr instead of nested asdict and deepcopy. No deepcopy (default: tuple()).
-        __ignore_kwarg__: tuple[str]
-            Exclude attr from kwargs (default: tuple()).
-        __ignore_str__: tuple[Type, ...]
-            Use str value for object (default: tuple()).
-        __repr_exclude__: tuple[str]
-            Exclude slot attr for repr (default: tuple()).
-        __repr_newline__: bool
-            New line per attr in repr (default: True).
-        __repr_pproperty__: bool
-            Include :class:`pproperty` in repr (default: True).
-
-    Methods:
-    --------
-        __getattribute__(item, default=None)
-            :class:`function`:  Sets ``None`` as default value is attr is not defined.
-        __hash__(self)
-            :class:`function`: hash
-        __repr__(self)
-            :class:`function`: repr
-        get(cls, name, default=None)
-            :class:`function`: Get attribute value.
-        info(self, key=Attr.PRIVATE)
-            :class:`function`: :class:`info`
-
-    Examples:
-    ---------
-        >>> from rc import Base
-        >>> from rc import Cls
-        >>> from rc import pproperty
-        >>> from rc import pretty_install
-        >>> from rc import TestBase
-        >>>
-        >>> pretty_install()
-        >>> test = TestBase()
-        >>>
-        >>> sorted(Mro.hash_exclude.val(test))
-        ['_slot']
-        >>> sorted(Mro.ignore_attr.val(test))
-        []
-        >>> Mro.ignore_copy.val(test).difference(Mro.ignore_copy.default)
-        set()
-        >>> sorted(Mro.ignore_kwarg.val(test))
-        []
-        >>> Mro.ignore_str.val(test).difference(Mro.ignore_str.default)
-        set()
-        >>> sorted(Mro.repr_exclude.val(test))
-        ['_repr']
-        >>> sorted(Mro.slots.val(test))
-        ['_hash', '_prop', '_repr', '_slot']
-        >>> Mro.repr_newline.first(test)
-        True
-        >>> Mro.repr_pproperty.first(test)
-        True
-        >>> Mro.slot(test, '_hash')
-        True
-        >>>
-        >>> test.info.cls.name
-        'TestBase'
-        >>> repr(test)  # doctest: +ELLIPSIS
-        'TestBase(_hash: None,\\n_prop: None,\\n_slot: None,\\npprop: pprop)'
-        >>> assert test.__repr_exclude__[0] not in repr(test)
-        >>> test.prop
-        >>> test.prop = 2
-        >>> test.prop
-        2
-        >>> del test.prop
-        >>> test.prop
-        >>> assert hash((test._hash, test._prop, test._repr)) == hash(test)
-        >>> set(test.__slots__).difference(test.info.cls.data_attrs)
-        set()
-        >>> sorted(test.info.cls.data_attrs)
-        ['_hash', '_prop', '_repr', '_slot', 'classvar', 'initvar']
-        >>> '__slots__' in sorted(test.info().cls.data_attrs)  # info() __call__(key=Attr.ALL)
-        True
-        >>> test.get.__name__ in test.info.cls.method
-        True
-        >>> test.get.__name__ in test.info.cls.callable
-        True
-        >>> 'prop' in test.info.cls.prop
-        True
-        >>> 'pprop' in test.info.cls.pproperty
-        True
-        >>> test.info.cls.importable_name  # doctest: +ELLIPSIS
-        '....TestBase'
-        >>> test.info.cls.importable_name == f'{test.info.cls.modname}.{test.info.cls.name}'
-        True
-        >>> test.info.cls.qualname
-        'TestBase'
-        >>> test.info.cls.attr_value('pprop')  # doctest: +ELLIPSIS
-        <....pproperty object at 0x...>
-        >>> test.info.attr_value('pprop')
-        'pprop'
-        >>> test.info.module  # doctest: +ELLIPSIS
-        <module '...' from '/Users/jose/....py'>
-        >>> assert sorted(test.info.dir) == sorted(test.info.cls.dir)
-        >>> sorted(test.info.cls.memberdescriptor)
-        ['_hash', '_prop', '_repr', '_slot']
-        >>> sorted(test.info.cls.memberdescriptor) == sorted(test.__slots__)
-        True
-        >>> test.info.cls.methoddescriptor  # doctest: +ELLIPSIS
-        [
-            '__delattr__',
-            ...,
-            '__subclasshook__',
-            'clsmethod',
-            'static'
-        ]
-        >>> sorted(test.info.cls.method)
-        ['_info', 'get', 'method_async']
-        >>> sorted(test.info.cls().method)  # doctest: +ELLIPSIS
-        [
-            '__delattr__',
-            ...,
-            '__str__',
-            '_info',
-            'get',
-            'method_async'
-        ]
-        >>> sorted(test.info.cls().callable) == \
-        sorted(list(test.info.cls().method) + list(test.info.cls().classmethod) + list(test.info.cls().staticmethod))
-        True
-        >>> test.info.cls.setter
-        ['prop']
-        >>> test.info.cls.deleter
-        ['prop']
-        >>> test.info.cls.is_attr('_hash')
-        True
-        >>> test.info.cls.is_data('_hash')
-        True
-        >>> test.info.cls.is_deleter('prop')
-        True
-        >>> test.info.cls.is_memberdescriptor('_hash')
-        True
-        >>> test.info.cls.is_method('__repr__')
-        True
-        >>> test.info.cls.is_methoddescriptor('__repr__')
-        False
-        >>> test.info.cls.is_methoddescriptor('__str__')
-        True
-        >>> test.info.cls.is_pproperty('pprop')
-        True
-        >>> test.info.cls.is_property('prop')
-        True
-        >>> test.info.cls.is_routine('prop')
-        False
-        >>> test.info.cls.is_setter('prop')
-        True
-        >>> test.info.cls.is_attr('classvar')
-        True
-        >>> test.info.is_attr('classvar')
-        True
-        >>> sorted(test.info.coros)
-        ['method_async', 'pprop_async']
-        >>> test.info.coros_pproperty
-        ['pprop_async']
-        >>> test.info.coros_property
-        ['pprop_async']
-        >>> test.info.is_coro('pprop_async')
-        True
-        >>> test.info.is_coro('method_async')
-        True
-        >>> test.info.is_coro_pproperty('pprop_async')
-        True
-        >>> test.info.is_coro_property('pprop_async')
-        True
-        >>> test.info.cls.classvar
-        ['classvar']
-        >>> test.info.cls.initvar
-        ['initvar']
-        >>> test.info.cls.is_classvar('classvar')
-        True
-        >>> test.info.cls.is_initvar('initvar')
-        True
-    """
-    __slots__ = tuple()
-    __hash_exclude__ = tuple()
-    """Exclude slot attr for hash (default: tuple())."""
-    __ignore_attr__ = tuple()
-    """Exclude instance attribute (default: tuple())."""
-    __ignore_copy__ = tuple()
-    """True or class for repr instead of nested asdict and deepcopy. No deepcopy (default: tuple())"""
-    __ignore_kwarg__ = tuple()
-    """Exclude attr from kwargs (default: tuple())."""
-    __ignore_str__ = tuple()
-    """Use str value for object (default: tuple())."""
-    __repr_exclude__ = tuple()
-    """Exclude slot attr for repr (default: tuple())."""
-    __repr_newline__ = True
-    """New line per attr in repr (default: True)."""
-    __repr_pproperty__ = True
-    """Include :class:`pproperty` in repr (default: True)."""
-
-    def __getattribute__(self, name, default=None):
-        """
-        Sets attribute:
-            - with None if it does not exists and involked with getattr()
-                # getattr does not pass default to __getattribute__
-            - with default if called directly.
-
-        Examples:
-            >>> from rc import Base
-            >>> class Dict(Base): pass
-            >>> class Slots(Base): __slots__ = ('a', )
-            >>>
-            >>> d = Dict()
-            >>> s = Slots()
-            >>> getattr(d, 'a')
-            >>> d.a
-            >>> getattr(s, 'a')
-            >>> s.a
-            >>>
-            >>> d = Dict()
-            >>> s = Slots()
-            >>> getattr(d, 'a', 2)  # getattr does not pass default to __getattribute__
-            >>> d.a
-            >>> getattr(s, 'a', 2)  # getattr does not pass default to __getattribute__
-            >>> s.a
-            >>>
-            >>> d = Dict()
-            >>> s = Slots()
-            >>> d.__getattribute__('a', 2)
-            2
-            >>> d.a
-            2
-            >>> s.__getattribute__('a', 2)
-            2
-            >>> s.a
-            2
-            >>>
-            >>> class Dict(Base): a = 1
-            >>> class Slots(Base):
-            ...     __slots__ = ('a', )
-            ...     def __init__(self):
-            ...         self.a = 1
-            >>> d = Dict()
-            >>> s = Slots()
-            >>> getattr(d, 'a')
-            1
-            >>> getattr(s, 'a')
-            1
-            >>> getattr(d, 'a', 2)
-            1
-            >>> getattr(s, 'a', 2)
-            1
-
-        Args:
-            name: attr name.
-            default: default value (default: None).
-
-        Returns:
-            Attribute value or sets default value and returns.
-        """
-        try:
-            return object.__getattribute__(self, name)
-        except AttributeError:
-            object.__setattr__(self, name, default)
-            return object.__getattribute__(self, name)
-
-    def __hash__(self): return self.info.hash
-
-    def __repr__(self): return self.info.repr
-
-    def get(self, name, default=None):
-        """
-        Sets attribute:
-            - with None if it does not exists and involked with getattr()
-                # getattr does not pass default to __getattribute__
-            - with default if called directly.
-
-        Examples:
-            >>> from rc import Base
-            >>> class Dict(Base): pass
-            >>> class Slots(Base): __slots__ = ('a', )
-            >>>
-            >>> d = Dict()
-            >>> s = Slots()
-            >>> d.get('a')
-            >>> d.a
-            >>> s.get('a')
-            >>> s.a
-            >>>
-            >>> d = Dict()
-            >>> s = Slots()
-            >>> getattr(d, 'a', 2)  # getattr does not pass default to __getattribute__
-            >>> d.a
-            >>> getattr(s, 'a', 2)  # getattr does not pass default to __getattribute__
-            >>> s.a
-            >>>
-            >>> d = Dict()
-            >>> s = Slots()
-            >>> d.get('a', 2)
-            2
-            >>> d.a
-            2
-            >>> s.get('a', 2)
-            2
-            >>> s.a
-            2
-            >>>
-            >>> class Dict(Base): a = 1
-            >>> class Slots(Base):
-            ...     __slots__ = ('a', )
-            ...     def __init__(self):
-            ...         self.a = 1
-            >>> d = Dict()
-            >>> s = Slots()
-            >>> d.get('a')
-            1
-            >>> s.get('a')
-            1
-            >>> d.get('a', 2)
-            1
-            >>> s.get('a', 2)
-            1
-            >>>
-            >>> class Dict(Base, dict): pass
-            >>> d = Dict()
-            >>> d.get('a', 2)
-            2
-            >>> d.a  # dict not super().__init__(dict(a=2)
-
-        Args:
-            name: attr name.
-            default: default value (default: None).
-
-        Returns:
-            Attribute value or sets default value and returns.
-        """
-        if hasattr(self, '__getitem__'):
-            if self.__getitem__ is not None:
-                try:
-                    rv = self.__getitem__(name)
-                except KeyError:
-                    self[name] = default
-                    rv = self.__getitem__(name)
-                return rv
-        return getset(self, name, default)
-
-    def _info(self, depth=None, ignore=False, key=Attr.PRIVATE): return self.info(depth=depth, ignore=ignore, key=key)
-
-    @property
-    def info(self): return info(self)
-
-
-# noinspection PyDataclass
-class Cls:
-    """Class Helper Class."""
-    __slots__ = ('args', 'asdict', 'attr', 'builtin', 'cache', 'cached_property', 'classified', 'classmethod',
-                 'classvar',
-                 'coro', 'data',
-                 'defaults', 'dir',
-                 'dynamicclassattribute',
-                 'es', 'factory',
-                 'fields', 'ignore', 'initvar', 'key', 'kwargs',
-                 'method', 'mro', 'name',
-                 'pproperty', 'prop', 'property_any', 'slots', 'staticmethod')
-    # __slots__ = ('asyncgen', 'asyncgeneratortype', 'asyncgenfunc', 'attrs', 'awaitable', 'builtinfunctiontype',
-    #              'callable', 'classmethod', 'classmethoddescriptortype', 'coroutine',
-    #              'coroutinefunc', 'coroutinetype', 'data',
-    #              'datafactory', 'datafield',
-    #              'deleter', 'defined_class', 'defined_obj', 'defaults', 'dir', 'dynamicclassattribute',
-    #              'es', 'functiontype', 'generator', 'generatortype', 'getsetdescriptor',
-    #              'ignore', 'initvar', 'key', 'lambdatype',
-    #              'mappingproxytype', 'memberdescriptor', 'method', 'methoddescriptor', 'methoddescriptortype',
-    #              'methodtype', 'methodwrappertype',
-    #              'mro', 'names',
-    #              'none', 'routine', 'setter', 'source'
-    #              'wrapperdescriptortype', )
-    kind_compose = ('annotation', 'data_attrs', 'datafactory_dict', 'datafield_dict', 'slots/memberdescriptor')
-
-    def __init__(self, data, ignore=False, key=Attr.PRIVATE):
-        """
-        Class Helper init.
-
-        Examples:
-            >>> from rc import Cls
-            >>> from rc import pretty_install
-            >>> from rc import TestData
-            >>>
-            >>> pretty_install()
-            >>>
-            >>> test = Cls(TestDataDictSlotMix)
-            >>>
-            #
-            # Data Class Fields
-            #
-            >>> list(test.datafield)
-            [
-                'dataclass_classvar',
-                'dataclass_default',
-                'dataclass_default_factory',
-                'dataclass_default_factory_init',
-                'dataclass_default_init',
-                'dataclass_initvar',
-                'dataclass_str'
-            ]
-            >>> test.datafield  # doctest: +ELLIPSIS
-            {
-                'dataclass_classvar': Field(name='dataclass_classvar',...),
-                'dataclass_default': Field(name='dataclass_default',...),
-                'dataclass_default_factory': Field(name='dataclass_default_factory',...),
-                'dataclass_default_factory_init': Field(name='dataclass_default_factory_init',...),
-                'dataclass_default_init': Field(name='dataclass_default_init',...),
-                'dataclass_initvar': Field(name='dataclass_initvar',...),
-                'dataclass_str': Field(name='dataclass_str',...)
-            }
-            >>>
-            #
-            # Data Class Fields - default_factory - ['dataclass_default_factory', 'dataclass_default_factory_init']
-            #
-            >>> list(test.datafactory)
-            ['dataclass_default_factory', 'dataclass_default_factory_init']
-            >>> test.datafactory
-            {'dataclass_default_factory': {}, 'dataclass_default_factory_init': {}}
-            >>> 'dataclass_default_factory' in TestDataDictSlotMix.__dataclass_fields__
-            True
-            >>> 'dataclass_default_factory' in dir(TestDataDictSlotMix)
-            False
-            >>> 'dataclass_default_factory' in vars(TestDataDictSlotMix)
-            False
-            >>> 'dataclass_default_factory' in vars(TestDataDictSlotMix())
-            True
-            >>> vars(TestDataDictSlotMix()).get('dataclass_default_factory')
-            {}
-            >>> getattr(TestDataDictSlotMix(), 'dataclass_default_factory')
-            {}
-            >>> 'dataclass_default_factory_init' in TestDataDictSlotMix.__dataclass_fields__
-            True
-            >>> 'dataclass_default_factory_init' in dir(TestDataDictSlotMix)
-            False
-            >>> 'dataclass_default_factory_init' in vars(TestDataDictSlotMix)
-            False
-            >>> 'dataclass_default_factory_init' in vars(TestDataDictSlotMix())
-            True
-            >>> vars(TestDataDictSlotMix()).get('dataclass_default_factory_init')
-            {}
-            >>> getattr(TestDataDictSlotMix(), 'dataclass_default_factory_init')
-            {}
-            >>> vars(TestDataDictSlotMix())['dataclass_default_factory_init'] == \
-            test.datafactory['dataclass_default_factory_init']
-            True
-            >>>
-            #
-            # Data Class Fields - ['dataclass_classvar']
-            #
-            >>> list(test.classvar)
-            ['dataclass_classvar']
-            >>> test.classvar  # doctest: +ELLIPSIS
-            {
-                'dataclass_classvar': Field(name='dataclass_classvar',...)
-            }
-            >>> 'dataclass_classvar' in TestDataDictSlotMix.__dataclass_fields__
-            True
-            >>> 'dataclass_classvar' in dir(TestDataDictSlotMix)
-            True
-            >>> 'dataclass_classvar' in vars(TestDataDictSlotMix)
-            False
-            >>> 'dataclass_classvar' in vars(TestDataDictSlotMix())
-            False
-            >>> vars(TestDataDictSlotMix()).get('dataclass_classvar')
-            >>> getattr(TestDataDictSlotMix(), 'dataclass_classvar')
-            'dataclass_classvar'
-            >>>
-            #
-            # Data Class Fields - ['dataclass_initvar']
-            #
-            >>> list(test.initvar)
-            ['dataclass_initvar']
-            >>> test.initvar  # doctest: +ELLIPSIS
-            {
-                'dataclass_initvar': Field(name='dataclass_initvar',...)
-            }
-            >>> 'dataclass_initvar' in TestDataDictSlotMix.__dataclass_fields__
-            True
-            >>> 'dataclass_initvar' in dir(TestDataDictSlotMix)
-            True
-            >>> 'dataclass_initvar' in vars(TestDataDictSlotMix)
-            False
-            >>> 'dataclass_initvar' in vars(TestDataDictSlotMix())
-            False
-            >>> vars(TestDataDictSlotMix()).get('dataclass_initvar')
-            >>> getattr(TestDataDictSlotMix(), 'dataclass_initvar')
-            'dataclass_initvar'
-            >>>
-            #
-            # Dict - ClassVar - ['subclass_classvar']
-            #
-
-x
-
-        Args:
-            data: Class to provide information.
-            ignore: ignore properties and kwargs :class:`Base.__ignore_kwargs__` (default: False)
-            key: keys to include (default: :attr:`rc.Key.PRIVATE`)
-
-        Returns:
-            Cls Instance.
-        """
-        effect(lambda x: self.__setattr__(x, dict()), self.__slots__)
-        self.data = data if isinstance(data, type) else type(data)
-        self.es = Es(self.data)
-        self.ignore = ignore
-        self.key = key
-        self.classified = dict_sort({i.name: i for i in classify_class_attrs(self.data) if self.key.include(i.name)})
-        self.fields = dict(filter(lambda x: self.key.include(x[0]), dict_sort(self.data.__dataclass_fields__).items(
-
-        ))) \
-            if self.es.datatype_sub else dict()
-        factories = filter(lambda x: Es(x[1]).datafactory, self.fields.items())
-        if self.es.datatype_sub:
-            for i in sorted(self.fields):
-                if self.key.include(i):
-                    v = self.fields[i]
-                    es = Es(v)
-                    self.datafield |= {i: v}
-                    if es.classvar:
-                        self.classvar |= {i: v}
-                    elif es.datafactory:
-                        self.factory |= {i: v.default_factory()}
-                    elif es.initvar:
-                        self.initvar |= {i: v}
-
-    def __call__(self, ignore=False, key=Attr.ALL):
-        """
-        Updates instance with ignore adn key (default: Attr.ALL)
-
-        Examples:
-            >>> from rc import Cls
-            >>> from rc import pretty_install
-            >>>
-            >>> pretty_install()
-            >>>
-            >>> cls = Cls(dict())
-            >>> cls.is_callable(Mro.getitem.value)
-            False
-            >>> cls().callable
-            >>> cls().is_callable(Mro.getitem.value)
-            True
-
-        Args:
-            ignore: ignore properties and kwargs :class:`Base.__ignore_kwargs__` (default: False)            key:
-            key: keys to include (default: :attr:`rc.Key.PRIVATE`)
-
-        Returns:
-            Updated Cls Instance.
-        """
-        return self.__init__(data=self.data, ignore=ignore, key=key)
-
-    @functools.cache
-    def _annotations(self, stack=2):
-        return annotations(self.data, stack=stack)
-
-    @property
-    def _asyncgen(self):
-        return self.kind[self.asyncgen.__name__]
-
-    @property
-    def _asyncgenfunc(self):
-        return self.kind[self.asyncgenfunc.__name__]
-
-    @functools.cache
-    def _attr_value(self, name, default=None): return getattr(self.data, name, default)
-
-    @property
-    def _awaitable(self):
-        return self.kind[self.awaitable.__name__]
-
-    @property
-    def _builtinfunctiontype(self):
-        return self.kind[self.builtinfunctiontype.__name__]
-
-    @property
-    def _by_kind(self): return bucket(self.classified, key=lambda x: x.kind if self.key.include(x.name) else 'e')
-
-    @property
-    def _by_name(self): return {i.name: i for i in self.classified if self.key.include(i.name)}
-
-    @property
-    def _cache(self):
-        return self.kind[self.cache.__name__]
-        # return sorted([key for key, value in self.data.__dict__.items() if Es(value).cache and self.key.include(key)])
-
-    @property
-    def _cached_property(self):
-        return self.kind[self.cached_property.__name__]
-        # return sorted([key for key, value in self.data.__dict__.items()
-        # if Es(value).cached_property and self.key.include(key)])
-
-    @property
-    def _callable(self):
-        """
-        Class Callables filtered based on startswith.
-
-        Examples:
-            >>> from rc import Cls
-            >>> from rc import pretty_install
-            >>> from rc import TestBase
-            >>>
-            >>> pretty_install()
-            >>> test = TestBase()
-            >>> test.info.cls.callable
-            ['_info', 'clsmethod', 'get', 'method_async', 'static']
-            >>> test.info.cls().callable  # doctest: +ELLIPSIS
-            [
-                '__delattr__',
-                '__dir__',
-                ...,
-                '__str__',
-                '__subclasshook__',
-                '_info',
-                'clsmethod',
-                'get',
-                'method_async',
-                'static'
-            ]
-
-        Returns:
-            List of Class Callables names filtered based on startswith.
-        """
-        return self.kind[self.callable.__name__]
-        # return sorted(self.classmethods + self.methods + self.staticmethods)
-
-    @property
-    def _classmethod(self):
-        """
-        Class Methods filtered based on startswith.
-
-        Examples:
-            >>> from rc import Cls
-            >>> from rc import pretty_install
-            >>> from rc import TestBase
-            >>>
-            >>> pretty_install()
-            >>> test = TestBase()
-            >>> test.info.cls.classmethod
-            ['clsmethod']
-            >>> test.clsmethod.__name__ in test.info.cls.classmethod
-            True
-            >>> test.info.cls().classmethod
-            ['__init_subclass__', '__subclasshook__', 'clsmethod']
-            >>> Mro.init_subclass.value in test.info.cls().classmethod
-            True
-
-        Returns:
-            List of Class Methods names filtered based on startswith.
-        """
-        return self.kind[self.classmethod.__name__]
-        # return list(map(Name.name_.getter, self.by_kind['class method']))
-
-    # @property
-    # def classvar(self):
-    #     return self.kind[self.classvar.__name__]
-    #     # return [key for key, value in self.annotations(stack=3).items() if value.classvar]
-
-    @property
-    def _coro(self):
-        return self.kind[self.coro.__name__]
-
-    @property
-    def _coroutine(self):
-        return self.kind[self.coroutine.__name__]
-
-    @property
-    def _coroutinefunc(self):
-        return self.kind[self.coroutinefunc.__name__]
-
-    @property
-    def _data_attrs(self):
-        """
-        Class Data Attributes including Dataclasses Fields with default factory are not in classified,
-        filtered based on startswith.
-
-        Examples:
-            >>> from rc import Cls
-            >>> from rc import pretty_install
-            >>> from rc import TestData
-            >>>
-            >>> pretty_install()
-            >>> testdata = Cls(TestData)
-            >>> testdata.data_attrs
-            ['a', 'b', 'c', 'd', 'e', 'f', 'g']
-            >>> testdata.dir
-            ['a', 'b', 'c', 'd', 'e', 'f', 'g']
-            >>> testdata.dir == testdata.data_attrs == testdata.datafield
-            True
-
-        Returns:
-            List of attribute names.
-        """
-        return sorted({*map(Name.name_.getter, self.by_kind['data']), *self.datafield_dict.keys()})
-
-    @property
-    def _defaults(self):
-        """
-        Data Class Fields List.
-
-        Examples:
-            >>> from rc import Cls
-            >>> from rc import pretty_install
-            >>> from rc import TestData
-            >>>
-            >>> pretty_install()
-            >>> testdata = Cls(TestData)
-            >>> testdata.defaults
-            ['a', 'b', 'c', 'd', 'e', 'f', 'g']
-
-        Returns:
-            Data Class Field Attribute Names List.
-        """
-        return self
-
-    @property
-    def _deleter(self):
-        return self.kind[self.deleter.__name__]
-        # return sorted([i.name for i in self.classified if Es(i.object).deleter])
-
-    @property
-    def _dir(self):
-        # noinspection PyUnresolvedReferences
-        """
-        Class Data Attributes including Dataclasses Fields with default factory are not in dir,
-            filtered based on startswith.
-
-        Examples:
-            >>> from rc import Cls
-            >>> from rc import pretty_install
-            >>> from rc import TestData
-            >>>
-            >>> pretty_install()
-            >>> testdata = Cls(TestData)
-            >>> testdata.data_attrs
-            ['a', 'b', 'c', 'd', 'e', 'f', 'g']
-            >>> testdata.dir
-            ['a', 'b', 'c', 'd', 'e', 'f', 'g']
-            >>> testdata.data_attrs == sorted([i for i in dir(TestData) \
-            if testdata.key.include(i)] + testdata.datafactories)
-            True
-
-        Returns:
-            List of attribute names.
-        """
-        return sorted([i for i in {*dir(self.data), *self.datafield_dict.keys()} if self.key.include(i)])
-
-    @property
-    def _generator(self):
-        return self.kind[self.generator.__name__]
-
-    @property
-    def _getsetdescriptor(self):
-        return self.kind[self.getsetdescriptor.__name__]
-
-    @functools.cache
-    def has_attr(self, name): return hasattr(self.data, name)
-
-    @functools.cache
-    def has_method(self, name): return has_method(self.data, name)
-
-    @property
-    def has_reduce(self): return has_reduce(self.data)
-
-    @functools.cache
-    def is_attr(self, name):
-        return name in self.dir
-
-    def is_callable(self, name):
-        """
-        Is Class Callable filtered based on startswith.
-
-        Examples:
-            >>> from rc import pretty_install
-            >>> from rc import TestBase
-            >>>
-            >>> pretty_install()
-            >>>
-            >>> test = TestBase()
-            >>> test.info.cls.is_callable('clsmethod')
-            True
-            >>> test.info.cls.is_callable(Mro.str.value)
-            False
-            >>> test.info.cls().is_callable(Mro.str.value)
-            True
-            >>> test.info.cls.is_callable('prop')
-            False
-
-        Returns:
-            True if Callable Method name filtered based on startswith.
-        """
-        return name in self.callable
-
-    @functools.cache
-    def is_classmethod(self, name):
-        """
-        Is Class Method filtered based on startswith.
-
-        Examples:
-            >>> from rc import pretty_install
-            >>> from rc import TestBase
-            >>>
-            >>> pretty_install()
-            >>>
-            >>> test = TestBase()
-            >>> test.info.cls.is_classmethod('clsmethod')
-            True
-            >>> test.info.cls.is_classmethod(Mro.init_subclass.value)
-            False
-            >>> test.info.cls().is_classmethod(Mro.init_subclass.value)
-            True
-            >>> test.info.cls.is_classmethod('pprop_async')
-            False
-
-        Returns:
-            True if Class Method name filtered based on startswith.
-        """
-        return name in self.classmethod
-
-    @functools.cache
-    def is_classvar(self, name):
-        return name in self.classvar
-
-    @functools.cache
-    def is_data(self, name):
-        return name in self.data_attrs
-
-    @functools.cache
-    def is_deleter(self, name):
-        return name in self.deleter
-
-    @functools.cache
-    def is_datafactory(self, name):
-        return name in self.datafactory
-
-    @functools.cache
-    def is_datafield(self, name):
-        return name in self.datafield
-
-    @functools.cache
-    def is_initvar(self, name):
-        return name in self.initvar
-
-    @functools.cache
-    def is_memberdescriptor(self, name):
-        return name in self.memberdescriptor
-
-    @functools.cache
-    def is_method(self, name):
-        return name in self.method
-
-    @functools.cache
-    def is_methoddescriptor(self, name):
-        return name in self.methoddescriptor
-
-    @functools.cache
-    def is_pproperty(self, name):
-        return name in self.pproperty
-
-    @functools.cache
-    def is_property(self, name):
-        return name in self.prop
-
-    @functools.cache
-    def is_routine(self, name):
-        return name in self.routine
-
-    @functools.cache
-    def is_setter(self, name):
-        return name in self.setter
-
-    @functools.cache
-    def is_staticmethod(self, name):
-        """
-        Is Static Method filtered based on startswith.
-
-        Examples:
-            >>> from rc import pretty_install
-            >>> from rc import TestBase
-            >>>
-            >>> pretty_install()
-            >>>
-            >>> test = TestBase()
-            >>> test.info.cls.is_staticmethod('static')
-            True
-            >>> test.info.cls.is_staticmethod('pprop_async')
-            False
-
-        Returns:
-            True if Static Methods name filtered based on startswith.
-        """
-        return name in self.staticmethod
-
-    def kind(self, value):
-        # TODO: coger el code de la clase de inspect y poner el source aqui y ver el code para el async!
-        #  o ponerlo en la de Name!!!
-        _fields = dict_sort(value.__dataclass_fields__) if self.es.datatype_sub else dict()
-
-        _dict = sorted([i for i in {*dir(value), *_fields.keys()} if self.key.include(i)])
-        self._kind = {kind: {name: obj for name, obj in _dict.items() if getattr(Es(obj), kind)
-                             and self.key.include(name)} for kind in self.kind_attr}
-
-    @property
-    def _mappingproxytype(self):
-        return self.kind[self.mappingproxytype.__name__]
-
-    @property
-    def _memberdescriptor(self):
-        return self.kind[self.memberdescriptor.__name__]
-        # return [i.name for i in self.classified if Es(i.object).memberdescriptor]
-
-    @property
-    def _method(self):
-        return self.kind[self.method.__name__]
-        # return list(map(Name.name_.getter, self.by_kind['method']))
-
-    @property
-    def _methoddescriptor(self):
-        """
-        Includes classmethod, staticmethod and methods but not functions defined (i.e: def info(self))
-
-        Returns:
-            Method descriptors.
-        """
-        return self.kind[self.methoddescriptor.__name__]
-        # return [i.name for i in self.classified if Es(i.object).methoddescriptor]
-
-    @property
-    def _methodwrappertype(self):
-        return self.kind[self.methodwrappertype.__name__]
-
-    @property
-    def _none(self):
-        return self.kind[self.none.__name__]
-
-    @property
-    def _pproperty(self):
-        return self.kind[self.pproperty.__name__]
-        # return [i.name for i in self.classified if Es(i.object).pproperty]
-
-    @property
-    def _prop(self):
-        return self.kind[self.prop.__name__]
-        # return list(map(Name.name_.getter, self.by_kind['property']))
-
-    @property
-    def _property_any(self):
-        return self.kind[self.property_any.__name__]
-        # return list(map(Name.name_.getter, self.by_kind['property']))
-
-    @staticmethod
-    def propnew(name, default=None):
-        return property(
-            lambda self:
-            self.__getattribute__(f'_{name}', default=default(self) if isinstance(default, partial) else default),
-            lambda self, value: self.__setattr__(f'_{name}', value),
-            lambda self: self.__delattr__(f'_{name}')
-        )
-
-    @property
-    def _qualname(self): return Name._qualname0.get(self.data, default=str())
-
-    @property
-    def _routine(self):
-        return self.kind[self.routine.__name__]
-        # return [i.name for i in self.classified if Es(i.object).routine]
-
-    @property
-    def _setter(self):
-        return self.kind[self.setter.__name__]
-        # return [i.name for i in self.classified if Es(i.object).setter]
-
-    @property
-    def _staticmethod(self):
-        """
-        Static Methods filtered based on startswith.
-
-        Examples:
-            >>> from rc import Cls
-            >>> from rc import pretty_install
-            >>> from rc import TestBase
-            >>>
-            >>> pretty_install()
-            >>> test = TestBase()
-            >>> test.info.cls.staticmethod
-            ['static']
-            >>> test.static.__name__ in test.info.cls.staticmethod
-            True
-
-        Returns:
-            List of Static Methods names filtered based on startswith.
-        """
-        return self.kind[self.staticmethod.__name__]
-        # return list(map(Name.name_.getter, self.by_kind['static method']))
-
-
-# noinspection PyDataclass
-class info:
-    """
-    Is Instance, etc. Helper Class
-
-    Attributes:
-    -----------
-    __slots__: tuple
-        slots (default: tuple()).
-    __ignore_attr__: tuple
-        Exclude instance attribute (default: tuple()).
-    __ignore_copy__: tuple
-        True or class for repr instead of nested asdict and deepcopy. No deepcopy (default: tuple()).
-    __ignore_kwarg__: tuple
-        Exclude attr from kwargs (default: tuple()).
-    __ignore_str__: tuple
-        Use str value for object (default: tuple()).
-    _data: Any
-        object to provide information (default: None)
-    _depth: Optional[int]
-        recursion depth (default: None)
-    _ignore: bool
-        ignore properties and kwargs :class:`info.__ignore_kwargs__` (default: False)
-    _key: :class:`Key`
-        keys to include (default: :attr:`rc.Key.PRIVATE`)
-    cls: :class:`Cls`
-        :class:`Cls` (default: Cls(_data, _ignore, _ley))
-    es: :class:`Es`
-        :class:`Es` (default: Es(data))
-   """
-    __slots__ = ('_data', '_depth', '_ignore', '_key',)
-    __ignore_attr__ = tuple()
-    """Exclude instance attribute (default: tuple())."""
-    __ignore_copy__ = tuple()
-    """True or class for repr instead of nested asdict and deepcopy. No deepcopy (default: tuple())"""
-    __ignore_kwarg__ = tuple()
-    """Exclude attr from kwargs (default: tuple())."""
-    __ignore_str__ = tuple()
-    """Use str value for object (default: tuple())."""
-
-    def __init__(self, data, depth=None, ignore=False, key=Attr.PRIVATE):
-        self.data = data
-        self.depth = depth
-        self.ignore = ignore
-        self.key = key
-
-    def __call__(self, depth=None, ignore=False, key=Attr.ALL):
-        self.depth = depth or self.depth
-        self.ignore = ignore or self.ignore
-        self.key = key or self.key
-        return self
-
-    def annotations(self, stack=2):
-        """
-        Object Annotations.
-
-        Examples:
-            >>> from dataclasses import dataclass
-            >>> from dataclasses import InitVar
-            >>> from typing import ClassVar
-            >>> from rc import info
-            >>>
-            >>> @dataclass
-            ... class Test:
-            ...     a: int = 1
-            ...     initvar: InitVar[int] = 1
-            ...     classvar: ClassVar[int] = 2
-            ...     def __post_init__(self, initvar: int):
-            ...         self.a = initvar
-            >>> ann = info(Test).annotations()
-            >>> ann['a'].cls, ann['a'].default
-            (<class 'int'>, 0)
-            >>> ann['initvar'].cls, ann['initvar'].initvar, ann['initvar'].default
-            (<class 'int'>, True, 0)
-            >>> ann['classvar'].cls, ann['classvar'].classvar, ann['classvar'].default
-            (<class 'int'>, True, 0)
-
-        Args:
-            stack: stack index to extract globals and locals (default: 2) or frame.
-
-        Returns:
-            Object Annotations.
-        """
-        return annotations(self.data, stack=stack)
-
-    # noinspection PyUnusedLocal
-    def asdict(self, count: int = ..., defaults: bool = ...):
-        """
-        Dict excluding.
-
-        Returns:
-            dict:
-        """
-        # convert = self.depth is None or self.depth > 1
-        # # if self.es().enumenuminstance:
-        # #     self.data = {self.data.name: self.data.value}
-        # # elif self.es().namedtuple:
-        # #     self.data = self.data._asdict().copy()
-        # # elif self.instance(self.getmroinsattr('__ignore_str__')) and convert:
-        # #     self.data = str(self.data)
-        # # elif self.instance(Semaphore) and convert:
-        # #     self.data = dict(locked=self.data.locked(), value=self.data._value)
-        # # elif self.instance(GitSymbolicReference) and convert:
-        # #     self.data = dict(repo=self.data.repo, path=self.data.path)
-        # # elif self.instance(Remote) and convert:
-        # #     self.data = dict(repo=self.data.repo, name=self.data.name)
-        # # elif self.instance(Environs) and convert:
-        # #     self.data = self.data.dump()
-        # # elif self.instance(Logger) and convert:
-        # #     self.data = dict(name=self.data.name, level=self.data.level)
-        # # if self.enumenumcls:
-        # #     self.data = {key: value._value_ for key, value in self.getcls.__members__.items()}
-        # # elif self.chainmap and convert:
-        # #     self.data.rv = ChainRV.FIRST
-        # #     self.data = dict(self.data).copy()
-        # if any([self.dataclass, self.dataclass_instance, self.dict_cls, self.dict_instance, self.slots_cls,
-        #           self.slots_instance]):
-        #     self.data = self.defaults if defaults else self.defaults | self.vars
-        # # elif self.mutablemapping and convert:
-        # #     self.data = dict(self.data).copy()
-        # if self.mlst:
-        #     rv = dict() if (mm := self.mutablemapping) else list()
-        #     for key in self.data:
-        #         value = get(self.data, key) if mm else key
-        #         if value:
-        #             if (inc := self.include(key, self.data if mm else None)) is None:
-        #                 continue
-        #             else:
-        #                 value = inc[1]
-        #                 if self.depth is None or count < self.depth:
-        #                     value = self.new(value).asdict(count=count + 1, defaults=defaults)
-        #         rv.update({key: value}) if mm else rv.append(value)
-        #     return rv if mm else type(self.data)(rv)
-        # if (inc := self.include(self.data)) is not None:
-        #     if self.getsetdescriptor() or self.iscoro or isinstance(inc[1], \
-        #     (*self.getmroinsattr('__ignore_copy__'),)) \
-        #             or (self.depth is not None and self.depth > 1):
-        #         return inc[1]
-        #     try:
-        #         return deepcopy(inc[1])
-        #     except TypeError as exception:
-        #         if "cannot pickle '_thread.lock' object" == str(exception):
-        #             return inc[1]
-        return self.data
-
-    def attr_value(self, name, default=None): return getattr(self.data, name, default)
-
-    @property
-    def attrs(self) -> list:
-        """
-        Attrs including properties if not self.ignore.
-
-        Excludes:
-            __ignore_attr__
-            __ignore_kwarg__ if not self.ignore.
-
-        Returns:
-            list:
-        """
-        return sorted([attr for attr in {*self.attrs_cls, *self.cls.memberdescriptor,
-                                         *(vars(self.data) if self.es().datatype or self.es().datatype_sub else []),
-                                         *(self.cls.prop if not self.ignore else [])}
-                       if self._include_attr(attr, self.cls.callable) and attr not in self.cls.setter])
-
-    @property
-    def attrs_cls(self):
-        attrs = {item for item in self.cls.dir if
-                 self._include_attr(item) and item in self.cls.data_attrs and item}
-        if self.cls.es.datatype_sub:
-            _ = {attrs.add(item.name) for item in datafields(self.data) if self._include_attr(item.name)}
-        return sorted(list(attrs))
-
-    @property
-    def cls(self): return Cls(data=self.data, ignore=self.ignore, key=self.key)
-
-    @property
-    def coro(self): return [i.name for i in self.cls.classified if Es(i.object).coro] + self.coros_property
-
-    @property
-    def coro_pproperty(self): return [i.name for i in self.cls.classified if Es(i.object).pproperty and
-                                      Es(object.__getattribute__(self.data, i.name)).coro]
-
-    @property
-    def coro_prop(self): return [i.name for i in self.cls.classified if Es(i.object).prop and
-                                 Es(object.__getattribute__(self.data, i.name)).coro]
-
-    data = property(
-        lambda self: object.__getattribute__(self, '_data'),
-        lambda self, value: object.__setattr__(self, '_data', value),
-        lambda self: object.__setattr__(self, '_data', None)
-    )
-
-    @property
-    def defaults(self):
-        """Class defaults."""
-
-        def is_missing(default: str) -> bool:
-            return isinstance(default, MISSING_TYPE)
-
-        rv = dict()
-        rv_data = dict()
-        attrs = self.attrs_cls
-        if self.cls.es.datatype_sub:
-            rv_data = {f.name: f.default if is_missing(
-                f.default) and is_missing(f.default_factory) else f.default if is_missing(
-                f.default_factory) else f.default_factory() for f in datafields(self.data) if f.name in attrs}
-        if self.cls.es.namedtype_sub:
-            rv = self.cls.data._field_defaults
-        elif self.cls.es.dicttype_sub or self.cls.es.slotstype_sub:
-            rv = {key: inc[1] for key in attrs if (inc := self.include(key, self.data)) is not None}
-        return rv | rv_data
-
-    depth = property(
-        lambda self: object.__getattribute__(self, '_depth'),
-        lambda self, value: object.__setattr__(self, '_depth', value),
-        lambda self: object.__setattr__(self, '_data', None)
-    )
-
-    @property
-    def dir(self):
-        return set(self.cls.dir + [i for i in dir(self.data) if self.key.include(i)])
-
-    def es(self, data=None): return Es(data or self.data)
-
-    def has_attr(self, name): return self.cls.has_attr(name=name) or hasattr(self.data, name)
-
-    def has_method(self, name): return self.cls.has_method(name=name) or has_method(self.data, name)
-
-    @property
-    def has_reduce(self): return self.cls.has_reduce or has_reduce(self.data)
-
-    @property
-    def hash(self):
-        return hash(tuple(map(lambda x: getset(self.data, x), Mro.hash_exclude.slotsinclude(self.data))))
-
-    ignore = property(
-        lambda self: object.__getattribute__(self, '_ignore'),
-        lambda self, value: object.__setattr__(self, '_ignore', value),
-        lambda self: object.__setattr__(self, '_ignore', False)
-    )
-
-    @property
-    def ignore_attr(self): return
-
-    def _include_attr(self, name, exclude=tuple()):
-        ignore = {*Mro.ignore_attr.val(self.data), *(Mro.ignore_kwarg.val(self.data) if self.ignore else set()),
-                  *exclude, *self.cls.initvar}
-        return not any([not self.key.include(name), name in ignore, f'_{self.cls.name}' in name])
-
-    def _include_exclude(self, data, key=True):
-        import typing
-        i = info(data)
-        call = (Environs,)
-        return any([i.module == typing, i.module == _abc, i.es().moduletype,
-                    False if i.cls.data in call else i.es().callable, i.es().type,
-                    self.key.include(data) if key else False])
-
-    def include(self, key=None, data=None):
-        es = Es(data)
-        if (not es.mm and Cls(data).is_memberdescriptor(key) and key not in Mro.ignore_attr.val(data)) \
-                or not self._include_exclude(key):
-            if not es.none:
-                if (value := get(self.data, key)) and self._include_exclude(value, key=False):
-                    return None
-                return key, value
-            return key, key
-        return None
-
-    @property
-    def initvarsdict(self):
-        return getattr(self.data, '__init_vars__', dict())
-
-    def is_attr(self, name): return self.cls.is_attr(name) or name in self().dir
-
-    def is_coro(self, name): return name in self().coros
-
-    def is_coro_pproperty(self, name): return name in self().coros_pproperty
-
-    def is_coro_property(self, name): return name in self().coros_property
-
-    key = property(
-        lambda self: object.__getattribute__(self, '_key'),
-        lambda self, value: object.__setattr__(self, '_key', value),
-        lambda self: object.__setattr__(self, '_key', Attr.PRIVATE)
-    )
-
-    @property
-    def keys(self):
-        """
-        Keys from kwargs to init class (not InitVars), exclude __ignore_kwarg__ and properties.
-
-        Returns:
-            list:
-        """
-        return sorted(list(self.kwargs.keys()))
-
-    @property
-    def kwargs(self):
-        """
-        Kwargs to init class with python objects no recursive, exclude __ignore_kwarg__ and properties.
-
-        Includes InitVars.
-
-        Example: Mongo binary.
-
-        Returns:
-            dict:
-        """
-        ignore = self.ignore
-        self.ignore = True
-        rv = {key: get(self.data, key) for key in self.attrs_cls} | \
-             {key: value for key, value in self.initvarsdict.items()
-              if key not in {*Mro.ignore_attr.val(self.data), *Mro.ignore_kwarg.val(self.data)}}
-        self.ignore = ignore
-        return rv
-
-    @property
-    def kwargs_dict(self) -> dict:
-        """
-        Kwargs recursive to init class with python objects as dict, asdict excluding __ignore_kwarg__ and properties.
-
-        Example: Mongo asdict.
-
-        Returns:
-            dict:
-        """
-        ignore = self.ignore
-        self.ignore = True
-        rv = self.asdict()
-        self.ignore = ignore
-        return rv
-
-    @property
-    def module(self): return getmodule(self.data)
-
-    @property
-    def public(self):
-        self.key = Attr.PUBLIC
-        return self.asdict()
-
-    @property
-    def repr(self):
-        attrs = Mro.repr_exclude.slotsinclude(self.data)
-        attrs.update(self.cls.pproperty if Mro.repr_pproperty.first(self.data) else list())
-        r = [f"{s}: {getset(self.data, s)}" for s in sorted(attrs) if s and not self.is_coro(s)]
-        new = f',{NEWLINE if Mro.repr_newline.first(self.data) else " "}'
-        return f'{self.cls.name}({new.join(r)})'
-
-    @property
-    def to_json(self, regenerate=True, indent=4, keys=True, max_depth=-1):
-        return jsonpickle.encode(self.data, unpicklable=regenerate, indent=indent, keys=keys, max_depth=max_depth)
-
-    def to_obj(self, keys=True): return jsonpickle.decode(self.data, keys=keys)
-
-    @property
-    def values(self):
-        """
-        Init python objects kwargs values no properties and not __ignore_kwarg__.
-
-        Returns:
-            list:
-        """
-        return list(self.kwargs.values())
-
-    @property
-    def values_dict(self):
-        """
-        Init python objects as dict kwargs values no properties and not __ignore_kwarg__.
-
-        Returns:
-            list:
-        """
-        return list(self.kwargs_dict.values())
-
-    @property
-    def vars(self):
-        attrs = self.attrs
-        return {key: inc[1] for key in attrs if (inc := self.include(key, self.data)) is not None}
-
-
-class Seq(Sequence):
-    """Sequence Helper Class."""
-    __builtin__ = object
-    __slots__ = ()
-
-    @abstractmethod
-    def __new__(cls, *args, **kwargs):
-        pass
-
-    @abstractmethod
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @abstractmethod
-    def __getitem__(self, index):
-        return self.__builtin.__getitem__(self, index)
-
-    def all_allin(self, *args, **kwargs):
-        """
-        ROWS: Get ALL container items/rows found if ALL args and kwargs are found IN item/row.
-
-        Recursivily for MutableMapping.
-
-        Examples:
-            >>> from inspect import classify_class_attrs
-            >>> from rc import BUILTINS_CLASSES
-            >>> from rc import pretty_install
-            >>> from rc import Seq
-            >>> from rc import slist
-            >>> from rc import stuple
-            >>>
-            >>> pretty_install()
-            >>>
-            #
-            # args
-            #
-            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
-            >>> s.all_allin('b', 'c')
-            slist[{'a': {'b': {'c': 1}}, 'b': 2}]
-            >>> s.all_allin('a', 'd')
-            slist[]
-            >>>
-            >>> s = stuple([dict(e=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), *classify_class_attrs(stuple)])
-            >>> s.all_allin(kind='method', defining_class=stuple)  # doctest: +ELLIPSIS
-            stuple(Attribute(name='__init__', kind='method', defining_class=<class '....stuple'>, \
-object=<function stuple.__init__ at 0x...>), Attribute(name='__repr__', kind='method', \
-defining_class=<class '....stuple'>, object=<function stuple.__repr__ at 0x...>))
-
-        Args:
-            *args: to use __contains__ in container value/column.
-            **kwargs: to use __getattribute__ or __getitem__ in container value/column.
-
-        Returns:
-            ROWS: ALL container items/rows found if ALL args and kwargs are IN item.
-        """
-        rv = slist()
-        for item in self:
-            yes = set()
-            es = Es(item)
-            if es.container:
-                if es.mm:
-                    for arg in args:
-                        yes.add(True) if nested_lookup(arg, item) else yes.add(False)
-                    for key, value in kwargs.items():
-                        yes.add(True) if in_dict(item, {key: value}) else yes.add(False)
-                    if yes == {True}:
-                        rv.append(item)
-                else:
-                    for arg in args:
-                        yes.add(True) if arg in item else yes.add(False)
-                    for key, value in kwargs.items():
-                        yes.add(True) if value == noexception(Exception, object.__getattribute__, item, key,
-                                                              default_=NotImplemented) else yes.add(False)
-                    if yes == {True}:
-                        rv.append(item)
-        return rv if Es(self.__class__).slist else self.__class__(rv)
-
-    def all_anyin(self, *args, **kwargs):
-        """
-        ROWS: Get ALL container items/rows found if ANY arg or kwarg are found IN item/row.
-
-        Recursivily for MutableMapping.
-
-        Examples:
-            >>> from inspect import classify_class_attrs
-            >>> from rc import BUILTINS_CLASSES
-            >>> from rc import pretty_install
-            >>> from rc import Seq
-            >>> from rc import slist
-            >>> from rc import stuple
-            >>>
-            >>> pretty_install()
-            >>>
-            #
-            # args
-            #
-            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
-            >>> s.all_anyin('b', c=1)
-            slist[['b', 'd'], {'a': {'b': {'c': 1}}, 'b': 2}, {'a': {'b': {'c': 1}}, 'b': 2}]
-            >>> s.all_anyin('a', 'd')
-            slist[{'a': 1}, ['b', 'd'], {'a': {'b': {'c': 1}}, 'b': 2}]
-            >>>
-            >>> s = stuple([dict(e=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), *classify_class_attrs(slist)])
-            >>> s.all_anyin('d', e=1)
-            stuple({'e': 1}, ['b', 'd'])
-            >>> s.all_anyin('j', e=3)
-            stuple()
-            >>> s.all_anyin('b', kind='data')  # doctest: +ELLIPSIS
-            stuple(['b', 'd'], {'a': {'b': {'c': 1}}, 'b': 2}, Attribute(name='__abstractmethods__', kind='data', ...)
-
-        Args:
-            *args: to use __contains__ in container value/column.
-            **kwargs: to use __getattribute__ or __getitem__ in container value/column.
-
-        Returns:
-            ROWS: ALL container items/rows found if ANY arg or kwarg are IN item/row.
-        """
-        rv = slist()
-        for item in self:
-            es = Es(item)
-            if es.container:
-                if es.mm:
-                    for arg in args:
-                        if nested_lookup(arg, item):
-                            rv.append(item)
-                    for key, value in kwargs.items():
-                        if in_dict(item, {key: value}):
-                            rv.append(item)
-                else:
-                    for arg in args:
-                        if arg in item:
-                            rv.append(item)
-                    for key, value in kwargs.items():
-                        if value == noexception(Exception, object.__getattribute__, item, key,
-                                                default_=NotImplemented):
-                            rv.append(item)
-        return rv if Es(self.__class__).slist else self.__class__(rv)
-
-    def first_allin(self, *args, **kwargs):
-        """
-        ROW: Get FIRST container item/row found if ALL args and kwargs are IN item/row.
-
-        Recursivily for MutableMapping.
-
-        Examples:
-            >>> from inspect import classify_class_attrs
-            >>> from rc import BUILTINS_CLASSES
-            >>> from rc import pretty_install
-            >>> from rc import Seq
-            >>> from rc import slist
-            >>> from rc import stuple
-            >>>
-            >>> pretty_install()
-            >>>
-            #
-            # args
-            #
-            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
-            >>> s.first_allin('b', c=1)
-            {'a': {'b': {'c': 1}}, 'b': 2}
-            >>> s.first_allin('b', 'd')
-            ['b', 'd']
-            >>> s = stuple([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
-            >>> s.first_allin('a', 'b')
-            {'a': {'b': {'c': 1}}, 'b': 2}
-            >>> s.first_allin('a', 'e') is None
-            True
-            >>>
-            #
-            # Kwargs - __getattribute__
-            #
-            >>> classified = slist(classify_class_attrs(slist))
-            >>> d_getattr = classified.first_allin(kind='method', name='first_allin')
-            >>> d_getattr  # doctest: +ELLIPSIS
-            Attribute(name='first_allin', kind='method', defining_class=<class '....Seq'>, \
-object=<function Seq.first_allin at 0x...>)
-            >>>
-            #
-            # Kwargs - __getitem__
-            #
-            >>> # noinspection PyUnresolvedReferences
-            >>> classified = stuple([i._asdict() for i in classify_class_attrs(slist)])
-            >>> d_getitem = classified.first_allin(kind='method', name='first_allin')
-            >>> d_getitem  # doctest: +ELLIPSIS
-            {
-                'name': 'first_allin',
-                'kind': 'method',
-                'defining_class': <class '....Seq'>,
-                'object': <function Seq.first_allin at 0x...>
-            }
-            >>> classified.first_allin(name='test', kind='data') is None
-            True
-            >>>
-            >>> d_getattr._asdict() == d_getitem
-            True
-
-        Args:
-            *args: to use __contains__ in container value/column.
-            **kwargs: to use __getattribute__ or __getitem__ in container value/column.
-
-        Returns:
-           ROW: FIRST container item/row found if ALL args and kwargs are IN item/row.
-        """
-        for item in self:
-            yes = set()
-            es = Es(item)
-            if es.container:
-                if es.mm:
-                    for arg in args:
-                        yes.add(True) if nested_lookup(arg, item) else yes.add(False)
-                    for key, value in kwargs.items():
-                        yes.add(True) if in_dict(item, {key: value}) else yes.add(False)
-                    if yes == {True}:
-                        return item
-                else:
-                    for arg in args:
-                        yes.add(True) if arg in item else yes.add(False)
-                    for key, value in kwargs.items():
-                        yes.add(True) if value == noexception(Exception, object.__getattribute__, item, key,
-                                                              default_=NotImplemented) else yes.add(False)
-                    if yes == {True}:
-                        return item
-
-    def first_anyin(self, *args, **kwargs):
-        """
-        ROW: Get FIRST container item/row when ANY args or kwargs are found IN item/row.
-
-        Recursivily for MutableMapping.
-
-        Examples:
-            >>> from inspect import classify_class_attrs
-            >>> from rc import BUILTINS_CLASSES
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>> from rc import Seq
-            >>> from rc import slist
-            >>> from rc import stuple
-            >>>
-            >>> pretty_install()
-            >>>
-            #
-            # args
-            #
-            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
-            >>> s.first_anyin('b', 'c')
-            ['b', 'd']
-            >>> s.first_anyin('d')
-            ['b', 'd']
-            >>> s.first_anyin('e', c=1)
-            {'a': {'b': {'c': 1}}, 'b': 2}
-            >>> s = stuple([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
-            >>> s.first_anyin('a', 'e')
-            {'a': 1}
-            >>> s.first_anyin('', 'e') is None
-            True
-            >>>
-            #
-            # Kwargs - __getitem__
-            #
-            >>> # noinspection PyUnresolvedReferences
-            >>> classified = slist([i._asdict() for i in classify_class_attrs(slist)])
-            >>> d_getitem = classified.first_anyin(test=None, kind='data')
-            >>> d_getitem  # doctest: +ELLIPSIS
-            {
-                'name': '__abstractmethods__',
-                'kind': 'data',
-                'defining_class': <class '....slist'>,
-                'object': frozenset()
-            }
-            >>>
-            #
-            # Kwargs - __getattribute__
-            #
-            >>> classified = slist(classify_class_attrs(slist))
-            >>> d_getattr = classified.first_anyin(test=None, kind='data')
-            >>> d_getattr  # doctest: +ELLIPSIS
-            Attribute(name='__abstractmethods__', kind='data', defining_class=<class '....slist'>, object=frozenset())
-            >>>
-            >>> d_getitem == d_getattr._asdict()
-            True
-
-        Args:
-            *args: to use __contains__ in container value/column.
-            **kwargs: to use __getattribute__ or __getitem__ in container value/column.
-
-        Returns:
-            ROW: FIRST container item/row found where ANY arg or kwarg are IN item/row.
-        """
-        for item in self:
-            es = Es(item)
-            if es.container:
-                if es.mm:
-                    for arg in args:
-                        if nested_lookup(arg, item):
-                            return item
-                    for key, value in kwargs.items():
-                        if in_dict(item, {key: value}):
-                            return item
-                else:
-                    for arg in args:
-                        if arg in item:
-                            return item
-                    for key, value in kwargs.items():
-                        if value == noexception(Exception, object.__getattribute__, item, key,
-                                                default_=NotImplemented):
-                            return item
-
-    def get_allin_dict(self, *args, **kwargs):
-        """
-        COLUMNS: GET items/columns when ALL args/keys and kwargs/items are found IN each container item/row/DICT.
-
-        Keys and Items are checked recursivily.
-
-        Args:
-            *args: keys to search in each item/row/DICT.
-            **kwargs: items to search in each item/row/DICT.
-
-        Returns:
-            COLUMNS: Items/columns when ALL args/keys and kwargs/items are found IN each container item/row/DICT.
-        """
-        rv = slist()
-        for item in self:
-            es = Es(item)
-            if es.mm:
-                for i in item:
-                    yes = set()
-                    for arg in args:
-                        yes.add(True) if nested_lookup(arg, i) else yes.add(False)
-                    for key, value in kwargs.items():
-                        yes.add(True) if in_dict(i, {key: value}) else yes.add(False)
-                    if yes == {True}:
-                        rv.append(i)
-        return rv if Es(self.__class__).slist else self.__class__(rv)
-
-    def get_anyin_dict(self, *args, **kwargs):
-        """
-        COLUMNS: GET items/columns when ANY args/keys or kwargs/items are found IN each container item/row/DICT.
-
-        Keys and Items are checked recursivily.
-
-        Examples:
-            >>> from inspect import classify_class_attrs
-            >>> from rc import BUILTINS_CLASSES
-            >>> from rc import Mro
-            >>> from rc import pretty_install
-            >>> from rc import Seq
-            >>> from rc import slist
-            >>> from rc import stuple
-            >>>
-            >>> pretty_install()
-            >>>
-            #
-            # args
-            #
-            >>> s = slist([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
-            >>> s.first_anyin('b', 'c')
-            ['b', 'd']
-            >>> s.first_anyin('d')
-            ['b', 'd']
-            >>> s.first_anyin('e', c=1)
-            {'a': {'b': {'c': 1}}, 'b': 2}
-            >>> s = stuple([dict(a=1), ['b', 'd'], None, dict(a=dict(b=dict(c=1)), b=2), ])
-            >>> s.first_anyin('a', 'e')
-            {'a': 1}
-            >>> s.first_anyin('', 'e') is None
-            True
-            >>>
-            #
-            # Kwargs - __getitem__
-            #
-            >>> # noinspection PyUnresolvedReferences
-            >>> classified = slist([i._asdict() for i in classify_class_attrs(slist)])
-            >>> d_getitem = classified.first_anyin(test=None, kind='data')
-            >>> d_getitem  # doctest: +ELLIPSIS
-            {
-                'name': '__abstractmethods__',
-                'kind': 'data',
-                'defining_class': <class '....slist'>,
-                'object': frozenset()
-            }
-            >>>
-            #
-            # Kwargs - __getattribute__
-            #
-            >>> classified = slist(classify_class_attrs(slist))
-            >>> d_getattr = classified.first_anyin(test=None, kind='data')
-            >>> d_getattr  # doctest: +ELLIPSIS
-            Attribute(name='__abstractmethods__', kind='data', defining_class=<class '....slist'>, object=frozenset())
-            >>>
-            >>> d_getitem == d_getattr._asdict()
-            True
-
-        Args:
-            *args: keys to search in each item/row/DICT.
-            **kwargs: items to search in each item/row/DICT.
-
-        Returns:
-            COLUMNS: Items/columns when ANY args/keys or kwargs/items are found IN each container item/row/DICT.
-        """
-        rv = slist()
-        for item in self:
-            es = Es(item)
-            if es.mm:
-                for i in item:
-                    for arg in args:
-                        if nested_lookup(arg, i):
-                            rv.append(i)
-                            break
-                    for key, value in kwargs.items():
-                        if in_dict(item, {key: value}):
-                            rv.append(i)
-                            break
-        return rv if Es(self.__class__).slist else self.__class__(rv)
-
-    def get_attr(self, *args):
-        """
-        COLUMNS: Get attr/args values/columns for each item/row if ANY attr/arg is found.
-
-        Args:
-            *args: attribute names to get values.
-
-        Returns:
-            COLUMNS: Values for attrs/args found.
-        """
-        rv = slist()
-        for item in self:
-            yes = set()
-            one = len(args) == 1
-            rv_sub = slist()
-            for arg in args:
-                if arg in dir(item):
-                    value = rv.append(object.__getattribute__(item, arg))
-                    rv.append(value) if one else rv_sub.append(value)
-            if not one and rv_sub:
-                rv.append(rv_sub if Es(self.__class__).slist else self.__class__(rv_sub))
-        return rv if Es(self.__class__).slist else self.__class__(rv)
-
-
-class slist(list, Seq):
-    """
-    List Seq Sequence Helper Class.
-
-    Examples:
-        >>> from rc import pretty_install
-        >>> from rc import slist
-        >>>
-        >>> pretty_install()
-        >>>
-        >>> s = slist(['bool', 'dict', 'int'])
-        >>> s
-        slist['bool', 'dict', 'int']
-        >>> repr(s)
-        "slist['bool', 'dict', 'int']"
-    """
-
-    def __new__(cls, *args, **kwargs): return list.__new__(cls)
-
-    def __init__(self, seq=()): list.__init__(self, seq)
-
-    def __repr__(self): return f'{self.__class__.__name__}{super().__repr__()}'
-
-
-collections.abc.Sequence.register(slist)
-
-
-class stuple(tuple, Seq):
-    """
-    Tuple Seq Sequence Helper Class.
-
-    Examples:
-        >>> from rc import pretty_install
-        >>> from rc import stuple
-        >>>
-        >>> pretty_install()
-        >>>
-        >>> s = stuple(['bool', 'dict', 'int'])
-        >>> s
-        stuple('bool', 'dict', 'int')
-        >>> repr(s)
-        "stuple('bool', 'dict', 'int')"
-    """
-    __slots__ = ()
-
-    def __new__(cls, *args, **kwargs): return tuple.__new__(stuple, *args, **kwargs)
-
-    def __init__(self, *args, **kwargs): tuple.__init__(*args, **kwargs)
-
-    def __repr__(self): return f'{self.__class__.__name__}{super().__repr__()}'
-
-
-collections.abc.Sequence.register(stuple)
 
 
 # </editor-fold>
@@ -6318,6 +3729,7 @@ def byellow(msg, bold=False, nl=True, underline=False,
 
 
 # </editor-fold>
+
 # <editor-fold desc="Test">
 class TestAsync:
     _async_classmethod = varname(1)
@@ -6343,9 +3755,6 @@ class TestAsync:
     def method(self): return self._method
 
     @cached_property
-    async def async_cprop(self): return self._async_cprop
-
-    @cached_property
     def cprop(self): return self._cprop
 
     @pproperty
@@ -6365,92 +3774,4 @@ class TestAsync:
 
     @staticmethod
     def staticmethod(): return TestAsync._staticmethod
-
-
-class TestBase(Base):
-    classvar: ClassVar[int] = 1
-    initvar: InitVar[int] = 1
-    __slots__ = ('_hash', '_prop', '_repr', '_slot',)
-    __hash_exclude__ = ('_slot',)
-    __repr_exclude__ = ('_repr',)
-    prop = newprop()
-
-    async def method_async(self):
-        pass
-
-    @classmethod
-    def clsmethod(cls):
-        pass
-
-    @staticmethod
-    def static():
-        pass
-
-    @pproperty
-    def pprop(self):
-        return 'pprop'
-
-    @pproperty
-    async def pprop_async(self):
-        return 'pprop_async'
-
-
-@dataclass
-class TestData:
-    __data = varname(1)
-    __dataclass_classvar__: ClassVar[str] = '__dataclass_classvar__'
-    __dataclass_classvar: ClassVar[str] = '__dataclass_classvar'
-    __dataclass_default_factory: Union[dict, str] = datafield(default_factory=dict, init=False)
-    __dataclass_default_factory_init: Union[dict, str] = datafield(default_factory=dict)
-    dataclass_classvar: ClassVar[str] = 'dataclass_classvar'
-    dataclass_default_factory: Union[dict, str] = datafield(default_factory=dict, init=False)
-    dataclass_default_factory_init: Union[dict, str] = datafield(default_factory=dict)
-    dataclass_default: str = datafield(default='dataclass_default', init=False)
-    dataclass_default_init: str = datafield(default='dataclass_default_init')
-    dataclass_initvar: InitVar[str] = 'dataclass_initvar'
-    dataclass_str: str = 'dataclass_integer'
-
-    def __post_init__(self, dataclass_initvar): pass
-
-    __class_getitem__ = classmethod(GenericAlias)
-
-
-class TestDataDictMix(TestData):
-    subclass_annotated_str: str = 'subclass_annotated_str'
-    subclass_classvar: ClassVar[str] = 'subclass_classvar'
-    subclass_str = 'subclass_str'
-
-    def __init__(self, dataclass_initvar='dataclass_initvar_1', subclass_dynamic='subclass_dynamic'):
-        super().__init__()
-        super().__post_init__(dataclass_initvar=dataclass_initvar)
-        self.subclass_dynamic = subclass_dynamic
-
-
-class TestDataDictSlotMix(TestDataDictMix):
-    __slots__ = ('_slot_property', 'slot',)
-
-    # Add init=True dataclass attrs if it subclassed and not @dataclass
-    def __init__(self, dataclass_initvar='dataclass_initvar_2', slot_property='slot_property', slot='slot'):
-        super().__init__()
-        super().__post_init__(dataclass_initvar=dataclass_initvar)
-        self._slot_property = slot_property
-        self.slot = slot
-
-    @pproperty
-    def slot_property(self):
-        return self._slot_property
-# </editor-fold>
-# <editor-fold desc="ToDo">
-# TODO: asdict_props
-# TODO: Es.asdict
-# TODO: Es.__hash__
-# TODO: Es.__getstate__
-# TODO: Es.__repr__
-# TODO: Es.__setstate__
-# TODO: Es.__str__
-# TODO: Es.asdict
-# TODO: classify_cls
-# TODO: Finish annotations wit defaults and kwargs and init
-
-
 # </editor-fold>

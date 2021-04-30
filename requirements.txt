@@ -15,6 +15,7 @@ intervaltree
 jsonpickle
 more-itertools
 nested-lookup
+pandas
 pip
 psutil
 pydantic

@@ -1,0 +1,19 @@
+# <editor-fold desc="ToDo">
+
+# TODO: Finish with Seq and change Dict for find first. If change to Tuple instead of dict use cache.
+# TODO: Printable properties, kwargs, .... ignore infocls.
+# TODO: Cepillar el Base y refundir con el Meta.
+
+# TODO: asdict_props
+# TODO: Es.asdict
+# TODO: Es.__hash__
+# TODO: Es.__getstate__
+# TODO: Es.__repr__
+# TODO: Es.__setstate__
+# TODO: Es.__str__
+# TODO: Es.asdict
+# TODO: classify_cls
+# TODO: Finish annotations wit defaults and kwargs and init
+
+
+# </editor-fold>

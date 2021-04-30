@@ -9,6 +9,7 @@
     <orderEntry type="module" module-name="tmp" />
     <orderEntry type="module" module-name="tmp" />
     <orderEntry type="module" module-name="tmp" />
+    <orderEntry type="module" module-name="pandas-tutorial" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="format" value="GOOGLE" />
