@@ -177,7 +177,7 @@ x
 
     def __call__(self, ignore=False, key=Attr.ALL):
         """
-        Updates instance with ignore adn key (default: Attr.ALL)
+        Updates instance with ignore adn key (default: Access.ALL)
 
         Examples:
             >>> from rc import Cls
@@ -186,10 +186,10 @@ x
             >>> pretty_install()
             >>>
             >>> cls = Cls(dict())
-            >>> cls.is_callable(Mro.getitem.value)
+            >>> cls.is_callable(Get.getitem.value)
             False
             >>> cls().callable
-            >>> cls().is_callable(Mro.getitem.value)
+            >>> cls().is_callable(Get.getitem.value)
             True
 
         Args:
@@ -293,7 +293,7 @@ x
             True
             >>> test.info.cls().classmethod
             ['__init_subclass__', '__subclasshook__', 'clsmethod']
-            >>> Mro.init_subclass.value in test.info.cls().classmethod
+            >>> Get.init_subclass.value in test.info.cls().classmethod
             True
 
         Returns:
@@ -430,9 +430,9 @@ x
             >>> test = TestBase()
             >>> test.info.cls.is_callable('clsmethod')
             True
-            >>> test.info.cls.is_callable(Mro.str.value)
+            >>> test.info.cls.is_callable(Get.str.value)
             False
-            >>> test.info.cls().is_callable(Mro.str.value)
+            >>> test.info.cls().is_callable(Get.str.value)
             True
             >>> test.info.cls.is_callable('prop')
             False
@@ -456,9 +456,9 @@ x
             >>> test = TestBase()
             >>> test.info.cls.is_classmethod('clsmethod')
             True
-            >>> test.info.cls.is_classmethod(Mro.init_subclass.value)
+            >>> test.info.cls.is_classmethod(Get.init_subclass.value)
             False
-            >>> test.info.cls().is_classmethod(Mro.init_subclass.value)
+            >>> test.info.cls().is_classmethod(Get.init_subclass.value)
             True
             >>> test.info.cls.is_classmethod('pprop_async')
             False

@@ -35,6 +35,7 @@ types-ipaddress
 types-nmap
 types-PyYAML
 types-requests
+types-singledispatch
 types-toml
 types-typing-extensions
 typing_json

@@ -1,3 +1,5 @@
+_ST = TypeVar('_ST')  # Seq
+_ST_co = TypeVar('_ST_co', covariant=True)  # Any type covariant containers.
 
 class Seq(Sequence[_ST_co]):
     __builtin__: Type[GetItemSupportType] = ...

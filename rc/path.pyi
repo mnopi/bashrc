@@ -18,7 +18,7 @@ from furl import furl
 from git import GitConfigParser
 from jinja2 import Template
 
-_P = TypeVar('_P', bound='Path')
+_P = TypeVar('_Private', bound='Path')
 _PI = TypeVar('_PI', bound='PathIs')
 _PM = TypeVar('_PM', bound='PathMode')
 _POp = TypeVar('_POp', bound='PathOption')

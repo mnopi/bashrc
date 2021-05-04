@@ -1,3 +1,4 @@
+_SLT = TypeVar('_SLT')  # slist
 
 class slist(list, Seq[_SLT]):
     def __new__(cls, iterable: Iterable[_SLT] = ...) -> slist: ...

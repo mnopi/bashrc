@@ -1,6 +1,18 @@
 # -*- coding: utf-8 -*-
-"""Utils Module."""
+"""
+Utils Module.
+
+Examples:
+    >>> from copy import deepcopy
+    >>> import environs
+    >>>
+    >>> deepcopy(environs.Env()) # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    RecursionError: maximum recursion depth exceeded
+"""
 __all__ = (
+    'ABCMeta',
+    'abstractmethod',
     'AST',
     'AsyncFor',
     'AsyncFunctionDef',
@@ -13,6 +25,13 @@ __all__ = (
     'ImportFrom',
     'NodeVisitor',
     'walk',
+    'current_task',
+    'get_running_loop',
+    'iscoroutine',
+    'ChainMap',
+    'defaultdict',
+    'namedtuple',
+    'OrderedDict',
     'AsyncGenerator',
     'AsyncIterable',
     'AsyncIterator',
@@ -40,13 +59,74 @@ __all__ = (
     'ValuesView',
     'ProcessPoolExecutor',
     'ThreadPoolExecutor',
+    'suppress',
+    'dataclass',
+    'DataField',
     'datafield',
     'datafields',
+    'InitVar',
+    'auto',
+    'Enum',
+    'cached_property',
+    'partial',
+    'singledispatch',
+    'singledispatchmethod',
+    'wraps',
+    'import_module',
+    'classify_class_attrs',
+    'FrameInfo',
+    'getfile',
+    'getsource',
+    'getsourcefile',
+    'getsourcelines',
+    'isasyncgenfunction',
+    'isawaitable',
+    'iscoroutinefunction',
+    'isgetsetdescriptor',
+    'ismemberdescriptor',
+    'ismethoddescriptor',
+    'isroutine',
     'insstack',
+    'BytesIO',
+    'FileIO',
+    'StringIO',
+    'attrgetter',
+    'PathLike',
     'PathLib',
+    'pickle_dump',
+    'pickle_dumps',
+    'pickle_load',
+    'pickle_loads',
+    'PicklingError',
+    'CompletedProcess',
+    'CRLock',
+    'Lock',
+    'timeit',
+    'AsyncGeneratorType',
+    'BuiltinFunctionType',
+    'ClassMethodDescriptorType',
+    'CodeType',
+    'CoroutineType',
+    'FrameType',
+    'FunctionType',
+    'GeneratorType',
+    'GenericAlias',
+    'GetSetDescriptorType',
+    'LambdaType',
+    'MappingProxyType',
+    'MemberDescriptorType',
+    'MethodType',
+    'MethodWrapperType',
+    'ModuleType',
     'Simple',
+    'TracebackType',
+    'WrapperDescriptorType',
+    'Alias',
+    'catch_warnings',
+    'filterwarnings',
 
-    # Imports PyPi
+    # Imports - PyPi
+    'pickle_np',
     'np',
     'pd',
     'Exit',
@@ -58,18 +138,45 @@ __all__ = (
     'dpathvalues',
     'Environs',
     'GitRepo',
+    'GitSymbolicReference',
+    'Pickler',
+    'Unpickler',
+    'collapse',
+    'consume',
+    'first_true',
+    'map_reduce',
+    'side_effect',
+    'nested_lookup',
     'Console',
     'pretty_install',
     'traceback_install',
+    'var_name',
+
+    # Imports - Protected
+    'RunningLoop',
+    'slotnames',
+    'DATACLASS_FIELDS',
+    'MISSING_TYPE',
+    'POST_INIT_NAME',
+    'CRLock',
+    'Alias',
+
+    # Typing
+    'DictStrAny',
+    'ExceptionUnion',
+    'LST',
+    'SeqNoStr',
+    'SeqUnion',
+    'TupleStr',
+    'TupleType',
 
     # Constants
-    'Alias',
     'BUILTINS',
     'BUILTINS_CLASSES',
     'BUILTINS_FUNCTIONS',
     'BUILTINS_OTHER',
-    'CRLock',
     'console',
+    'cp',
     'DATACLASS_FIELDS',
     'debug',
     'fmic',
@@ -81,68 +188,41 @@ __all__ = (
     'IgnoreAttr',
     'IgnoreCopy',
     'IgnoreStr',
-    'LST',
-    'MISSING_TYPE',
     'NEWLINE',
-    'POST_INIT_NAME',
-    'pp',
+    'PICKLE_ATTRS',
     'print_exception',
     'PYTHON_SYS',
     'PYTHON_SITE',
-    'RunningLoop',
-    'SeqNoStr',
-    'SeqUnion',
 
-    # Exceptions
-    'CmdError',
-    'CmdAioError',
-
-    # Types
-    'AnnotationsType',
-    'AsDictMethodType',
-    'AsDictPropertyType',
-    'DataType',
-    'DictType',
-    'GetAttrNoBuiltinType',
-    'GetAttrType',
-    'GetSupportType',
-    'GetType',
-    # 'MetaType',
-    'NamedType',
-    'NamedAnnotationsType',
-    'SlotsType',
-    # 'Types',
+    # NamedTuple
+    'AccessEnumMembers',
+    'Annotation',
+    'Attribute',
+    'CacheWrapperInfo',
+    'GetEnumMembers',
 
     # Enums
-    'Attr',
+    'EnumBase',
+    'Access',
     'ChainRV',
-    'EnumDict',
-    'EnumDictAlias',
     'Executor',
     'Kind',
-    'MroGenValue',
-    'Mro',
-    'NameGenValue',
+    'GetBase',
+    'Get',
+    'ModuleBase',
+    'Module',
+    'NameBase',
     'Name',
+    'PrivateBase',
+    'Private',
+    'ProtectedBase',
+    'Protected',
+    'PublicBase',
+    'Public',
 
-    # Bases
-    'Annotation',
-    'BoxKeys',
-    'Chain',
-    'Es',
-    # 'InfoCls',
-    'pproperty',
-    # 'Meta',
-    # 'MetaType',
-    # 'RV',
-    # 'Seq',
-    # 'slist',
-    # 'stuple',
-
-    # Inspect
-    # 'Attribute',
-    # 'InfoClsBase',
-    # 'InfoCls1',
+    # Enums - NamedTuple - Typing
+    'AttrUnion',
+    'EnumBaseAlias',
 
     # Functions
     'aioloop',
@@ -150,17 +230,16 @@ __all__ = (
     'annotations',
     'annotations_init',
     'anyin',
+    'cache',
     'cmd',
-    # 'asdict',
-    # 'asdict_props',
     'cmdname',
     'current_task_name',
     'delete',
     'delete_list',
     'dict_sort',
     'effect',
+    'enumvalue',
     'get',
-    'get_getattrtype',
     'getset',
     'iseven',
     'in_dict',
@@ -181,15 +260,40 @@ __all__ = (
     'yield_if',
     'yield_last',
 
-    # Meta
-    # 'BaseMeta',
-    # 'Class',
+    # Es
+    'Es',
+
+    # Exceptions
+    'CmdError',
+    'CmdAioError',
+
+    # Types
+    'AnnotationsType',
+    'AsDictMethodType',
+    'AsDictPropertyType',
+    'DataType',
+    'DictType',
+    'GetAttrNoBuiltinType',
+    'GetAttrType',
+    'GetSupportType',
+    'GetType',
+    'NamedType',
+    'NamedAnnotationsType',
+    'SlotsType',
 
     # Classes
-    # 'AsDict',
-    # 'Base',
-    # 'Cls',
-    # 'info',
+    'BoxKeys',
+    'Chain',
+    'pproperty',
+
+    # Bases
+    'BaseState',
+
+    # States
+    'StateEnv',
+
+    # Aliases
+    'EnumBaseAlias',
 
     # Echo
     'black',
@@ -211,14 +315,11 @@ __all__ = (
 
     # Test
     'TestAsync',
-    # 'TestBase',
-    # 'TestData',
-    # 'TestDataDictMix',
-    # 'TestDataDictSlotMix',
 )
 
 import ast
 import collections.abc
+import copy
 import functools
 import re
 import subprocess
@@ -228,8 +329,8 @@ import tokenize
 import types
 import typing
 import warnings
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta as ABCMeta
+from abc import abstractmethod as abstractmethod
 from ast import AST as AST
 from ast import AsyncFor as AsyncFor
 from ast import AsyncFunctionDef as AsyncFunctionDef
@@ -242,14 +343,14 @@ from ast import Import as Import
 from ast import ImportFrom as ImportFrom
 from ast import NodeVisitor as NodeVisitor
 from ast import walk as walk
-from asyncio import current_task
-from asyncio import get_running_loop
-from asyncio import iscoroutine
+from asyncio import current_task as current_task
+from asyncio import get_running_loop as get_running_loop
+from asyncio import iscoroutine as iscoroutine
 from asyncio.events import _RunningLoop
-from collections import ChainMap
-from collections import defaultdict
-from collections import namedtuple
-from collections import OrderedDict
+from collections import ChainMap as ChainMap
+from collections import defaultdict as defaultdict
+from collections import namedtuple as namedtuple
+from collections import OrderedDict as OrderedDict
 from collections.abc import AsyncGenerator as AsyncGenerator
 from collections.abc import AsyncIterable as AsyncIterable
 from collections.abc import AsyncIterator as AsyncIterator
@@ -277,60 +378,73 @@ from collections.abc import Sized as Sized
 from collections.abc import ValuesView as ValuesView
 from concurrent.futures.process import ProcessPoolExecutor as ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor as ThreadPoolExecutor
-from contextlib import suppress
+from contextlib import suppress as suppress
+from copyreg import _slotnames
 from dataclasses import _FIELDS
 from dataclasses import _MISSING_TYPE
 from dataclasses import _POST_INIT_NAME
-from dataclasses import Field
+from dataclasses import dataclass as dataclass
+from dataclasses import Field as DataField
 from dataclasses import field as datafield
 from dataclasses import fields as datafields
-from dataclasses import InitVar
-from enum import auto
-from enum import Enum
-from functools import cached_property
-from functools import partial
-from functools import singledispatch
-from functools import singledispatchmethod
-from inspect import classify_class_attrs
-from inspect import FrameInfo
-from inspect import getfile
-from inspect import getsource
-from inspect import getsourcefile
-from inspect import getsourcelines
-from inspect import isasyncgenfunction
-from inspect import isawaitable
-from inspect import iscoroutinefunction
-from inspect import isgetsetdescriptor
-from inspect import ismemberdescriptor
-from inspect import ismethoddescriptor
-from inspect import isroutine
+from dataclasses import InitVar as InitVar
+from enum import auto as auto
+from enum import Enum as Enum
+from functools import cached_property as cached_property
+from functools import partial as partial
+from functools import singledispatch as singledispatch
+from functools import singledispatchmethod as singledispatchmethod
+from functools import wraps as wraps
+from importlib import import_module as import_module
+from inspect import classify_class_attrs as classify_class_attrs
+from inspect import FrameInfo as FrameInfo
+from inspect import getfile as getfile
+from inspect import getsource as getsource
+from inspect import getsourcefile as getsourcefile
+from inspect import getsourcelines as getsourcelines
+from inspect import isasyncgenfunction as isasyncgenfunction
+from inspect import isawaitable as isawaitable
+from inspect import iscoroutinefunction as iscoroutinefunction
+from inspect import isgetsetdescriptor as isgetsetdescriptor
+from inspect import ismemberdescriptor as ismemberdescriptor
+from inspect import ismethoddescriptor as ismethoddescriptor
+from inspect import isroutine as isroutine
 from inspect import stack as insstack
-from io import BytesIO
-from io import FileIO
-from io import StringIO
-from operator import attrgetter
+from io import BytesIO as BytesIO
+from io import FileIO as FileIO
+from io import StringIO as StringIO
+from operator import attrgetter as attrgetter
+from os import PathLike as PathLike
 from pathlib import Path as PathLib
-from subprocess import CompletedProcess
+from pickle import dump as pickle_dump
+from pickle import dumps as pickle_dumps
+from pickle import load as pickle_load
+from pickle import loads as pickle_loads
+from pickle import PicklingError as PicklingError
+from subprocess import CompletedProcess as CompletedProcess
 from threading import _CRLock
-from types import AsyncGeneratorType
-from types import BuiltinFunctionType
-from types import ClassMethodDescriptorType
-from types import CodeType
-from types import CoroutineType
-from types import DynamicClassAttribute
-from types import FrameType
-from types import FunctionType
-from types import GeneratorType
-from types import GetSetDescriptorType
-from types import LambdaType
-from types import MappingProxyType
-from types import MemberDescriptorType
-from types import MethodType
-from types import MethodWrapperType
-from types import ModuleType
+from threading import Lock as Lock
+from timeit import timeit as timeit
+from types import AsyncGeneratorType as AsyncGeneratorType
+from types import BuiltinFunctionType as BuiltinFunctionType
+from types import ClassMethodDescriptorType as ClassMethodDescriptorType
+from types import CodeType as CodeType
+from types import CoroutineType as CoroutineType
+from types import DynamicClassAttribute as DynamicClassAttribute
+from types import FrameType as FrameType
+from types import FunctionType as FunctionType
+from types import GeneratorType as GeneratorType
+from types import GenericAlias as GenericAlias
+from types import GetSetDescriptorType as GetSetDescriptorType
+from types import LambdaType as LambdaType
+from types import MappingProxyType as MappingProxyType
+from types import MemberDescriptorType as MemberDescriptorType
+from types import MethodType as MethodType
+from types import MethodWrapperType as MethodWrapperType
+from types import ModuleType as ModuleType
 from types import SimpleNamespace as Simple
-from types import TracebackType
-from types import WrapperDescriptorType
+from types import TracebackType as TracebackType
+from types import WrapperDescriptorType as WrapperDescriptorType
 from typing import _alias
 from typing import Any
 from typing import ClassVar
@@ -344,17 +458,19 @@ from typing import Optional
 from typing import Protocol
 from typing import runtime_checkable
 from typing import Union
-from warnings import catch_warnings
-from warnings import filterwarnings
+from typing import Type
+from warnings import catch_warnings as catch_warnings
+from warnings import filterwarnings as filterwarnings
 
+import jsonpickle.ext.numpy as pickle_np
 import numpy as np
 import pandas as pd
-from box import Box
-from bson import ObjectId
-from click import secho
+from box import Box as Box
+from bson import ObjectId as ObjectId
+from click import secho as secho
 from click.exceptions import Exit as Exit
-from decorator import decorator
-from devtools import Debug
+from decorator import decorator as decorator
+from devtools import Debug as Debug
 from dpath.util import delete as dpathdelete
 from dpath.util import get as dpathget
 from dpath.util import new as dpathnew
@@ -362,41 +478,66 @@ from dpath.util import search as dpathsearch
 from dpath.util import set as dpathset
 from dpath.util import values as dpathvalues
 from environs import Env as Environs
-from git import GitConfigParser
-from git import Remote
+from git import GitConfigParser as GitConfigParser
+from git import Remote as Remote
 from git import Repo as GitRepo
 from git.refs import SymbolicReference as GitSymbolicReference
-from icecream import IceCreamDebugger
+from icecream import IceCreamDebugger as IceCreamDebugger
+from jsonpickle.pickler import Pickler as Pickler
+from jsonpickle.unpickler import Unpickler as Unpickler
+from jsonpickle.util import importable_name
 from jsonpickle.util import is_collections
 from jsonpickle.util import is_installed
 from jsonpickle.util import is_module_function
 from jsonpickle.util import is_noncomplex
 from jsonpickle.util import is_object
-from jsonpickle.util import is_picklable
 from jsonpickle.util import is_primitive
 from jsonpickle.util import is_reducible
 from jsonpickle.util import is_reducible_sequence_subclass
 from jsonpickle.util import is_unicode
-from more_itertools import collapse
-from more_itertools import consume
-from more_itertools import first_true
-from more_itertools import map_reduce
-from more_itertools import side_effect
-from nested_lookup import nested_lookup
+from more_itertools import collapse as collapse
+from more_itertools import consume as consume
+from more_itertools import first_true as first_true
+from more_itertools import map_reduce as map_reduce
+from more_itertools import side_effect as side_effect
+from nested_lookup.nested_lookup import _nested_lookup
+from nested_lookup import nested_lookup as nested_lookup
 from rich.console import Console as Console
 from rich.pretty import install as pretty_install
 from rich.traceback import install as traceback_install
+from varname import varname as var_name
 
-# <editor-fold desc="Constants">
+# <editor-fold desc="Protected">
+RunningLoop = _RunningLoop
+slotnames = _slotnames
+DATACLASS_FIELDS = _FIELDS
+MISSING_TYPE = _MISSING_TYPE
+POST_INIT_NAME = _POST_INIT_NAME
+CRLock = _CRLock
 Alias = _alias
+
+
+# </editor-fold>
+# <editor-fold desc="Typing">
+DictStrAny = dict[str, Any]
+ExceptionUnion = Union[tuple[Type[Exception]], Type[Exception]]
+LST = Union[typing.MutableSequence, typing.MutableSet, tuple]
+SeqNoStr = Union[typing.Iterator, typing.KeysView, typing.MutableSequence, typing.MutableSet, tuple, typing.ValuesView]
+SeqUnion = Union[typing.AnyStr, typing.ByteString, typing.Iterator, typing.KeysView, typing.MutableSequence,
+                 typing.MutableSet, typing.Sequence, tuple, typing.ValuesView]
+TupleStr = tuple[str, ...]
+TupleType = tuple[Type, ...]
+
+
+# </editor-fold>
+# <editor-fold desc="Constants">
 BUILTINS = (_bltns if isinstance(_bltns := globals()['__builtins__'], dict) else vars(_bltns)).copy()
 BUILTINS_CLASSES = tuple(filter(lambda x: isinstance(x, type), BUILTINS.values()))
 BUILTINS_FUNCTIONS = tuple(filter(lambda x: isinstance(x, (BuiltinFunctionType, FunctionType,)), BUILTINS.values()))
 BUILTINS_OTHER = tuple(map(BUILTINS.get, ('__doc__', '__import__', '__spec__', 'copyright', 'credits', 'exit',
                                           'help', 'license', 'quit',)))
-CRLock = _CRLock
 console = Console(color_system='256')
-DATACLASS_FIELDS = _FIELDS
+cp = console.print
 debug = Debug(highlight=True)
 fmic = IceCreamDebugger(prefix=str()).format
 fmicc = IceCreamDebugger(prefix=str(), includeContext=True).format
@@ -413,577 +554,32 @@ IgnoreCopy = Union[CRLock, Environs, FrameType, GitConfigParser, GitSymbolicRefe
 IgnoreStr = Union[GitConfigParser, GitRepo, ObjectId, PathLib]
 """Use str value for object (default: (:class:`git.GitConfigParser`, :class:`rc.GitRepo`, :class:`bson.ObjectId`,
 :class:`rc.PathLib`, ))."""
-LST = Union[typing.MutableSequence, typing.MutableSet, tuple]
-MISSING_TYPE = _MISSING_TYPE
+LockClass = type(Lock())
 NEWLINE = '\n'
-POST_INIT_NAME = _POST_INIT_NAME
-pp = console.print
+PICKLE_ATTRS = {
+    Environs: ('__custom_parsers__', '_errors', '_fields', '_prefix', '_sealed', '_values', 'eager', 'expand_vars', ),
+}
 print_exception = console.print_exception
-pretty_install(console=console, expand_all=True)
 PYTHON_SYS = PathLib(sys.executable)
 PYTHON_SITE = PathLib(PYTHON_SYS).resolve()
-# rich.traceback.install(console=console, extra_lines=5, show_locals=True)
-RunningLoop = _RunningLoop
-SeqNoStr = Union[typing.Iterator, typing.KeysView, typing.MutableSequence, typing.MutableSet, tuple, typing.ValuesView]
-SeqUnion = Union[typing.AnyStr, typing.ByteString, typing.Iterator, typing.KeysView, typing.MutableSequence,
-                 typing.MutableSet, typing.Sequence, tuple, typing.ValuesView]
 
 
 # </editor-fold>
-# <editor-fold desc="Exceptions">
-class CmdError(Exception):
-    """Thrown if execution of cmd command fails with non-zero status code."""
-
-    def __init__(self, rv):
-        command = rv.args
-        rc = rv.returncode
-        stderr = rv.stderr
-        stdout = rv.stdout
-        super().__init__(f'{command=}', f'{rc=}', f'{stderr=}', f'{stdout=}')
-
-
-class CmdAioError(CmdError):
-    """Thrown if execution of aiocmd command fails with non-zero status code."""
-
-    def __init__(self, rv):
-        super().__init__(rv)
-
-
-# </editor-fold>
-# <editor-fold desc="Types">
-class AnnotationsType(metaclass=ABCMeta):
-    """
-    Annotations Type.
-
-    Examples:
-        >>> named = namedtuple('named', 'a', defaults=('a', ))
-        >>> Named = NamedTuple('Named', a=str)
-        >>>
-        >>> Es(named).annotationstype_sub
-        False
-        >>> Es(named()).annotationstype
-        False
-        >>>
-        >>> Es(Named).annotationstype_sub
-        True
-        >>> Es(Named(a='a')).annotationstype
-        True
-    """
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is AnnotationsType:
-            return Mro.annotations.firstdict(C) is not NotImplemented
-        return NotImplemented
-
-
-class AsDictMethodType(metaclass=ABCMeta):
-    """
-    AsDict Method Support (Class, Static and Method).
-
-    Examples:
-        >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
-        >>> class AsDictM: asdict = lambda self, *args, **kwargs: dict()
-        >>> class AsDictP: asdict = property(lambda self: dict())
-        >>> class AsDictStatic: asdict = staticmethod(lambda cls, *args, **kwargs: dict())
-        >>>
-        >>> c = AsDictClass()
-        >>> m = AsDictM()
-        >>> p = AsDictP()
-        >>> s = AsDictStatic()
-        >>>
-        >>> Es(AsDictClass).asdictmethod_sub
-        True
-        >>> Es(c).asdictmethod
-        True
-        >>>
-        >>> Es(AsDictM).asdictmethod_sub
-        True
-        >>> Es(m).asdictmethod
-        True
-        >>>
-        >>> Es(AsDictP).asdictmethod_sub
-        False
-        >>> Es(p).asdictmethod
-        False
-        >>>
-        >>> Es(AsDictStatic).asdictmethod_sub
-        True
-        >>> Es(s).asdictmethod
-        True
-    """
-
-    # noinspection PyUnusedLocal
-    @abstractmethod
-    def asdict(self, *args, **kwargs):
-        pass
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is AsDictMethodType:
-            value = Mro.asdict.firstdict(C)
-            es = Es(value)
-            return value is not NotImplemented and any(
-                [es.classmethod, es.lambdatype, es.method, es.staticmethod]) and not es.prop
-        return NotImplemented
-
-
-class AsDictPropertyType(metaclass=ABCMeta):
-    """
-    AsDict Property Type.
-
-    Examples:
-        >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
-        >>> class AsDictM: asdict = lambda self, *args, **kwargs: dict()
-        >>> class AsDictP: asdict = property(lambda self: dict())
-        >>> class AsDictStatic: asdict = staticmethod(lambda cls, *args, **kwargs: dict())
-        >>>
-        >>> c = AsDictClass()
-        >>> m = AsDictM()
-        >>> p = AsDictP()
-        >>> s = AsDictStatic()
-        >>>
-        >>> Es(AsDictClass).asdictproperty_sub
-        False
-        >>> Es(c).asdictproperty
-        False
-        >>>
-        >>> Es(AsDictM).asdictproperty_sub
-        False
-        >>> Es(m).asdictproperty
-        False
-        >>>
-        >>> Es(AsDictP).asdictproperty_sub
-        True
-        >>> Es(p).asdictproperty
-        True
-        >>>
-        >>> Es(AsDictStatic).asdictproperty_sub
-        False
-        >>> Es(s).asdictproperty
-        False
-    """
-
-    @property
-    @abstractmethod
-    def asdict(self):
-        return dict()
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is AsDictPropertyType:
-            return (value := Mro.asdict.firstdict(C)) is not NotImplemented and Es(value).prop
-        return NotImplemented
-
-
-class DataType(metaclass=ABCMeta):
-    """
-    Data Type.
-
-    Examples:
-        >>> from dataclasses import make_dataclass
-        >>>
-        >>> Data = make_dataclass('C', [('a', int, datafield(default=1))])
-        >>> class Dict: a = 1
-        >>>
-        >>> data = Data()
-        >>> d = Dict()
-        >>>
-        >>> Es(Data).datatype_sub
-        True
-        >>> Es(data).datatype
-        True
-        >>> Es(Data).datatype
-        False
-        >>>
-        >>> Es(Dict).datatype_sub
-        False
-        >>> Es(d).datatype
-        False
-    """
-    __annotations__ = dict()
-    __dataclass_fields__ = dict()
-
-    @abstractmethod
-    def __repr__(self) -> str:
-        return str(self)
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is DataType:
-            return Mro.annotations.firstdict(C) is not NotImplemented \
-                   and Mro.dataclass_fields.firstdict(C) is not NotImplemented \
-                   and Mro.repr.firstdict(C) is not NotImplemented
-        return NotImplemented
-
-
-class DictType(metaclass=ABCMeta):
-    """
-    Dict Type.
-
-    Examples:
-        >>> class Dict: a = 1
-        >>> class Slots: a = 1; __slots__ = tuple()
-        >>>
-        >>> d = Dict()
-        >>> s = Slots()
-        >>>
-        >>> Es(Dict).dicttype_sub
-        True
-        >>> Es(d).dicttype
-        True
-        >>>
-        >>> Es(Slots).dicttype_sub
-        False
-        >>> Es(s).dicttype
-        False
-    """
-    __dict__ = dict()
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is DictType:
-            return Mro.dict.firstdict(C) is not NotImplemented
-        return NotImplemented
-
-
-class GetAttrNoBuiltinType(metaclass=ABCMeta):
-    """
-    Get Attr Type (Everything but builtins, except: object and errors)
-
-    Examples:
-        >>> class Dict: a = 1
-        >>> class Get: a = 1; get = lambda self, item: self.__getattribute__(item)
-        >>> Named = namedtuple('Named', 'a')
-        >>>
-        >>> d = Dict()
-        >>> dct = dict(a=1)
-        >>> g = Get()
-        >>> n = Named('a')
-        >>> t = tuple()
-        >>>
-        >>> Es(Dict).getattrnobuiltintype_sub
-        True
-        >>> Es(d).getattrnobuiltintype
-        True
-        >>>
-        >>> Es(Get).getattrnobuiltintype_sub
-        False
-        >>> Es(g).getattrnobuiltintype
-        False
-        >>>
-        >>> Es(dict).getattrnobuiltintype_sub
-        False
-        >>> Es(dct).getattrnobuiltintype
-        False
-        >>>
-        >>> Es(tuple).getattrnobuiltintype_sub
-        False
-        >>> Es(t).getattrnobuiltintype
-        False
-        >>>
-        >>> Es(list).getattrnobuiltintype_sub
-        False
-        >>> Es(list()).getattrnobuiltintype
-        False
-        >>>
-        >>> Es(Named).getattrnobuiltintype_sub
-        True
-        >>> Es(n).getattrnobuiltintype
-        True
-        """
-
-    @abstractmethod
-    def __getattribute__(self, n):
-        return object.__getattribute__(self, n)
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is GetAttrNoBuiltinType:
-            g = Mro.get.firstdict(C)
-            return any([Mro._field_defaults.firstdict(C) is not NotImplemented,
-                        not allin(C.__mro__, BUILTINS_CLASSES) and g is NotImplemented or
-                        (g is not NotImplemented and not callable(g))])
-        return NotImplemented
-
-
-class GetAttrType(metaclass=ABCMeta):
-    """
-    Get Attr Type (Everything but GetType)
-
-    Examples:
-        >>> class Dict: a = 1
-        >>> class Get: a = 1; get = lambda self, item: self.__getattribute__(item)
-        >>> Named = namedtuple('Named', 'a')
-        >>>
-        >>> d = Dict()
-        >>> dct = dict(a=1)
-        >>> g = Get()
-        >>> n = Named('a')
-        >>> t = tuple()
-        >>>
-        >>> Es(Dict).getattrtype_sub
-        True
-        >>> Es(d).getattrtype
-        True
-        >>>
-        >>> Es(Get).getattrtype_sub
-        False
-        >>> Es(g).getattrtype
-        False
-        >>>
-        >>> Es(dict).getattrtype_sub
-        False
-        >>> Es(dct).getattrtype
-        False
-        >>>
-        >>> Es(tuple).getattrtype_sub
-        True
-        >>> Es(t).getattrtype
-        True
-        >>>
-        >>> Es(list).getattrtype_sub
-        True
-        >>> Es(list()).getattrtype
-        True
-        >>>
-        >>> Es(Named).getattrtype_sub
-        True
-        >>> Es(n).getattrtype
-        True
-        """
-
-    @abstractmethod
-    def __getattribute__(self, n):
-        return object.__getattribute__(self, n)
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is GetAttrType:
-            g = Mro.get.firstdict(C)
-            return any([Mro._field_defaults.firstdict(C) is not NotImplemented,
-                        g is NotImplemented or (g is not NotImplemented and not callable(g))])
-        return NotImplemented
-
-
-@runtime_checkable
-class GetItemSupportType(Protocol):
-    """Supports __getitem__."""
-    __slots__ = tuple()
-
-    @abstractmethod
-    def __getitem__(self, index):
-        return self[index]
-
-
-@runtime_checkable
-class GetSupportType(Protocol):
-    """Supports get method."""
-    __slots__ = tuple()
-
-    @abstractmethod
-    def get(self, name, default=None):
-        return self, name, default
-
-
-@runtime_checkable
-class GetType(Protocol):
-    """
-    Get Type.
-
-    Examples:
-        >>> class Dict: a = 1
-        >>> class Get: a = 1; get = lambda self, item: self.__getattribute__(item)
-        >>> class Slots: a = 1; __slots__ = tuple()
-        >>>
-        >>> d = Dict()
-        >>> dct = dict(a=1)
-        >>> g = Get()
-        >>>
-        >>> dct.get('a')
-        1
-        >>> g.get('a')
-        1
-        >>>
-        >>> Es(Dict).gettype_sub
-        False
-        >>> Es(d).gettype
-        False
-        >>>
-        >>> Es(Get).gettype_sub
-        True
-        >>> Es(g).gettype
-        True
-        >>>
-        >>> Es(dict).gettype_sub
-        True
-        >>> Es(dct).gettype
-        True
-    """
-
-    @abstractmethod
-    def get(self, name, default=None):
-        pass
-
-
-class NamedType(metaclass=ABCMeta):
-    """
-    named Type.
-
-    Examples:
-        >>> named = namedtuple('named', 'a', defaults=('a', ))
-        >>>
-        >>> Es(named()).namedtype
-        True
-        >>> Es(named).namedtype_sub
-        True
-        >>>
-        >>> Es(named()).tuple
-        True
-        >>> issubclass(named, tuple)
-        True
-    """
-    _fields = tuple()
-    _field_defaults = dict()
-
-    @abstractmethod
-    def _asdict(self):
-        return dict()
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is NamedType:
-            _asdict = Mro._asdict.firstdict(C)
-            rv = Mro._field_defaults.firstdict(C) is not NotImplemented and (_asdict is not NotImplemented and callable(
-                _asdict)) and Mro._fields.firstdict(C) is not NotImplemented
-            return rv
-        return NotImplemented
-
-
-class NamedAnnotationsType(metaclass=ABCMeta):
-    """
-    named Type.
-
-    Examples:
-        >>> named = namedtuple('named', 'a', defaults=('a', ))
-        >>> Named = NamedTuple('Named', a=str)
-        >>>
-        >>> Es(named()).named_annotationstype
-        False
-        >>> Es(named).named_annotationstype_sub
-        False
-        >>>
-        >>> Es(Named('a')).named_annotationstype
-        True
-        >>> Es(Named).named_annotationstype_sub
-        True
-        >>>
-        >>> Es(named()).tuple
-        True
-        >>> issubclass(named, tuple)
-        True
-    """
-    __annotations__ = dict()
-    _fields = tuple()
-    _field_defaults = dict()
-
-    @abstractmethod
-    def _asdict(self):
-        return dict()
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is NamedAnnotationsType:
-            _asdict = Mro._asdict.firstdict(C)
-            _a = _asdict is not NotImplemented and callable(_asdict)
-            return Mro.annotations.firstdict(C) is not NotImplemented and Mro._field_defaults.firstdict(
-                C) is not NotImplemented and _a and Mro._fields.firstdict(C) is not NotImplemented
-        return NotImplemented
-
-
-class SlotsType(metaclass=ABCMeta):
-    """
-    Slots Type.
-
-    Examples:
-        >>> class Dict: a = 1
-        >>> class Slots: a = 1; __slots__ = tuple()
-        >>>
-        >>> d = Dict()
-        >>> s = Slots()
-        >>>
-        >>> Es(Dict).slotstype_sub
-        False
-        >>> Es(d).slotstype
-        False
-        >>>
-        >>> Es(Slots).slotstype_sub
-        True
-        >>> Es(s).slotstype
-        True
-    """
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is SlotsType:
-            return Mro.slots.firstdict_object(C) is not NotImplemented
-        return NotImplemented
+# <editor-fold desc="NamedTuple">
+AccessEnumMembers = namedtuple('AccessEnumMembers', 'all private protected public')
+Annotation = namedtuple('Annotation', 'any args classvar cls default final hint initvar literal name optional '
+                                      'origin union')
+Attribute = namedtuple('Attribute', 'annotation default defining es field kind name object qual')
+CacheWrapperInfo = namedtuple('CacheWrapperInfo', 'hit passed total')
+GetEnumMembers = namedtuple('GetEnumMembers', 'all pickle private protected public')
 
 
 # </editor-fold>
 # <editor-fold desc="Enums">
-class Attr(Enum):
-    """
-    Include Attr.
+class EnumBase(Enum):
+    def _generate_next_value_(self, start, count, last_values):
+        return self.lower()
 
-    Attributes:
-    -----------
-    ALL:
-        include all public, private '_' and builtin '__'
-    PRIVATE:
-        include private '_' and public vars
-    PUBLIC:
-        include only public: no '_' and not '__'
-
-    Methods:
-    --------
-        include(string)
-            Include Attr.
-    """
-    ALL = auto()
-    PRIVATE = '__'
-    PUBLIC = '_'
-
-    def include(self, obj) -> bool:
-        """
-        Include Key.
-
-        Examples:
-            >>> Attr.PUBLIC.include('_hello')
-            False
-            >>> Attr.PRIVATE.include('_hello')
-            True
-            >>> Attr.ALL.include('__hello')
-            True
-
-        Args:
-            obj: string
-
-        Returns:
-            True if key to be included.
-        """
-        if self is Attr.ALL:
-            return True
-        return not obj.startswith(self.value)
-
-
-class ChainRV(Enum):
-    ALL = auto()
-    FIRST = auto()
-    UNIQUE = auto()
-
-
-class EnumDict(Enum):
     @classmethod
     def asdict(cls):
         return {key: value._value_ for key, value in cls.__members__.items()}
@@ -1021,18 +617,165 @@ class EnumDict(Enum):
     def lower(self):
         return self.name.lower()
 
-    def prefix(self, prefix):
-        return f'{prefix}_{self.name}'
-
     @classmethod
     def values(cls):
         return list(cls.asdict().values())
 
 
-EnumDictAlias = Alias(EnumDict, 1, name=EnumDict.__name__)
+class Access(EnumBase):
+    """Access Attributes Enum Class."""
+    ALL = re.compile('.')
+    PRIVATE = re.compile('^__.*')
+    PROTECTED = re.compile('^_(?!_).*$')
+    PUBLIC = re.compile('^(?!_)..*$')
+
+    @classmethod
+    @functools.cache
+    def classify(cls, *args, keys=False, **kwargs):
+        """
+        Classify args or kwargs based on data access.
+
+        Examples:
+            >>> a = Access.classify(**dict(map(lambda x: (x.name, x, ), classify_class_attrs(TestAsync))))
+            >>> n = '__class__'
+            >>> assert n in a.all and n in a.private and n not in a.protected and n not in a.public
+            >>> n = TestAsync._staticmethod
+            >>> assert n in a.all and n not in a.private and n in a.protected and n not in a.public
+            >>> n = TestAsync.staticmethod.__name__
+            >>> assert n in a.all and n not in a.private and n not in a.protected and n in a.public
+            >>>
+            >>> a = Access.classify(**dict(map(lambda x: (x.name, x, ), classify_class_attrs(TestAsync))), keys=True)
+            >>> n = '__class__'
+            >>> assert n in a.all and n in a.private and n not in a.protected and n not in a.public
+            >>> assert a.private[n].name == n
+            >>> n = TestAsync._staticmethod
+            >>> assert n in a.all and n not in a.private and n in a.protected and n not in a.public
+            >>> assert a.protected[n].name == n
+            >>> n = TestAsync.staticmethod.__name__
+            >>> assert n in a.all and n not in a.private and n not in a.protected and n in a.public
+            >>> assert a.public[n].name == n
+
+        Args:
+            *args: str iterable.
+            keys: include keys if kwargs so return dict or list with kwargs.values().
+            **kwargs: dict with keys to check and values
+
+        Raises:
+            TypeError('args or kwargs not both')
+
+        Returns:
+            AccessEnumMembers.
+        """
+        if args and kwargs:
+            raise TypeError('args or kwargs not both')
+        rv: defaultdict[Access, Union[dict, list]] = defaultdict(dict if keys and kwargs else list, dict())
+        for name in args or kwargs:
+            if value := cls.val(name):
+                rv[value].update({name: kwargs.get(name)}) if keys and kwargs else rv[value].append(name)
+                rv[cls.ALL].update({name: kwargs.get(name)}) if keys and kwargs else rv[cls.ALL].append(name)
+        return AccessEnumMembers(all=rv[cls.ALL], private=rv[cls.PRIVATE], protected=rv[cls.PROTECTED],
+                                 public=rv[cls.PUBLIC])
+
+    @functools.cache
+    def es(self, name):
+        """
+        Is Access Attr?
+
+        Examples:
+            >>> pretty_install()
+            >>> Access.ALL.es(str()), Access.PRIVATE.es(str()), Access.PROTECTED.es(str()), \
+Access.PUBLIC.es(str())
+            (False, False, False, False)
+            >>> Access.ALL.es('__name__'), Access.PRIVATE.es('__name__'), Access.PROTECTED.es('__name__'), \
+Access.PUBLIC.es('__name__')
+            (True, True, False, False)
+            >>> Access.ALL.es('_name__'), Access.PRIVATE.es('_name__'), Access.PROTECTED.es('_name__'), \
+Access.PUBLIC.es('_name__')
+            (True, False, True, False)
+            >>> Access.ALL.es('name__'), Access.PRIVATE.es('name__'), Access.PROTECTED.es('name__'), \
+Access.PUBLIC.es('name__')
+            (True, False, False, True)
+
+        Args:
+            name: name.
+
+        Returns:
+            True if match.
+        """
+        return bool(self.value.search(name))
+
+    @functools.cache
+    def include(self, name):
+        """
+        Include Key.
+
+        Examples:
+            >>> pretty_install()
+            >>> Access.ALL.include(str()), Access.PRIVATE.include(str()), Access.PROTECTED.include(str()), \
+Access.PUBLIC.include(str())
+            (None, None, None, None)
+            >>> Access.ALL.include('__name__'), Access.PRIVATE.include('__name__'), \
+            Access.PROTECTED.include('__name__'), Access.PUBLIC.include('__name__')
+            (True, True, False, False)
+            >>> Access.ALL.include('_name__'), Access.PRIVATE.include('_name__'), Access.PROTECTED.include('_name__'), \
+Access.PUBLIC.include('_name__')
+            (True, True, True, False)
+            >>> Access.ALL.include('name__'), Access.PRIVATE.include('name__'), Access.PROTECTED.include('name__'), \
+Access.PUBLIC.include('name__')
+            (True, True, True, True)
+
+        Args:
+            name: name.
+
+        Returns:
+            True if key to be included.
+        """
+        Cls = type(self)
+        if name:
+            if self in (Cls.ALL, Cls.PRIVATE, ):
+                return True
+            elif self is Cls.PUBLIC:
+                return self.es(name)
+            elif self is Cls.PROTECTED:
+                return self.es(name) or Cls.PUBLIC.es(name)
+
+    @classmethod
+    @functools.cache
+    def val(cls, name: str):
+        """
+        Access Enum Instance for name.
+
+        Examples:
+            >>> pretty_install()
+            >>> Access.val(str()), Access.val('__name__'), Access.val('_name__'), Access.val('name__')
+            (
+                None,
+                <Access.PRIVATE: re.compile('^__.*')>,
+                <Access.PROTECTED: re.compile('^_(?!_).*$')>,
+                <Access.PUBLIC: re.compile('^(?!_)..*$')>
+            )
+
+        Args:
+            name: name.
+
+        Returns:
+            Access Enum Instance.
+        """
+        if cls.PRIVATE.es(name):
+            return cls.PRIVATE
+        elif cls.PROTECTED.es(name):
+            return cls.PROTECTED
+        elif cls.PUBLIC.es(name):
+            return cls.PUBLIC
 
 
-class Executor(Enum):
+class ChainRV(EnumBase):
+    ALL = auto()
+    FIRST = auto()
+    UNIQUE = auto()
+
+
+class Executor(EnumBase):
     PROCESS = ProcessPoolExecutor
     THREAD = ThreadPoolExecutor
     NONE = None
@@ -1065,7 +808,181 @@ class Executor(Enum):
         return await loop.run_in_executor(self.value, call)
 
 
-class Kind(Enum):
+class GetBase(EnumBase):
+    def _generate_next_value_(self, start, count, last_values):
+        return f'__{self.lower()}__' if self.isupper() else self
+
+
+class Get(GetBase):
+    """
+    MRO Helper Calls.
+
+    Private in upper case and public in lower case.
+
+    Examples:
+        >>> Get.ALL.value_str, Get.Environs.value_str, Get._asdict.value_str, Get.name.value_str
+        ('__all__', 'Env', '_asdict', 'name')
+
+    """
+    ALL = auto()
+    ANNOTATIONS = auto()
+    ARGS = auto()
+    ASDICT = auto()
+    BUILTINS = auto()
+    CACHE_CLEAR = auto()
+    CACHE_INFO = auto()
+    CACHED = auto()
+    CODE = auto()
+    CONTAINS = auto()
+    DATACLASS_FIELDS = auto()
+    DATACLASS_PARAMS = auto()
+    DELATTR = auto()
+    DICT = auto()
+    DIR = auto()
+    DOC = auto()
+    EQ = auto()
+    FILE = auto()
+    GET = auto()
+    GETATTRIBUTE = auto()
+    GETITEM = auto()
+    HASH_EXCLUDE = auto()
+    IGNORE_ATTR = ('__ignore_attr__', ('asdict', 'attrs', 'defaults', 'keys', 'kwargs', 'kwargs_dict',
+                                       'public', 'values', 'values_dict', ))
+    """Exclude instance attribute."""
+    IGNORE_COPY = ('__ignore_copy__', IgnoreCopy.__args__)
+    """True or class for repr instead of nested asdict and deepcopy. No deepcopy."""
+    IGNORE_KWARG = auto()
+    IGNORE_STR = ('__ignore_str__', IgnoreStr.__args__)
+    """Use str value for object ."""
+    INIT = auto()
+    INIT_SUBCLASS = auto()
+    LEN = auto()
+    LOADER = auto()
+    MEMBERS = auto()
+    MODULE = auto()
+    MRO = auto()
+    NAME = auto()
+    PACKAGE = auto()
+    PICKLE = auto()
+    POST_INIT = auto()
+    QUALNAME = auto()
+    REDUCE = auto()
+    REDUCE_EX = auto()
+    REPR = auto()
+    REPR_EXCLUDE = auto()
+    REPR_NEWLINE = auto()
+    REPR_PPROPERTY = auto()
+    SETATTR = auto()
+    SLOTS = auto()
+    SPEC = auto()
+    STR = auto()
+    SUBCLASSHOOK = auto()
+    CRLock = CRLock, ('_block', '_count', '_owner', )
+    Environs = Environs, PICKLE_ATTRS[Environs]
+    FrameType = FrameType, ()
+    GitConfigParser = GitConfigParser, ()
+    GitRepo = GitRepo, ()
+    GitSymbolicReference = GitSymbolicReference, ()
+    LockClass = LockClass, ()
+    ObjectId = ObjectId, ()
+    PathLib = PathLib, ()
+    Remote = Remote, ()
+    _asdict = auto()
+    _field_defaults = auto()
+    _fields = auto()
+    name = auto()
+    value = auto()
+
+    @classmethod
+    @functools.cache
+    def getenum_members(cls):
+        """
+        Enum Class Names and Values.
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> members = Get.getenum_members()
+            >>> assert Get.ANNOTATIONS in members.all.values() and Get.ANNOTATIONS in members.private.values() \
+            and Get.ANNOTATIONS not in members.protected.values()
+            >>> assert Get.LockClass in members.pickle.values() \
+            and Get.LockClass not in members.protected.values() and Get.LockClass in members.public.values()
+            >>> assert Get._field_defaults in members.protected.values() \
+            and Get._field_defaults not in members.public.values()
+            >>> assert Get.name in members.public.values() and Get.name not in members.private.values()
+
+        Returns:
+            Enum Class Names and Values Dict.
+        """
+        m = cls.__members__
+        access = Access.classify(keys=True, **{cls[k].value_str: v for k, v in m.items()})
+        return GetEnumMembers(all=access.all, pickle={k: i for k, i in m.items() if cls[k].is_value_class},
+                              private=access.private, protected=access.protected, public=access.public)
+
+    @classmethod
+    @functools.cache
+    def getenum_pickle_classes(cls):
+        """
+        Get Pickle Classes.
+
+        Examples:
+            >>> pretty_install()
+            >>> Get.getenum_pickle_classes()  # doctest: +ELLIPSIS
+            (
+                ...,
+                <class 'environs.Env'>,
+                ...
+            )
+
+        Returns:
+            Tuple of Pickle Classes.
+        """
+        return tuple(map(lambda x: x.value_class, cls.getenum_members().pickle.values()))
+
+    @classmethod
+    @functools.cache
+    def getenum_pickle_members_by_class(cls):
+        """
+        Get Pickle Members by Class.
+
+        Examples:
+            >>> pretty_install()
+            >>> Get.getenum_pickle_members_by_class()  # doctest: +ELLIPSIS
+            {
+                ...,
+                <class 'environs.Env'>: <Get.Environs: (<class 'environs.Env'>, (...))>,
+                ...
+            }
+
+        Returns:
+            Dict of Pickle Members by Class.
+        """
+        return dict(map(lambda x: (x.value_class, x), cls.getenum_members().pickle.values()))
+
+    @property
+    @functools.cache
+    def is_value_class(self):
+        return self.is_value_tuple and Es(self.value[0]).type
+
+    @property
+    @functools.cache
+    def is_value_tuple(self): return Es(self.value).tuple
+
+    @property
+    @functools.cache
+    def value_class(self): return self.value[0] if self.is_value_class else None
+
+    @property
+    @functools.cache
+    def value_default(self): return self.value[1] if self.is_value_tuple else tuple()
+
+    @property
+    @functools.cache
+    def value_str(self): return rv.__name__ if (rv := self.value_class) else self.value[0] \
+        if self.is_value_tuple else self.value
+
+
+class Kind(EnumBase):
     CLASS = 'class method'
     DATA = 'data'
     METHOD = 'method'
@@ -1073,433 +990,28 @@ class Kind(Enum):
     STATIC = 'static method'
 
 
-class MroGenValue(Enum):
-    def _generate_next_value_(self, start, count, last_values):
-        exclude = ('_asdict', '_field_defaults', '_fields', 'asdict', 'get',)
-        return self if self in exclude else f'__{self}__'
-
-
-class Mro(MroGenValue):
-    """
-    MRO Helper Calls.
-
-    Private attributes and public which do not conflict with private.
-
-    i.e: name is __name__, use :class:`Attr.name_` for name.
-    """
-    _asdict = auto()
-    _field_defaults = auto()
-    _fields = auto()
-    all = auto()
-    annotations = auto()
-    args = auto()
-    asdict = auto()
-    cache_clear = auto()
-    cache_info = auto()
-    cached = auto()
-    code = auto()
-    contains = auto()
-    dataclass_fields = auto()
-    dataclass_params = auto()
-    delattr = auto()
-    dict = auto()
-    dir = auto()
-    doc = auto()
-    eq = auto()
-    file = auto()
-    get = auto()
-    getattribute = auto()
-    getitem = auto()
-    hash_exclude = auto()
-    ignore_attr = auto()
-    ignore_copy = auto()
-    ignore_kwarg = auto()
-    ignore_str = auto()
-    init_subclass = auto()
-    len = auto()
-    loader = auto()
-    module = auto()
-    name = auto()
-    package = auto()
-    post_init = auto()
-    qualname = auto()
-    reduce = auto()
-    repr = auto()
-    repr_exclude = auto()
-    repr_newline = auto()
-    repr_pproperty = auto()
-    setattr = auto()
-    slots = auto()
-    spec = auto()
-    str = auto()
-    subclasshook = auto()
-
-    @classmethod
+class ModuleBase(EnumBase):
+    @property
     @functools.cache
-    def attrs(cls):
-        """
-        Get attrs tuple with private converted to real names.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> Mro.attrs()  # doctest: +ELLIPSIS
-            (
-                ...,
-                'ignore_copy',
-                ...
-            )
-
-        Returns:
-            Tuple of attributes wit private converted to real names.
-        """
-        return tuple(sorted(cls.members()))
-
-    @classmethod
-    def cls(cls, obj):
-        """
-        Object Class MRO.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> Mro.cls(dict(a=1))
-            (<class 'dict'>, <class 'object'>)
-
-        Args:
-            obj: object.
-
-        Returns:
-            Object Class MRO.
-        """
-        return obj.__mro__ if isinstance(obj, type) else type(obj).__mro__
+    def get(self): return globals().get(self.value)
 
     @property
-    def default(self):
-        # noinspection PyUnresolvedReferences
-        """
-        Default ignore values from Type
-
-        Examples:
-            >>> Mro.ignore_attr.default  # doctest: +ELLIPSIS
-            ('asdict', ...)
-            >>> Mro.ignore_attr.default == IgnoreAttr.__args__
-            True
-            >>> Mro.ignore_copy.default  # doctest: +ELLIPSIS
-            (<class '_thread.RLock'>, ...)
-            >>> Mro.ignore_copy.default == IgnoreCopy.__args__
-            True
-            >>> Mro.getattribute.default
-            ()
-
-        Returns:
-            Tuple with default values
-        """
-        return noexception(Exception, getattr, globals().get(to_camel(self.name)), Mro.args.value, default_=tuple())
-
-    def first(self, obj):
-        """
-        First value of attr found in mro and instance if obj is instance.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> class Test:
-            ...     __repr_newline__ = True
-            >>>
-            >>> test = Test()
-            >>> class Test2(Test):
-            ...     def __init__(self):
-            ...         self.__repr_newline__ = False
-            >>>
-            >>> Mro.repr_newline.first(Test())
-            True
-            >>> Mro.repr_newline.first(Test2())
-            False
-            >>> Mro.repr_newline.first(int())
-            >>> Mro.repr_pproperty.first(Test())
-
-        Returns:
-            First value of attr found in mro and instance if obj is instance.
-        """
-        for item in self.obj(obj):
-            if self.has(item):
-                return object.__getattribute__(item, self.value)
-
-    def _firstdict(self, mro):
-        for C in mro:
-            if self.value in C.__dict__:
-                return C.__dict__[self.value]
-        return NotImplemented
-
-    def firstdict(self, obj):
-        """
-        First value of attr in obj.__class__.__dict__ found in mro.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> class Test:
-            ...     __repr_newline__ = False
-            >>>
-            >>> test = Test()
-            >>> class Test2(Test):
-            ...     def __init__(self):
-            ...         self.__repr_newline__ = False
-            >>>
-            >>> Mro.repr_newline.firstdict(Test())
-            False
-            >>> Mro.repr_newline.firstdict(Test2())
-            False
-            >>> Mro.repr_newline.firstdict(int())
-            NotImplemented
-            >>> Mro.repr_pproperty.firstdict(Test())
-            NotImplemented
-            >>> A = namedtuple('A', 'a')
-            >>> Mro.slots.firstdict(A)
-            ()
-
-        Returns:
-            First value of attr in obj.__class__.__dict__ found in mro.
-        """
-        return self._firstdict(self.cls(obj))
-
-    def firstdict_object(self, obj):
-        """
-        First value of attr in obj.__class__.__dict__ found in mro excluding object.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> class Test:
-            ...     __repr_newline__ = False
-            >>>
-            >>> test = Test()
-            >>> class Test2(Test):
-            ...     def __init__(self):
-            ...         self.__repr_newline__ = False
-            >>>
-            >>> Mro.repr_newline.firstdict_object(Test())
-            False
-            >>> Mro.repr_newline.firstdict_object(Test2())
-            False
-            >>> Mro.repr_newline.firstdict_object(int())
-            NotImplemented
-            >>> Mro.repr_pproperty.firstdict_object(Test())
-            NotImplemented
-            >>> A = namedtuple('A', 'a')
-            >>> Mro.slots.firstdict_object(A)
-            ()
-            >>> Mro.slots.firstdict_object(dict)
-            NotImplemented
-            >>> Mro.slots.firstdict_object(dict())
-            NotImplemented
-
-        Returns:
-            First value of attr in obj.__class__.__dict__ found in mro excluding object.
-        """
-        mro = list(self.cls(obj))
-        mro.remove(object)
-        return self._firstdict(mro)
-
-    @property
-    def getter(self):
-        """
-        Attr getter with real name/value.
-
-        Examples:
-            >>> import rc.utils
-            >>>
-            >>> Mro.module.getter(tuple)
-            'builtins'
-            >>> Mro.name.getter(tuple)
-            'tuple'
-            >>> Mro.file.getter(rc.utils)  # doctest: +ELLIPSIS
-            '/Users/jose/....py'
-
-        Returns:
-            Attr getter with real name/value.
-        """
-        return attrgetter(self.value)
-
-    def has(self, obj):
-        """
-        Checks if Object has attr.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> class Test:
-            ...     __repr_newline__ = True
-            >>>
-            >>> Mro.repr_newline.has(Test)
-            True
-            >>> Mro.repr_exclude.has(Test)
-            False
-
-        Returns:
-            True if object has attribute.
-        """
-        return hasattr(obj, self.value)
-
-    @classmethod
     @functools.cache
-    def members(cls):
-        """
-        Names and real names.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> Mro.members()  # doctest: +ELLIPSIS
-            {
-                ...,
-                '_field_defaults': '_field_defaults',
-                ...,
-                'ignore_copy': '__ignore_copy__',
-                ...
-            }
-
-        Returns:
-            Dict with Names and real names..
-        """
-        return dict_sort({key: value.value for key, value in cls.__members__.items()})
-
-    @classmethod
-    def obj(cls, obj):
-        """
-        Object and Class MRO tuple.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> Mro.obj(dict(a=1))
-            ({'a': 1}, <class 'dict'>, <class 'object'>)
-
-        Args:
-            obj: object.
-
-        Returns:
-            Object and Class MRO tuple.
-        """
-        return obj.__mro__ if isinstance(obj, type) else (obj, *type(obj).__mro__)
-
-    @classmethod
-    def slot(cls, obj, name):
-        """
-        Is attribute in slots?
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> class First:
-            ...     __slots__ = ('_hash', )
-            >>>
-            >>> class Test(First):
-            ...     __slots__ = ('_prop', '_repr', '_slot', )
-            >>>
-            >>> Mro.slot(Test(), '_hash')
-            True
-            >>> Mro.slot(Test(), '_prop')
-            True
-            >>> Mro.slot(Test(), 'False')
-            False
-
-        Args:
-            obj: object.
-            name: attribute name.
-
-        Returns:
-            True if attribute in slots
-        """
-        return name in cls.slots.val(obj)
-
-    def slotsinclude(self, obj):
-        """
-        Accumulated values from slots - Accumulated values from mro attr name.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> class First:
-            ...     __slots__ = ('_hash', )
-            >>>
-            >>> class Test(First):
-            ...     __slots__ = ('_prop', '_repr', '_slot', )
-            ...     __hash_exclude__ = ('_slot', )
-            ...     __repr_exclude__ = ('_repr', )
-            >>>
-            >>> test = Test()
-            >>> slots = sorted(Mro.slots.val(test))
-            >>> slots
-            ['_hash', '_prop', '_repr', '_slot']
-            >>> hash_attrs = sorted(Mro.hash_exclude.slotsinclude(test))
-            >>> hash_attrs
-            ['_hash', '_prop', '_repr']
-            >>> sorted(hash_attrs + list(Mro.hash_exclude.val(test))) == sorted(Mro.slots.val(test))
-            True
-            >>> repr_attrs = sorted(Mro.repr_exclude.slotsinclude(test))
-            >>> repr_attrs
-            ['_hash', '_prop', '_slot']
-            >>> sorted(repr_attrs + list(Mro.repr_exclude.val(test))) == sorted(Mro.slots.val(test))
-            True
-
-        Returns:
-            Accumulated values from slots - Accumulated values from mro attr name.
-        """
-        return self.__class__.slots.val(obj).difference(self.val(obj))
-
-    def val(self, obj):
-        """
-        All/accumulated values of attr in mro and obj if instance.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> class First:
-            ...     __slots__ = ('_hash', '_repr')
-            ...     __ignore_copy__ = (tuple, )
-            ...     __repr_exclude__ = ('_repr', )
-            >>>
-            >>> class Test(First):
-            ...     __slots__ = ('_prop', '_slot', )
-            ...     __hash_exclude__ = ('_slot', )
-            ...     __ignore_attr__ = ('attr', )
-            ...     __ignore_kwarg__ = ('kwarg', )
-            ...     __ignore_str__ = (tuple, )
-            >>>
-            >>> test = Test()
-            >>> sorted(Mro.hash_exclude.val(test))
-            ['_slot']
-            >>> sorted(Mro.ignore_attr.val(test))  # doctest: +ELLIPSIS
-            [
-                'asdict',
-                'attr',
-                ...
-            ]
-            >>> Mro.ignore_copy.val(test).difference(Mro.ignore_copy.default)
-            {<class 'tuple'>}
-            >>> sorted(Mro.ignore_kwarg.val(test))
-            ['kwarg']
-            >>> Mro.ignore_str.val(test).difference(Mro.ignore_str.default)
-            {<class 'tuple'>}
-            >>> sorted(Mro.repr_exclude.val(test))
-            ['_repr']
-            >>> sorted(Mro.slots.val(test))
-            ['_hash', '_prop', '_repr', '_slot']
-
-        Returns:
-            All/accumulated values of attr in mro and obj if instance.
-        """
-        return {*(value for item in self.obj(obj) for value in getattr(item, self.value, tuple())), *self.default}
+    def load(self): return import_module(self.value)
 
 
-class NameGenValue(Enum):
+class Module(ModuleBase):
+    """Module Enum Class."""
+    FUNCTOOLS = auto()
+    TYPING = auto()
+
+
+class NameBase(EnumBase):
     def _generate_next_value_(self, start, count, last_values):
         return f'__{self}' if self.endswith('__') else self.removesuffix('_')
 
 
-class Name(NameGenValue):
+class Name(NameBase):
     """Name Enum Class."""
     all__ = auto()
     class__ = auto()
@@ -1622,8 +1134,9 @@ class Name(NameGenValue):
         """
         return tuple(collapse(Name._attrs().values()))
 
+    # TODO: Name.get()
     @singledispatchmethod
-    def get(self, obj: GetType, default=None):
+    def get(self, obj: MutableMapping, default=None):
         """
         Get value from GetType/MutableMapping.
 
@@ -1669,7 +1182,7 @@ class Name(NameGenValue):
         return obj.get(self.value, default)
 
     @get.register
-    def get_getattrtype(self, obj: GetAttrType, default=None):
+    def get_getattrtype(self, obj: object, default=None):
         """
         Get value of attribute from GetAttrType.
 
@@ -1681,22 +1194,26 @@ class Name(NameGenValue):
             >>> pretty_install()
             >>> f = insstack()[0]
             >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
-            >>> Name.file__.get(globs_locs)  # doctest: +ELLIPSIS
-            PosixPath('/Users/jose/....py')
-            >>> Name.file__.get(rc.utils)  # doctest: +ELLIPSIS
-            PosixPath('/Users/jose/....py')
-            >>> PathLib(Name.spec__.get(globs_locs).origin)  # doctest: +ELLIPSIS
-            PosixPath('/Users/jose/....py')
-            >>> PathLib(Name.spec__.get(rc.utils).origin)  # doctest: +ELLIPSIS
-            PosixPath('/Users/jose/....py')
-            >>> Name.spec__.get(rc.utils).name == rc.utils.__name__
-            True
-            >>> Name.spec__.get(rc.utils).name.split('.')[0] == rc.utils.__package__
-            True
-            >>> Name.name__.get(rc.utils) == rc.utils.__name__
-            True
-            >>> Name.package__.get(rc.utils) == rc.utils.__package__
-            True
+
+            # >>> Name.file__.get(globs_locs)  # doctest: +ELLIPSIS
+            # PosixPath('/Users/jose/....py')
+            # >>> Name.file__.get(rc.utils)  # doctest: +ELLIPSIS
+            # PosixPath('/Users/jose/....py')
+
+            >>> globs_locs.get('__spec__'), Name.spec__.get(globs_locs)
+
+            # >>> PathLib(Name.spec__.get(globs_locs).origin)  # doctest: +ELLIPSIS
+            # PosixPath('/Users/jose/....py')
+            # >>> PathLib(Name.spec__.get(rc.utils).origin)  # doctest: +ELLIPSIS
+            # PosixPath('/Users/jose/....py')
+            # >>> Name.spec__.get(rc.utils).name == rc.utils.__name__
+            # True
+            # >>> Name.spec__.get(rc.utils).name.split('.')[0] == rc.utils.__package__
+            # True
+            # >>> Name.name__.get(rc.utils) == rc.utils.__name__
+            # True
+            # >>> Name.package__.get(rc.utils) == rc.utils.__package__
+            # True
 
         Args:
             obj: object
@@ -1705,6 +1222,7 @@ class Name(NameGenValue):
         Returns:
             Value from __getattribute__ method.
         """
+        ic(obj, isinstance(obj, MutableMapping))
         if self is Name.file__:
             try:
                 p = object.__getattribute__(obj, Name.file__.value)
@@ -1712,6 +1230,7 @@ class Name(NameGenValue):
             except AttributeError:
                 return self.path(obj)
         try:
+            ic(self.value)
             return object.__getattribute__(obj, self.value)
         except AttributeError:
             return default
@@ -2137,409 +1656,466 @@ class Name(NameGenValue):
             return str(obj)
 
 
-# </editor-fold>
-# <editor-fold desc="Bases">
-Annotation = namedtuple('Annotation', 'any args classvar cls default final hint initvar literal name optional '
-                                      'origin union')
+class PrivateBase(EnumBase):
+    """Access Types Base Enum Class."""
 
+    def _generate_next_value_(self, start, count, last_values):
+        return f'__{self.lower()}__'
 
-class BoxKeys(Box):
-    """
-    Creates a Box with values from keys.
-    """
+    def _get(self, obj, default=None):
+        return obj.get(self.value, default)
 
-    def __init__(self, keys, value='lower'):
+    def getattr(self, obj, default=None):
+        return obj.get(self.value, default)
+    def get(self, obj, default=None):
+        es = Es(obj)
+        if es.mm:
+            if self is Private.FILE
+
+    @property
+    @functools.cache
+    def getter(self):
+        """Attr Getter."""
+        return attrgetter(self.value)
+
+    def has(self, obj):
         """
-        Creates Box instance.
+        Checks if Object has attr.
 
         Examples:
+            >>> from rc import Es, Private, pretty_install
             >>> pretty_install()
             >>>
-            >>> BoxKeys('a b', value=None)
-            <Box: {'a': 'a', 'b': 'b'}>
-            >>> BoxKeys('A B')
-            <Box: {'A': 'a', 'B': 'b'}>
-            >>> BoxKeys('A B', value=list)
-            <Box: {'A': [], 'B': []}>
-
-        Args:
-            keys: keys to use for keys and values.
-            value: Type or function to use to init the Box.
-
-        Returns:
-            Initialize box from keys.
-        """
-        es = Es(value)
-        super().__init__({item: getattr(item, value)() if es.str else item if es.none else value()
-                          for item in to_iter(keys)})
-
-
-class Chain(ChainMap):
-    """Variant of chain that allows direct updates to inner scopes and returns more than one value,
-    not the first one."""
-    rv = ChainRV.UNIQUE
-    default = None
-    maps = list()
-
-    def __init__(self, *maps, rv=ChainRV.UNIQUE, default=None):
-        super().__init__(*maps)
-        self.rv = rv
-        self.default = default
-
-    def __getitem__(self, key):
-        rv = []
-        for mapping in self.maps:
-            if Es(mapping).namedtype:
-                mapping = mapping._asdict()
-            elif hasattr(mapping, 'asdict'):
-                to_dict = getattr(mapping.__class__, 'asdict')
-                if isinstance(to_dict, property):
-                    mapping = mapping.asdict
-                elif callable(to_dict):
-                    mapping = mapping.asdict()
-            if hasattr(mapping, '__getitem__'):
-                try:
-                    value = mapping[key]
-                    if self.rv is ChainRV.FIRST:
-                        return value
-                    if (self.rv is ChainRV.UNIQUE and value not in rv) or self.rv is ChainRV.ALL:
-                        rv.append(value)
-                except KeyError:
-                    pass
-            elif hasattr(mapping, '__getattribute__') and isinstance(key, str) and \
-                    not isinstance(mapping, (tuple, bool, int, str, bytes)):
-                try:
-                    value = getattr(mapping, key)
-                    if self.rv is ChainRV.FIRST:
-                        return value
-                    if (self.rv is ChainRV.UNIQUE and value not in rv) or self.rv is ChainRV.ALL:
-                        rv.append(value)
-                except AttributeError:
-                    pass
-        return self.default if self.rv is ChainRV.FIRST else rv
-
-    def __delitem__(self, key):
-        index = 0
-        deleted = []
-        found = False
-        for mapping in self.maps:
-            if mapping:
-                if not isinstance(mapping, (tuple, bool, int, str, bytes)):
-                    if hasattr(mapping, '__delitem__'):
-                        if key in mapping:
-                            del mapping[key]
-                            if self.rv is ChainRV.FIRST:
-                                found = True
-                    elif hasattr(mapping, '__delattr__') and hasattr(mapping, key) and isinstance(key, str):
-                        delattr(mapping.__class__, key) if key in dir(mapping.__class__) else delattr(mapping, key)
-                        if self.rv is ChainRV.FIRST:
-                            found = True
-                if not mapping:
-                    deleted.append(index)
-                if found:
-                    break
-            index += 1
-        for index in reversed(deleted):
-            del self.maps[index]
-        return self
-
-    def delete(self, key):
-        del self[key]
-        return self
-
-    def __setitem__(self, key, value):
-        found = False
-        for mapping in self.maps:
-            if mapping:
-                if not isinstance(mapping, (tuple, bool, int, str, bytes)):
-                    if hasattr(mapping, '__setitem__'):
-                        if key in mapping:
-                            mapping[key] = value
-                            if self.rv is ChainRV.FIRST:
-                                found = True
-                    elif hasattr(mapping, '__setattr__') and hasattr(mapping, key) and isinstance(key, str):
-                        setattr(mapping, key, value)
-                        if self.rv is ChainRV.FIRST:
-                            found = True
-                if found:
-                    break
-        if not found and not isinstance(self.maps[0], (tuple, bool, int, str, bytes)):
-            if hasattr(self.maps[0], '__setitem__'):
-                self.maps[0][key] = value
-            elif hasattr(self.maps[0], '__setattr__') and isinstance(key, str):
-                setattr(self.maps[0], key, value)
-        return self
-
-    def set(self, key, value):
-        return self.__setitem__(key, value)
-
-
-class Es:
-    # noinspection PyUnresolvedReferences
-    """
-        Is Instance, Subclass, etc. Helper Class
-
-        Examples:
-            >>> pretty_install()
+            >>> class Test:
+            ...     __repr_newline__ = True
             >>>
-            >>> es = Es(2)
-            >>> es.int
+            >>> Private.REPR_NEWLINE.has(Test())
             True
-            >>> es.bool
+            >>> Private.REPR_EXCLUDE.has(Test())
             False
-            >>> es.instance(dict, tuple)
-            False
-            >>> es(dict, tuple)
-            False
-            >>> def func(): pass
-            >>> Es(func).coro
-            False
-            >>> async def async_func(): pass
-            >>> es = Es(async_func)
-            >>> es.coro, es.coroutinefunction, es.asyncgen, es.asyncgenfunction, es.awaitable, es.coroutine
-            (True, True, False, False, False, False)
-            >>> es = {i.name: Es(i.object) for i in classify_class_attrs(TestAsync)}
-            >>> es['async_classmethod'].coro, es['async_classmethod'].coroutinefunction, \
-            es['async_classmethod'].asyncgen, es['async_classmethod'].asyncgenfunction, \
-            es['async_classmethod'].awaitable, es['async_classmethod'].coroutine
-            (True, True, False, False, False, False)
-            >>> es['async_method'].coro, es['async_method'].coroutinefunction, \
-            es['async_method'].asyncgen, es['async_method'].asyncgenfunction, \
-            es['async_method'].awaitable, es['async_method'].coroutine
-            (True, True, False, False, False, False)
-            >>> es['async_pprop'].coro, es['async_pprop'].coroutinefunction, \
-            es['async_pprop'].asyncgen, es['async_pprop'].asyncgenfunction, \
-            es['async_pprop'].awaitable, es['async_pprop'].coroutine
-            (True, True, False, False, False, False)
-            >>> es['async_prop'].coro, es['async_prop'].coroutinefunction, \
-            es['async_prop'].asyncgen, es['async_prop'].asyncgenfunction, \
-            es['async_prop'].awaitable, es['async_prop'].coroutine
-            (True, True, False, False, False, False)
-            >>> es['async_staticmethod'].coro, es['async_staticmethod'].coroutinefunction, \
-            es['async_staticmethod'].asyncgen, es['async_staticmethod'].asyncgenfunction, \
-            es['async_staticmethod'].awaitable, es['async_staticmethod'].coroutine
-            (True, True, False, False, False, False)
-            >>> assert es['classmethod'].coro == False
-            >>> assert es['cprop'].coro == False
-            >>> assert es['method'].coro == False
-            >>> assert es['pprop'].coro == False
-            >>> assert es['prop'].coro == False
-            >>> assert es['staticmethod'].coro == False
 
-        Attributes:
-        -----------
-        data: Any
-            object to provide information (default: None)
+        Args:
+            obj: object.
+
+        Returns:
+            True if object has attribute.
         """
-    __slots__ = ('data',)
+        return Es(obj).has(self)
 
-    def __init__(self, data=None): self.data = data
-
-    def __call__(self, *args): return isinstance(self.data, args)
-
-    # TODO: Test: __getstate__ and doc.
-    def __getstate__(self): return dict(data=self.data)
-
-    def __repr__(self): return f'{self.__class__.__name__}({self.data})'
-
-    # TODO: Test: __setstate__ and doc.
-    def __setstate__(self, state): self.data = state['data']
-
-    def __str__(self): return str(self.data)
-
-    _func = property(
-        lambda self:
-        self.data.fget if self.prop else self.data.__func__ if self(classmethod, staticmethod) else self.data)
-    annotation = property(lambda self: self(Annotation))
-    annotationstype = property(lambda self: self(AnnotationsType))
-    annotationstype_sub = property(lambda self: self.subclass(AnnotationsType))
-    # TODO: asdict_props
-    # asdict = property(lambda self: dict(data=self.data) | asdict_props(self))
-    asdictmethod = property(lambda self: self(AsDictMethodType))
-    asdictmethod_sub = property(lambda self: self.subclass(AsDictMethodType))
-    asdictproperty = property(lambda self: self(AsDictPropertyType))
-    asdictproperty_sub = property(lambda self: self.subclass(AsDictPropertyType))
-    ast = property(lambda self: self(AST))
-    asyncfor = property(lambda self: isinstance(self._func, AsyncFor))
-    asyncfunctiondef = property(lambda self: isinstance(self._func, AsyncFunctionDef))
-    asyncgen = property(lambda self: isinstance(self._func, AsyncGeneratorType))
-    asyncgenfunction = property(lambda self: isasyncgenfunction(self._func))
-    asyncwith = property(lambda self: isinstance(self._func, AsyncWith))
-    # TODO: Attribute
-    # attribute = property(lambda self: self(Attribute))
-    await_ast = property(lambda self: isinstance(self._func, Await))
-    awaitable = property(lambda self: isawaitable(self._func))
-    bool = property(lambda self: self(int) and self(bool))
-    builtin = property(lambda self: any([in_dict(BUILTINS, self.data), self.builtinclass, self.builtinfunction]))
-    builtinclass = property(lambda self: self.data in BUILTINS_CLASSES)
-    builtinfunction = property(lambda self: self.data in BUILTINS_FUNCTIONS)
-    builtinfunctiontype = property(lambda self: self(BuiltinFunctionType))
-    bytesio = property(lambda self: self(BytesIO))  # :class:`typing.BinaryIO`
-    cache = property(lambda self: Mro.cache_clear.has(self.data))
-    cached_property = property(lambda self: self(cached_property))
-    callable = property(lambda self: self(Callable))
-    chain = property(lambda self: self(Chain))
-    chainmap = property(lambda self: self(ChainMap))
-    classdef = property(lambda self: self(ClassDef))
-    classmethod = property(lambda self: self(classmethod))
-    classmethoddescriptortype = property(lambda self: self(ClassMethodDescriptorType))
-    classvar = property(
-        lambda self: (self.datafield and get_origin(self.data.type) == ClassVar) or get_origin(self.data) == ClassVar)
-    codetype = property(lambda self: self(CodeType))
-    collections = property(lambda self: is_collections(self.data))
-    container = property(lambda self: self(Container))
-    coro = property(lambda self: any(
-        [self.asyncfor, self.asyncfunctiondef, self.asyncwith, self.await_ast] if self.ast else
-        [self.asyncgen, self.asyncgenfunction, self.awaitable, self.coroutine, self.coroutinefunction]))
-    coroutine = property(lambda self: iscoroutine(self._func) or isinstance(self._func, CoroutineType))
-    coroutinefunction = property(lambda self: iscoroutinefunction(self._func))
-    datafactory = property(
-        lambda self: self.datafield and Es(self.data.default).missing and hasattr(self.data, 'default_factory'))
-    datafield = property(lambda self: self(Field))
-    datatype = property(lambda self: self(DataType))
-    datatype_sub = property(lambda self: self.subclass(DataType))
-    defaultdict = property(lambda self: self(defaultdict))
-    deleter = property(lambda self: self.property_any and self.data.fdel is not None)
-    dict = property(lambda self: self(dict))
-    dicttype = property(lambda self: self(DictType))
-    dicttype_sub = property(lambda self: self.subclass(DictType))
-    dynamicclassattribute = property(lambda self: self(DynamicClassAttribute))
-    dlst = property(lambda self: self(dict, list, set, tuple))
-    enum = property(lambda self: self(Enum))
-    enum_sub = property(lambda self: self.subclass(Enum))
-    enumdict = property(lambda self: self(EnumDict))
-    enumdict_sub = property(lambda self: self.subclass(EnumDict))
-    even: property(lambda self: not self.data % 2)
-    fileio = property(lambda self: self(FileIO))
-    float = property(lambda self: self(float))
-    frameinfo = property(lambda self: self(FrameInfo))
-    frametype = property(lambda self: self(FrameType))
-    functiondef = property(lambda self: self(FunctionDef))
-    functiontype = property(lambda self: self(FunctionType))
-    generator = property(lambda self: self(Generator))
-    generatortype = property(lambda self: self(GeneratorType))
-    genericalias = property(lambda self: self(types.GenericAlias))
-    getattrnobuiltintype = property(lambda self: self(GetAttrNoBuiltinType))
-    getattrnobuiltintype_sub = property(lambda self: self.subclass(GetAttrNoBuiltinType))
-    getattrtype = property(lambda self: self(GetAttrType))
-    getattrtype_sub = property(lambda self: self.subclass(GetAttrType))
-    getsetdescriptor = lambda self, n: isgetsetdescriptor(self.cls_attr_value(n)) if n else self.data
-    getsetdescriptortype = property(lambda self: self(GetSetDescriptorType))
-    gettype = property(lambda self: self(GetType))
-    gettype_sub = property(lambda self: self.subclass(GetType))
-    hashable = property(lambda self: bool(noexception(TypeError, hash, self.data)))
-    import_ast = property(lambda self: self(Import))
-    importfrom = property(lambda self: self(ImportFrom))
-    initvar = property(
-        lambda self: (self.datafield and isinstance(self.data.type, InitVar)) or self(InitVar))
-    installed = property(lambda self: is_installed(self.data))
-    instance = lambda self, *args: isinstance(self.data, args)
-    int = property(lambda self: self(int))
-    io = property(lambda self: self.bytesio and self.stringio)  # :class:`typing.IO`
-    iterable = property(lambda self: self(Iterable))
-    iterator = property(lambda self: self(Iterator))
-    lambdatype = property(lambda self: self(LambdaType))
-    list = property(lambda self: self(list))
-    lst = property(lambda self: self(list, set, tuple))
-    mappingproxytype = property(lambda self: self(MappingProxyType))
-    mappingproxytype_sub = property(lambda self: self.subclass(MappingProxyType))
-    memberdescriptor = property(lambda self: ismemberdescriptor(self.data))
-    memberdescriptortype = property(lambda self: self(MemberDescriptorType))
-    # TODO: Meta
-    # meta = property(lambda self: self(Meta))
-    # meta_sub = property(lambda self: self.subclass(Meta))
-    # metatype = property(lambda self: self(MetaType))
-    # metatype_sub = property(lambda self: self.subclass(MetaType))
-    method = property(lambda self: self.methodtype and not self(classmethod, property, staticmethod))
-    methoddescriptor = property(lambda self: ismethoddescriptor(self.data))
-    methoddescriptortype = property(lambda self: self(types.MethodDescriptorType))
-    methodtype = property(lambda self: self(MethodType))  # True if it is an instance method!.
-    methodwrappertype = property(lambda self: self(MethodWrapperType))
-    methodwrappertype_sub = property(lambda self: self.subclass(MethodWrapperType))
-    missing = property(lambda self: self(MISSING_TYPE))
-    mlst = property(lambda self: self(MutableMapping, list, set, tuple))
-    mm = property(lambda self: self(MutableMapping))
-    moduletype = property(lambda self: self(ModuleType))
-    module_function = property(lambda self: is_module_function(self.data))
-    noncomplex = property(lambda self: is_noncomplex(self.data))
-    namedtype = property(lambda self: self(NamedType))
-    namedtype_sub = property(lambda self: self.subclass(NamedType))
-    named_annotationstype = property(lambda self: self(NamedAnnotationsType))
-    named_annotationstype_sub = property(lambda self: self.subclass(NamedAnnotationsType))
-    none = property(lambda self: self(type(None)))
-    object = property(lambda self: is_object(self.data))
-    pathlib = property(lambda self: self(PathLib))
-    picklable = lambda self, name: is_picklable(name, self.data)
-    primitive = property(lambda self: is_primitive(self.data))
-    pproperty = property(lambda self: self(pproperty))
-    prop = property(lambda self: self(property))
-    property_any = property(lambda self: self.prop or self.cached_property)
-    reducible = property(lambda self: is_reducible(self.data))
-    reducible_sequence_subclass = property(lambda self: is_reducible_sequence_subclass(self.data))
-    routine = property(lambda self: isroutine(self.data))
-    sequence = property(lambda self: self(Sequence))
-    sequence_sub = property(lambda self: self.subclass(Sequence))
-    set = property(lambda self: self(set))
-    setter = property(lambda self: self.prop and self.data.fset is not None)
-    simple = property(lambda self: self(Simple))
-    sized = property(lambda self: self(Sized))
-    # TODO: slist
-    # slist = property(lambda self: self(slist))
-    slotstype = property(lambda self: self(SlotsType))
-    slotstype_sub = property(lambda self: self.subclass(SlotsType))
-    staticmethod = property(lambda self: self(staticmethod))
-    str = property(lambda self: self(str))
-    # TODO: stuple
-    # stuple = property(lambda self: self(stuple))
-    subclass = lambda self, *args: self.type and issubclass(self.data, args)
-    stringio = property(lambda self: self(StringIO))  # :class:`typing.TextIO`
-    tracebacktype = property(lambda self: self(TracebackType))
-    tuple = property(lambda self: self(tuple))
-    type = property(lambda self: self(type))
-    unicode = property(lambda self: is_unicode(self.data))
-    wrapperdescriptortype = property(lambda self: self(WrapperDescriptorType))
-
-    def __class_getitem__(cls, prop):
-        # TODO: Examples: __class_getitem__
+    def mro_first_data(self, obj):
         """
-        Getter with Property Name.
+        First value of attr found in mro and instance if obj is instance.
 
         Examples:
             >>> pretty_install()
             >>>
-
-        Args:
-            prop: property
+            >>> class Test:
+            ...     __repr_newline__ = True
+            >>>
+            >>> test = Test()
+            >>> class Test2(Test):
+            ...     def __init__(self):
+            ...         self.__repr_newline__ = False
+            >>>
+            >>> Private.REPR_NEWLINE.mro_first_data(Test())
+            True
+            >>> Private.REPR_NEWLINE.mro_first_data(Test2())
+            False
+            >>> Private.REPR_NEWLINE.mro_first_data(int())
+            >>> Private.REPR_PPROPERTY.mro_first_data(Test())
 
         Returns:
-            Getter with Property Name.
+            First value of attr found in mro and instance if obj is instance.
         """
-        return attrgetter(n) if ((n := cls(prop).property_any.__name__) in cls.__dict__) else NotImplemented
+        return Es(obj).mro_first_data(self)
+
+    def mro_first_dict(self, obj):
+        """
+        First value of attr in obj.__class__.__dict__ found in mro.
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> class Test:
+            ...     __repr_newline__ = False
+            >>>
+            >>> test = Test()
+            >>> class Test2(Test):
+            ...     def __init__(self):
+            ...         self.__repr_newline__ = False
+            >>>
+            >>> Private.REPR_NEWLINE.mro_first_dict(Test())
+            False
+            >>> Private.REPR_NEWLINE.mro_first_dict(Test2())
+            False
+            >>> Private.REPR_NEWLINE.mro_first_dict(int())
+            NotImplemented
+            >>> Private.REPR_PPROPERTY.mro_first_dict(Test())
+            NotImplemented
+            >>> A = namedtuple('A', 'a')
+            >>> Private.SLOTS.mro_first_dict(A)
+            ()
+
+        Returns:
+            First value of attr in obj.__class__.__dict__ found in mro.
+        """
+        return Es(obj).mro_first_dict(self)
+
+    def mro_first_dict_no_object(self, obj):
+        """
+        First value of attr in obj.__class__.__dict__ found in mro excluding object.
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> class Test:
+            ...     __repr_newline__ = False
+            >>>
+            >>> test = Test()
+            >>> class Test2(Test):
+            ...     def __init__(self):
+            ...         self.__repr_newline__ = False
+            >>>
+            >>> Private.REPR_NEWLINE.mro_first_dict_no_object(Test())
+            False
+            >>> Private.REPR_NEWLINE.mro_first_dict_no_object(Test2())
+            False
+            >>> Private.REPR_NEWLINE.mro_first_dict_no_object(int())
+            NotImplemented
+            >>> Private.REPR_PPROPERTY.mro_first_dict_no_object(Test())
+            NotImplemented
+            >>> A = namedtuple('A', 'a')
+            >>> Private.SLOTS.mro_first_dict_no_object(A)
+            ()
+            >>> Private.SLOTS.mro_first_dict_no_object(dict)
+            NotImplemented
+            >>> Private.SLOTS.mro_first_dict_no_object(dict())
+            NotImplemented
+
+        Returns:
+            First value of attr in obj.__class__.__dict__ found in mro excluding object.
+        """
+        return Es(obj).mro_first_dict_no_object(self)
+
+    def mro_values(self, obj):
+        """
+        All/accumulated values of attr in mro and obj if instance.
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_hash', '_repr')
+            ...     __ignore_copy__ = (tuple, )
+            ...     __repr_exclude__ = ('_repr', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_prop', '_slot', )
+            ...     __hash_exclude__ = ('_slot', )
+            ...     __ignore_attr__ = ('attr', )
+            ...     __ignore_kwarg__ = ('kwarg', )
+            ...     __ignore_str__ = (tuple, )
+            >>>
+            >>> test = Test()
+            >>> Private.HASH_EXCLUDE.mro_values(test)
+            ('_slot',)
+            >>> Private.IGNORE_ATTR.mro_values(test)  # doctest: +ELLIPSIS
+            (
+                'asdict',
+                'attr',
+                ...
+            )
+            >>> set(Private.IGNORE_COPY.mro_values(test)).difference(Private.IGNORE_COPY.mro_values_default(test))
+            {<class 'tuple'>}
+            >>> Private.IGNORE_KWARG.mro_values(test)
+            ('kwarg',)
+            >>> set(Private.IGNORE_STR.mro_values(test)).difference(Private.IGNORE_STR.mro_values_default(test))
+            {<class 'tuple'>}
+            >>> Private.REPR_EXCLUDE.mro_values(test)
+            ('_repr',)
+            >>> Private.SLOTS.mro_values(test)
+            ('_hash', '_prop', '_repr', '_slot')
+            >>> assert sorted(Private.PICKLE.mro_values(Environs())) == sorted(PICKLE_ATTRS[Environs])
+
+        Returns:
+            All/accumulated values of attr in mro and obj if instance.
+        """
+        return Es(obj).mro_values(self)
+
+    @functools.cache
+    def mro_values_default(self, obj):
+        """
+        Default values for attr in mro and instance.
+
+        Examples:
+            >>> from rc import Es, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_hash', '_repr')
+            ...     __ignore_copy__ = (tuple, )
+            ...     __repr_exclude__ = ('_repr', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_prop', '_slot', )
+            ...     __hash_exclude__ = ('_slot', )
+            ...     __ignore_attr__ = ('attr', )
+            ...     __ignore_kwarg__ = ('kwarg', )
+            ...     __ignore_str__ = (tuple, )
+            >>>
+            >>> test = Test()
+            >>> assert Private.HASH_EXCLUDE.mro_values_default(test) == tuple()
+            >>> assert Private.IGNORE_ATTR.mro_values_default(test) == IgnoreAttr.__args__
+            >>> assert Private.IGNORE_COPY.mro_values_default(test) == IgnoreCopy.__args__
+            >>> assert Private.IGNORE_KWARG.mro_values_default(test) == tuple()
+            >>> assert Private.IGNORE_STR.mro_values_default(test) == IgnoreStr.__args__
+            >>> assert Private.REPR_EXCLUDE.mro_values_default(test) == tuple()
+            >>> assert Private.SLOTS.mro_values_default(test) == tuple()
+            >>> assert sorted(Private.PICKLE.mro_values_default(Environs())) == sorted(PICKLE_ATTRS[Environs])
+
+        Returns:
+           Default values for attr in mro and instance.
+        """
+        return Es(obj).mro_values_default(self)
+
+    def slot(self, obj):
+        """
+        Is attribute in slots?
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_data', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_id', )
+            >>>
+            >>> Protected.DATA.slot(Test())
+            True
+            >>> Protected.ID.slot(Test())
+            True
+            >>> Public.IP.slot(Test())
+            False
+
+        Args:
+            obj: object.
+
+        Returns:
+            True if attribute in slots
+        """
+        return Es(obj).slot(self)
+
+    def slots_include(self, obj):
+        """
+        Accumulated values from slots - Accumulated values from mro attr name.
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_hash', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_prop', '_repr', '_slot', )
+            ...     __hash_exclude__ = ('_slot', )
+            ...     __repr_exclude__ = ('_repr', )
+            >>>
+            >>> test = Test()
+            >>> slots = Private.SLOTS.mro_values(test)
+            >>> slots
+            ('_hash', '_prop', '_repr', '_slot')
+            >>> hash_attrs = Private.HASH_EXCLUDE.slots_include(test)
+            >>> hash_attrs
+            ('_hash', '_prop', '_repr')
+            >>> sorted(hash_attrs + Private.HASH_EXCLUDE.mro_values(test)) == sorted(slots)
+            True
+            >>> repr_attrs = Private.REPR_EXCLUDE.slots_include(test)
+            >>> repr_attrs
+            ('_hash', '_prop', '_slot')
+            >>> sorted(repr_attrs + Private.REPR_EXCLUDE.mro_values(test)) == sorted(slots)
+            True
+
+        Returns:
+            Accumulated values from slots - Accumulated values from mro attr name.
+        """
+        return Es(obj).slots_include(self)
 
 
-class pproperty(property):
-    """
-    Print property.
+class Private(PrivateBase):
+    """Private Access Attributes Enum Class.."""
+    ALL = auto()
+    ANNOTATIONS = auto()
+    ARGS = auto()
+    ASDICT = auto()
+    BUILTINS = auto()
+    CACHE_CLEAR = auto()
+    CACHE_INFO = auto()
+    CACHED = auto()
+    CODE = auto()
+    CONTAINS = auto()
+    DATACLASS_FIELDS = auto()
+    DATACLASS_PARAMS = auto()
+    DELATTR = auto()
+    DICT = auto()
+    DIR = auto()
+    DOC = auto()
+    EQ = auto()
+    FILE = auto()
+    GET = auto()
+    GETATTRIBUTE = auto()
+    GETITEM = auto()
+    GETSTATE = auto()
+    HASH_EXCLUDE = auto()
+    IGNORE_ATTR = auto()
+    IGNORE_COPY = auto()
+    IGNORE_KWARG = auto()
+    IGNORE_STR = auto()
+    INIT = auto()
+    INIT_SUBCLASS = auto()
+    LEN = auto()
+    LOADER = auto()
+    MEMBERS = auto()
+    MODULE = auto()
+    MRO = auto()
+    NAME = auto()
+    PACKAGE = auto()
+    PICKLE = auto()
+    POST_INIT = auto()
+    QUALNAME = auto()
+    REDUCE = auto()
+    REDUCE_EX = auto()
+    REPR = auto()
+    REPR_EXCLUDE = auto()
+    REPR_NEWLINE = auto()
+    REPR_PPROPERTY = auto()
+    SETATTR = auto()
+    SETSTATE = auto()
+    SLOTS = auto()
+    SPEC = auto()
+    STR = auto()
+    SUBCLASSHOOK = auto()
 
-    Examples:
-        >>> pretty_install()
-        >>> class Test:
-        ...     _pp = 0
-        ...     @pproperty
-        ...     def pp(self):
-        ...         self._pp += 1
-        ...         prop = Es(self.__class__.__dict__['pp']).prop
-        ...         pprop = Es(self.__class__.__dict__['pp']).pproperty
-        ...         return self._pp, prop, pprop
-        >>> test = Test()
-        >>> test.pp
-        (1, True, True)
-        >>> test.pp
-        (2, True, True)
-    """
 
-    def __init__(self, fget=None, fset=None, fdel=None, doc=None):
-        super().__init__(fget=fget, fset=fset, fdel=fdel, doc=doc)
+class ProtectedBase(PrivateBase):
+    def _generate_next_value_(self, start, count, last_values):
+        return f'_{self.lower()}'
+
+
+class Protected(ProtectedBase):
+    """Protected Access Attributes Enum Class."""
+    ASDICT = auto()
+    CLS = auto()
+    COPY = auto()
+    COUNT = auto()
+    DATA = auto()
+    EXTEND = auto()
+    EXTERNAL = auto()
+    FIELD_DEFAULTS = auto()
+    FIELDS = auto()
+    FILE = auto()
+    FILENAME = auto()
+    FRAME = auto()
+    FUNC = auto()
+    FUNCTION = auto()
+    GET = auto()
+    GLOBALS = auto()
+    ID = auto()
+    INDEX = auto()
+    IP = auto()
+    ITEM = auto()
+    ITEMS = auto()
+    KEY = auto()
+    KEYS = auto()
+    KIND = auto()
+    LOCALS = auto()
+    NAME = auto()
+    ORIGIN = auto()
+    OBJ = auto()
+    OBJECT = auto()
+    PATH = auto()
+    REPO = auto()
+    RV = auto()
+    PYPI = auto()
+    REMOVE = auto()
+    REVERSE = auto()
+    SORT = auto()
+    UPDATE = auto()
+    VALUE = auto()
+    VALUES = auto()
+    VARS = auto()
+
+
+class PublicBase(PrivateBase):
+    def _generate_next_value_(self, start, count, last_values):
+        return self.lower()
+
+
+class Public(PublicBase):
+    """Public Access Attributes Enum Class."""
+    ADD = auto()
+    APPEND = auto()
+    ASDICT = auto()
+    CLS = auto()
+    CLEAR = auto()
+    CO_NAME = auto()
+    CODE_CONTEXT = auto()
+    COPY = auto()
+    COUNT = auto()
+    DATA = auto()
+    ENDSWITH = auto()
+    EXTEND = auto()
+    EXTERNAL = auto()
+    F_BACK = auto()
+    F_CODE = auto()
+    F_GLOBALS = auto()
+    F_LINENO = auto()
+    F_LOCALS = auto()
+    FILE = auto()
+    FILENAME = auto()
+    FRAME = auto()
+    FUNC = auto()
+    FUNCTION = auto()
+    GET = auto()
+    GLOBALS = auto()
+    ID = auto()
+    INDEX = auto()
+    IP = auto()
+    ITEM = auto()
+    ITEMS = auto()
+    KEY = auto()
+    KEYS = auto()
+    KIND = auto()
+    LINENO = auto()
+    LOCALS = auto()
+    NAME = auto()
+    ORIGIN = auto()
+    OBJ = auto()
+    OBJECT = auto()
+    PATH = auto()
+    REPO = auto()
+    RV = auto()
+    POP = auto()
+    POPITEM = auto()
+    PYPI = auto()
+    REMOVE = auto()
+    REVERSE = auto()
+    SELF = auto()
+    SORT = auto()
+    STARTSWITH = auto()
+    TB_FRAME = auto()
+    TB_LINENO = auto()
+    TB_NEXT = auto()
+    UPDATE = auto()
+    VALUE = auto()
+    VALUES = auto()
+    VARS = auto()
+
+
+# </editor-fold>
+# <editor-fold desc="Enums - Typing">
+AttrUnion = Union[str, Private, Protected, Public]
+EnumBaseAlias = Alias(EnumBase, 1, name=EnumBase.__name__)
 
 
 # </editor-fold>
@@ -2577,7 +2153,7 @@ def allin(origin, destination):
     return all(map(lambda x: x in destination, origin))
 
 
-def annotations(obj, stack=1):
+def annotations(obj, stack=1, sequence=False):
     """
     Formats obj annotations.
 
@@ -2606,7 +2182,7 @@ def annotations(obj, stack=1):
         ...     def __post_init__(self, initvar: int, initvar_optional: Optional[int]):
         ...         self.a = initvar
         >>>
-        >>> ann = annotations(Test)
+        >>> ann = annotations(Test, sequence=False)
         >>> ann['any'].any, ann['any'].cls, ann['any'].default
         (True, typing.Any, None)
         >>> ann['classvar'].classvar, ann['classvar'].cls, ann['classvar'].default
@@ -2641,8 +2217,9 @@ def annotations(obj, stack=1):
         (True, True, <class 'str'>, '')
 
     Args:
-        obj: obj.
+        obj: object.
         stack: stack index to extract globals and locals (default: 1) or frame.
+        sequence: return sequence instead of dict (default: False).
 
     Returns:
         Annotation: obj annotations. Default are filled with annotation not with class default.
@@ -2650,7 +2227,7 @@ def annotations(obj, stack=1):
 
     def value(_cls):
         # TODO: 1) default from annotations, 2) value from kwargs or class defaults.
-        return noexception(Exception, _cls)
+        return noexception(_cls)
 
     def inner(_hint):
         cls = _hint
@@ -2704,10 +2281,11 @@ def annotations(obj, stack=1):
 
     frame = stack if Es(stack).frametype else insstack()[stack].frame
     rv = dict()
-    if a := noexception(TypeError, get_type_hints, obj, globalns=frame.f_globals, localns=frame.f_locals):
+    if a := noexception(get_type_hints, obj, globalns=frame.f_globals, localns=frame.f_locals):
         for name, hint in a.items():
             rv |= {name: inner(hint)}
-    return dict_sort(rv)
+    rv = dict_sort(rv)
+    return list(rv.values()) if sequence else rv
 
 
 def annotations_init(cls, stack=2, optional=True, **kwargs):
@@ -2737,7 +2315,7 @@ def annotations_init(cls, stack=2, optional=True, **kwargs):
         cls: cls instance with default values.
     """
     values = dict()
-    for name, a in annotations(cls, stack=stack).items():
+    for name, a in annotations(cls, stack=stack, sequence=False).items():
         if v := kwargs.get(name):
             value = v
         elif a.origin == Union and not optional:
@@ -2788,6 +2366,66 @@ def anyin(origin, destination):
     origin = to_iter(origin)
     destination = to_iter(destination)
     return first_true(origin, pred=lambda x: x in destination)
+
+
+def cache(func):
+    """
+    Caches previous calls to the function if object is pickable.
+
+    Examples:
+        >>>
+    """
+    cache.enabled = True
+    cache.memo = dict()
+    if func not in cache.memo:
+        cache.memo[func] = dict()
+
+    def cache_info():
+        """
+        Cache Wrapper Info.
+
+        Returns:
+            Cache Wrapper Info.
+        """
+        return CacheWrapperInfo(wrapper.cache_hit, wrapper.cache_passed, wrapper.cache_total)
+
+    def cache_clear():
+        """Clear Cache."""
+        wrapper.cache_hit = 0
+        wrapper.cache_passed = 0
+        wrapper.cache_total = 0
+        del cache.memo[func]
+        cache.memo[func] = dict()
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        """Cache Wrapper."""
+        wrapper.cache_total += 1
+        if cache.enabled:
+            try:
+                key = Es((args, kwargs, )).pickles
+                if key not in cache.memo[func]:
+                    wrapper.cache_hit += 1
+                    cache.memo[func][key] = func(*args, **kwargs)
+                else:
+                    wrapper.cache_passed += 1
+                value = cache.memo[func][key]
+            except Exception as exception:
+                red(f'{func=}({args}, {kwargs}) not cached: {exception}')
+                wrapper.cache_hit += 1
+                value = func(*args, **kwargs)
+        else:
+            wrapper.cache_hit += 1
+            value = func(*args, **kwargs)
+        return value
+
+    wrapper.cache_hit = 0
+    wrapper.cache_passed = 0
+    wrapper.cache_total = 0
+    wrapper.cache_clear = cache_clear
+    wrapper.cache_info = cache_info
+
+    return wrapper
 
 
 def cmd(command, exc=False, lines=True, shell=True, py=False, pysite=True):
@@ -2936,54 +2574,74 @@ def effect(apply, data):
     consume(side_effect(apply, to_iter(data)))
 
 
-@singledispatch
-def get(data: GetType, name, default=None):
+def enumvalue(data):
     """
-    Get value of name in Mutabble Mapping/GetType or object.
+    Returns Enum Value if Enum Instance or Data.
+
+    Examples:
+        >>> pretty_install()
+        >>>
+        >>> enumvalue(Private.ANNOTATIONS)
+        '__annotations__'
+        >>> enumvalue(None)
+
+    Args:
+        data: object.
+
+    Returns:
+        Enum Value or Data.
+    """
+    return data.value if Es(data).enum else data
+
+
+def get(data, *args, default=None, one=True, recursive=False, with_keys=False):
+    """
+    Get value of name in Mutabble Mapping/GetType or object
 
     Examples:
         >>> get(dict(a=1), 'a')
         1
         >>> get(dict(a=1), 'b')
-        >>> get(dict(a=1), 'b', 2)
+        >>> get(dict(a=1), 'b', default=2)
         2
-
-    Args:
-        data: MutabbleMapping/GetType to get value.
-        name: key.
-        default: default value (default:None)
-
-    Returns:
-        Value for key.
-    """
-    return data.get(name, default)
-
-
-@get.register
-def get_getattrtype(data: GetAttrType, name, default=None):
-    """
-    Get value of name in Mutabble Mapping or object.
-
-    Examples:
         >>> get(dict, '__module__')
         'builtins'
         >>> get(dict, '__file__')
 
     Args:
-        data: object to get value.
-        name: attr name.
-        default: default value (default:None)
+        data: MutabbleMapping/GetType to get value.
+        *args: keys (default: ('name')).
+        default: default value (default: None).
+        with_keys: return dict names and values or values (default: False).
+        one: return [0] if len == 1 and one instead of list (default: True).
+        recursive: recursivily for MutableMapping (default: False).
 
     Returns:
-        Value for attribute.
+        Value for key.
     """
-    try:
-        return object.__getattribute__(data, name)
-    except AttributeError:
-        return default
+    def rv(items):
+        if recursive and with_keys:
+            items = {key: value[0] if len(value) == 1 and one else value for key, value in items}
+        if with_keys:
+            return items
+        return list(r)[0] if len(r := items.values()) == 1 and one else list(r)
+
+    args = args or ('name', )
+    es = Es(data)
+    if recursive and not es.mm:
+        # TODO: to_vars() empty
+        # data = to_vars()
+        pass
+    if es.mm and recursive:
+        return rv(defaultdict(list, {k: v for arg in args for k, v in _nested_lookup(arg, data,
+                                                                                     with_keys=with_keys)}))
+    elif es.mm:
+        return rv({arg: data.get(arg, default) for arg in args})
+
+    return rv({attr: getattr(data, attr, default) for attr in args})
 
 
-def getset(data, name, default=None):
+def getset(data, name, default=None, setvalue=True):
     """
     Sets attribute with default if it does not exists and returns value.
 
@@ -3031,6 +2689,7 @@ def getset(data, name, default=None):
         data: object.
         name: attr name.
         default: default value (default: None)
+        setvalue: setattr in object if AttributeError (default: True).
 
     Returns:
         Attribute value or sets default value and returns.
@@ -3038,8 +2697,10 @@ def getset(data, name, default=None):
     try:
         return object.__getattribute__(data, name)
     except AttributeError:
-        object.__setattr__(data, name, default)
-        return object.__getattribute__(data, name)
+        if setvalue:
+            object.__setattr__(data, name, default)
+            return object.__getattribute__(data, name)
+        return default
 
 
 def iseven(number): return Es(number).even
@@ -3169,25 +2830,25 @@ def newprop(name=None, default=None, pprop=False):
     )
 
 
-def noexception(exception, func, *args, default_=None, **kwargs):
+def noexception(func, *args, default_=None, exc_=Exception, **kwargs):
     """
     Execute function suppressing exceptions.
 
     Examples:
-        >>> noexception(KeyError, dict(a=1).pop, 'b', default_=2)
+        >>> noexception(dict(a=1).pop, 'b', default_=2, exc_=KeyError)
         2
 
     Args:
-        exception: exception or exceptions.
         func: callable.
         *args: args.
         default_: default value if exception is raised.
+        exc_: exception or exceptions.
         **kwargs: kwargs.
 
     Returns:
         Any: Function return.
     """
-    with suppress(exception):
+    with suppress(exc_):
         return func(*args, **kwargs)
     return default_
 
@@ -3231,11 +2892,11 @@ def to_camel(text, replace=True):
     Convert to Camel
 
     Examples:
-        >>> to_camel(Mro.ignore_attr.name)
+        >>> to_camel(Private.IGNORE_ATTR.name)
         'IgnoreAttr'
-        >>> to_camel(Mro.ignore_attr.name, replace=False)
+        >>> to_camel(Private.IGNORE_ATTR.name, replace=False)
         'Ignore_Attr'
-        >>> to_camel(Mro.ignore_attr.value, replace=False)
+        >>> to_camel(Private.IGNORE_ATTR.value, replace=False)
         '__Ignore_Attr__'
 
     Args:
@@ -3282,6 +2943,20 @@ def to_iter(data, always=False, split=' '):
     elif not es.iterable or always:
         data = [data]
     return data
+
+
+def to_vars():
+    """
+    Object to dict with no copy or deepcopy.
+
+    To be used for:
+        - get recursivily
+        - repr
+
+    Returns:
+        Dict.
+    """
+    pass
 
 
 def token_open(file):
@@ -3396,6 +3071,2054 @@ def yield_last(data, split=' '):
     for i in data:
         count += 1
         yield count == total, *(i, data.get(i) if mm else None,)
+
+
+# </editor-fold>
+# <editor-fold desc="Es">
+class Es:
+    # noinspection PyUnresolvedReferences
+    """
+        Is Instance, Subclass, etc. Helper Class
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> es = Es(2)
+            >>> es.int
+            True
+            >>> es.bool
+            False
+            >>> es.instance(dict, tuple)
+            False
+            >>> es(dict, tuple)
+            False
+            >>> def func(): pass
+            >>> Es(func).coro
+            False
+            >>> async def async_func(): pass
+            >>> es = Es(async_func)
+            >>> es.coro, es.coroutinefunction, es.asyncgen, es.asyncgenfunction, es.awaitable, es.coroutine
+            (True, True, False, False, False, False)
+            >>> es = {i.name: Es(i.object) for i in classify_class_attrs(TestAsync)}
+            >>> es['async_classmethod'].coro, es['async_classmethod'].coroutinefunction, \
+            es['async_classmethod'].asyncgen, es['async_classmethod'].asyncgenfunction, \
+            es['async_classmethod'].awaitable, es['async_classmethod'].coroutine
+            (True, True, False, False, False, False)
+            >>> es['async_method'].coro, es['async_method'].coroutinefunction, \
+            es['async_method'].asyncgen, es['async_method'].asyncgenfunction, \
+            es['async_method'].awaitable, es['async_method'].coroutine
+            (True, True, False, False, False, False)
+            >>> es['async_pprop'].coro, es['async_pprop'].coroutinefunction, \
+            es['async_pprop'].asyncgen, es['async_pprop'].asyncgenfunction, \
+            es['async_pprop'].awaitable, es['async_pprop'].coroutine
+            (True, True, False, False, False, False)
+            >>> es['async_prop'].coro, es['async_prop'].coroutinefunction, \
+            es['async_prop'].asyncgen, es['async_prop'].asyncgenfunction, \
+            es['async_prop'].awaitable, es['async_prop'].coroutine
+            (True, True, False, False, False, False)
+            >>> es['async_staticmethod'].coro, es['async_staticmethod'].coroutinefunction, \
+            es['async_staticmethod'].asyncgen, es['async_staticmethod'].asyncgenfunction, \
+            es['async_staticmethod'].awaitable, es['async_staticmethod'].coroutine
+            (True, True, False, False, False, False)
+            >>> assert es['classmethod'].coro == False
+            >>> assert es['cprop'].coro == False
+            >>> assert es['method'].coro == False
+            >>> assert es['pprop'].coro == False
+            >>> assert es['prop'].coro == False
+            >>> assert es['staticmethod'].coro == False
+
+        Attributes:
+        -----------
+        data: Any
+            object to provide information (default: None)
+        """
+    __slots__ = ('data', )
+    def __init__(self, data=None): self.data = data
+    def __call__(self, *args): return isinstance(self.data, args)
+    def __getstate__(self): return dict(data=self.data)
+    def __hash__(self): return hash((type(self.data), self.__str__()))
+    def __reduce__(self): return self.__class__, tuple(self.data)
+    def __reduce_ex__(self, *args, **kwargs): return self.__class__, tuple(self.data)
+    def __repr__(self): return f'{self.__class__.__name__}({self.data})'
+    def __setstate__(self, state): self.data = state['data']
+    def __str__(self): return str(self.data)
+
+    # <editor-fold desc="Es - Protected">
+    @property
+    @functools.cache
+    def _func(self): return self.data.fget if self.prop else self.data.__func__ \
+        if self(classmethod, staticmethod) else self.data
+
+    @property
+    @functools.cache
+    def _function(self): return insstack()[1].function
+    # </editor-fold>
+
+    # <editor-fold desc="Es - Bool">
+    @property
+    @functools.cache
+    def annotation(self): return self(Annotation)
+
+    @property
+    @functools.cache
+    def annotationstype(self): return self(AnnotationsType)
+
+    @property
+    @functools.cache
+    def annotationstype_both(self): return self.annotationstype or self.es_cls.annotationstype_sub
+
+    @property
+    @functools.cache
+    def annotationstype_sub(self): return self.subclass(AnnotationsType)
+
+    @property
+    @functools.cache
+    def asdictmethod(self): return self(AsDictMethodType)
+
+    @property
+    @functools.cache
+    def asdictmethod_sub(self): return self.subclass(AsDictMethodType)
+
+    @property
+    @functools.cache
+    def asdictproperty(self): return self(AsDictPropertyType)
+
+    @property
+    @functools.cache
+    def asdictproperty_sub(self): return self.subclass(AsDictPropertyType)
+
+    @property
+    @functools.cache
+    def ast(self): return self(AST)
+
+    @property
+    @functools.cache
+    def asyncfor(self): return isinstance(self._func, AsyncFor)
+
+    @property
+    @functools.cache
+    def asyncfunctiondef(self): return isinstance(self._func, AsyncFunctionDef)
+
+    @property
+    @functools.cache
+    def asyncgen(self): return isinstance(self._func, AsyncGeneratorType)
+
+    @property
+    @functools.cache
+    def asyncgenfunction(self): return isasyncgenfunction(self._func)
+
+    @property
+    @functools.cache
+    def asyncwith(self): return isinstance(self._func, AsyncWith)
+
+    @property
+    @functools.cache
+    def attribute(self): return self(Attribute)
+
+    @property
+    @functools.cache
+    def await_ast(self): return isinstance(self._func, Await)
+
+    @property
+    @functools.cache
+    def awaitable(self): return isawaitable(self._func)
+
+    @property
+    @functools.cache
+    def basestate(self): return self(BaseState)
+
+    @property
+    @functools.cache
+    def bool(self): return self(int) and self(bool)
+
+    @property
+    @functools.cache
+    def builtin(self): return any([in_dict(BUILTINS, self.data), self.builtinclass, self.builtinfunction])
+
+    @property
+    @functools.cache
+    def builtinclass(self): return self.data in BUILTINS_CLASSES
+
+    @property
+    @functools.cache
+    def builtinfunction(self): return self.data in BUILTINS_FUNCTIONS
+
+    @property
+    @functools.cache
+    def builtinfunctiontype(self): return self(BuiltinFunctionType)
+
+    @property
+    @functools.cache
+    def bytesio(self): return self(BytesIO)  # :class:`typing.BinaryIO`
+
+    @property
+    @functools.cache
+    def cache_clear(self): return self.has(self._function) and self.modname == Module.functools.value
+
+    @property
+    @functools.cache
+    def cached_property(self): return self(cached_property)
+
+    @property
+    @functools.cache
+    def callable(self): return self(Callable)
+
+    @property
+    @functools.cache
+    def chain(self): return self(Chain)
+
+    @property
+    @functools.cache
+    def chainmap(self): return self(ChainMap)
+
+    @property
+    @functools.cache
+    def classdef(self): return self(ClassDef)
+
+    @property
+    @functools.cache
+    def classmethoddescriptortype(self): return self(ClassMethodDescriptorType)
+
+    @property
+    @functools.cache
+    def classvar(self): return (self.datafield and get_origin(self.data.type) == ClassVar) or get_origin(
+        self.data) == ClassVar
+
+    @property
+    @functools.cache
+    def clsmethod(self): return self(classmethod)
+
+    @property
+    @functools.cache
+    def codetype(self): return self(CodeType)
+
+    @property
+    @functools.cache
+    def collections(self): return is_collections(self.data)
+
+    @property
+    @functools.cache
+    def container(self): return self(Container)
+
+    @property
+    @functools.cache
+    def coro(self): return any(
+        [self.asyncfor, self.asyncfunctiondef, self.asyncwith, self.await_ast] if self.ast else
+        [self.asyncgen, self.asyncgenfunction, self.awaitable, self.coroutine, self.coroutinefunction])
+
+    @property
+    @functools.cache
+    def coroutine(self): return iscoroutine(self._func) or isinstance(self._func, CoroutineType)
+
+    @property
+    @functools.cache
+    def coroutinefunction(self): return iscoroutinefunction(self._func)
+
+    @property
+    @functools.cache
+    def default_factory(self): return self.datafield and Es(self.data.default).missing and self.has(self._function)
+
+    @property
+    @functools.cache
+    def datafield(self): return self(DataField)
+
+    @property
+    @functools.cache
+    def datatype(self): return self(DataType)
+
+    @property
+    @functools.cache
+    def datatype_both(self): return self.datatype or self.es_cls.datatype_sub
+
+    @property
+    @functools.cache
+    def datatype_sub(self): return self.subclass(DataType)
+
+    @property
+    @functools.cache
+    def defaultdict(self): return self(defaultdict)
+
+    @property
+    @functools.cache
+    def deleter(self): return self.property_any and self.data.fdel is not None
+
+    @property
+    @functools.cache
+    def dict(self): return self(dict)
+
+    @property
+    @functools.cache
+    def dicttype(self): return self(DictType)
+
+    @property
+    @functools.cache
+    def dicttype_sub(self): return self.subclass(DictType)
+
+    @property
+    @functools.cache
+    def dynamicclassattribute(self): return self(DynamicClassAttribute)
+
+    @property
+    @functools.cache
+    def dlst(self): return self(dict, list, set, tuple)
+
+    @property
+    @functools.cache
+    def enum(self): return self(Enum)
+
+    @property
+    @functools.cache
+    def enum_sub(self): return self.subclass(Enum)
+
+    @property
+    @functools.cache
+    def enumbase(self): return self(EnumBase)
+
+    @property
+    @functools.cache
+    def enumbase_sub(self): return self.subclass(EnumBase)
+
+    @property
+    @functools.cache
+    def even(self): return not self.data % 2
+
+    @property
+    @functools.cache
+    def fileio(self): return self(FileIO)
+
+    @property
+    @functools.cache
+    def float(self): return self(float)
+
+    @property
+    @functools.cache
+    def frameinfo(self): return self(FrameInfo)
+
+    @property
+    @functools.cache
+    def frametype(self): return self(FrameType)
+
+    @property
+    @functools.cache
+    def functiondef(self): return self(FunctionDef)
+
+    @property
+    @functools.cache
+    def functiontype(self): return self(FunctionType)
+
+    @property
+    @functools.cache
+    def generator(self): return self(Generator)
+
+    @property
+    @functools.cache
+    def generatortype(self): return self(GeneratorType)
+
+    @property
+    @functools.cache
+    def genericalias(self): return self(types.GenericAlias)
+
+    @property
+    @functools.cache
+    def getattrnobuiltintype(self): return self(GetAttrNoBuiltinType)
+
+    @property
+    @functools.cache
+    def getattrnobuiltintype_sub(self): return self.subclass(GetAttrNoBuiltinType)
+
+    @property
+    @functools.cache
+    def getattrtype(self): return self(GetAttrType)
+
+    @property
+    @functools.cache
+    def getattrtype_sub(self): return self.subclass(GetAttrType)
+
+    def getsetdescriptor(self, n=None): return isgetsetdescriptor(self.es_cls.get(n) if n else self.data)
+
+    @property
+    @functools.cache
+    def getsetdescriptortype(self): return self(GetSetDescriptorType)
+
+    @property
+    @functools.cache
+    def gettype(self): return self(GetType)
+
+    @property
+    @functools.cache
+    def gettype_sub(self): return self.subclass(GetType)
+
+    @functools.cache
+    def has(self, name):
+        """
+        Checks if Object has attr.
+
+        Examples:
+            >>> from rc import Es, Private, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class Test:
+            ...     __repr_newline__ = True
+            >>>
+            >>> Es(Test()).has(Private.REPR_NEWLINE)
+            True
+            >>> Es(Test()).has(Private.REPR_EXCLUDE)
+            False
+
+        Args:
+            name: attribute name.
+        Returns:
+            True if object has attribute.
+        """
+        return hasattr(self.data, enumvalue(name))
+
+    @property
+    @functools.cache
+    def hashable(self): return bool(noexception(TypeError, hash, self.data))
+
+    @property
+    @functools.cache
+    def import_ast(self): return self(Import)
+
+    @property
+    @functools.cache
+    def importfrom(self): return self(ImportFrom)
+
+    @property
+    @functools.cache
+    def initvar(self): return (self.datafield and isinstance(self.data.type, InitVar)) or self(InitVar)
+
+    @property
+    @functools.cache
+    def installed(self): return is_installed(self.data)
+
+    @functools.cache
+    def instance(self, *args): return isinstance(self.data, args)
+
+    @property
+    @functools.cache
+    def int(self): return self(int)
+
+    @property
+    @functools.cache
+    def io(self): return self.bytesio and self.stringio  # :class:`typing.IO`
+
+    @property
+    @functools.cache
+    def iterable(self): return self(Iterable)
+
+    @property
+    @functools.cache
+    def iterator(self): return self(Iterator)
+
+    @property
+    @functools.cache
+    def lambdatype(self): return self(LambdaType)
+
+    @property
+    @functools.cache
+    def list(self): return self(list)
+
+    @property
+    @functools.cache
+    def lst(self): return self.list or self.set or self.tuple
+
+    @property
+    @functools.cache
+    def mappingproxytype(self): return self(MappingProxyType)
+
+    @property
+    @functools.cache
+    def mappingproxytype_sub(self): return self.subclass(MappingProxyType)
+
+    @property
+    @functools.cache
+    def memberdescriptor(self): return ismemberdescriptor(self.data)
+
+    @property
+    @functools.cache
+    def memberdescriptortype(self): return self(MemberDescriptorType)
+
+    @property
+    @functools.cache
+    def meta(self): return  # TODO: meta
+
+    @property
+    @functools.cache
+    def meta_sub(self): return  # TODO: meta_sub
+
+    @property
+    @functools.cache
+    def metatype(self): return  # TODO: metatype
+
+    @property
+    @functools.cache
+    def metatype_sub(self): return  # TODO: metatype_sub
+
+    @property
+    @functools.cache
+    def method(self): return self.methodtype and not self(classmethod, property, staticmethod)
+
+    @property
+    @functools.cache
+    def methoddescriptor(self): return ismethoddescriptor(self.data)
+
+    @property
+    @functools.cache
+    def methoddescriptortype(self): return self(types.MethodDescriptorType)
+
+    @property
+    @functools.cache
+    def methodtype(self): return self(MethodType)  # True if it is an instance method!.
+
+    @property
+    @functools.cache
+    def methodwrappertype(self): return self(MethodWrapperType)
+
+    @property
+    @functools.cache
+    def methodwrappertype_sub(self): return self.subclass(MethodWrapperType)
+
+    @property
+    @functools.cache
+    def missing(self): return self(MISSING_TYPE)
+
+    @property
+    @functools.cache
+    def mlst(self): return self.mm or self.list or self.set or self.tuple
+
+    @property
+    @functools.cache
+    def mm(self): return self(MutableMapping)
+
+    @property
+    @functools.cache
+    def moduletype(self): return self(ModuleType)
+
+    @property
+    @functools.cache
+    def module_function(self): return is_module_function(self.data)
+
+    @property
+    @functools.cache
+    def noncomplex(self): return is_noncomplex(self.data)
+
+    @property
+    @functools.cache
+    def namedtype(self): return self(NamedType)
+
+    @property
+    @functools.cache
+    def namedtype_sub(self): return self.subclass(NamedType)
+
+    @property
+    @functools.cache
+    def named_annotationstype(self): return self(NamedAnnotationsType)
+
+    @property
+    @functools.cache
+    def named_annotationstype_sub(self): return self.subclass(NamedAnnotationsType)
+
+    @property
+    @functools.cache
+    def none(self): return self(type(None))
+
+    @property
+    @functools.cache
+    def object(self): return is_object(self.data)
+
+    @property
+    @functools.cache
+    def pathlib(self): return self(PathLib)
+
+    @property
+    @functools.cache
+    def picklable(self): return True if noexception(pickle_dumps, self.data) else False
+
+    @property
+    @functools.cache
+    def primitive(self): return is_primitive(self.data)
+
+    @property
+    @functools.cache
+    def pproperty(self): return self(pproperty)
+
+    @property
+    @functools.cache
+    def prop(self): return self(property)
+
+    @property
+    @functools.cache
+    def property_any(self): return self.prop or self.cached_property
+
+    @functools.cache
+    def readonly(self, name='__readonly__'):
+        """
+        Is readonly object?
+
+        Examples:
+            >>> from rc import Es, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_data', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_id', )
+            >>>
+            >>> Es(Test()).readonly()
+            AttributeError("'Test' object has no attribute '__readonly__'")
+
+        Returns:
+            True if readonly.
+        """
+        name = enumvalue(name)
+        value = None
+        try:
+            if self.has(name):
+                value = object.__getattribute__(self.data, name)
+            object.__setattr__(self.data, name, value)
+        except Exception as exception:
+            return exception
+        if value is not None:
+            object.__delattr__(self.data, name)
+        return False
+
+    @property
+    @functools.cache
+    def reducible(self): return is_reducible(self.data)
+
+    @property
+    @functools.cache
+    def reducible_sequence_subclass(self): return is_reducible_sequence_subclass(self.data)
+
+    @property
+    @functools.cache
+    def routine(self): return isroutine(self.data)
+
+    @property
+    @functools.cache
+    def sequence(self): return self(Sequence)
+
+    @property
+    @functools.cache
+    def sequence_sub(self): return self.subclass(Sequence)
+
+    @property
+    @functools.cache
+    def set(self): return self(set)
+
+    @property
+    @functools.cache
+    def setter(self): return self.prop and self.data.fset is not None
+
+    @property
+    @functools.cache
+    def simple(self): return self(Simple)
+
+    @property
+    @functools.cache
+    def sized(self): return self(Sized)
+
+    @property
+    @functools.cache
+    def slist(self): return  # TODO: slist
+
+    @functools.cache
+    def slot(self, name):
+        """
+        Is attribute in slots?
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_data', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_id', )
+            >>>
+            >>> Es(Test()).slot(Protected.DATA)
+            True
+            >>> Es(Test()).slot(Protected.ID)
+            True
+            >>> Es(Test()).slot(Protected.IP)
+            False
+
+        Returns:
+            True if attribute in slots
+        """
+        name = enumvalue(name)
+        return name in self.slots
+
+    @property
+    @functools.cache
+    def slotstype(self): return self(SlotsType)
+
+    @property
+    @functools.cache
+    def slotstype_sub(self): return self.subclass(SlotsType)
+
+    @property
+    @functools.cache
+    def static(self): return self(staticmethod)
+
+    @property
+    @functools.cache
+    def str(self): return self(str)
+
+    @property
+    @functools.cache
+    def stuple(self): return  # TODO: stuple
+
+    @functools.cache
+    def subclass(self, *args):
+        return self.type and issubclass(self.data, args)
+
+    @property
+    @functools.cache
+    def stringio(self): return self(StringIO)  # :class:`typing.TextIO`
+
+    @property
+    @functools.cache
+    def tracebacktype(self): return self(TracebackType)
+
+    @property
+    @functools.cache
+    def tuple(self): return self(tuple)
+
+    @property
+    @functools.cache
+    def type(self): return self(type)
+
+    @property
+    @functools.cache
+    def unicode(self): return is_unicode(self.data)
+
+    @property
+    @functools.cache
+    def wrapperdescriptortype(self): return self(WrapperDescriptorType)
+
+    @functools.cache
+    def writeable(self, name):
+        # noinspection PyUnresolvedReferences
+        """
+        Checks if an attr is writeable in object.
+
+        Examples:
+            >>> from rc import Es, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_data', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_id', )
+            >>>
+            >>> test = Test()
+            >>> es = Es(test)
+            >>> es.writeable('_id')
+            True
+            >>> es.writeable('test')
+            False
+            >>> Es(test.__class__).writeable('test')
+            True
+            >>> test.__class__.test = 2
+            >>> assert test.test == 2
+            >>> Es(test.__class__).writeable('cls')
+            True
+            >>> object.__setattr__(test.__class__, 'cls', 2) # doctest: +IGNORE_EXCEPTION_DETAIL
+            Traceback (most recent call last):
+            TypeError: can't apply this __setattr__ to type object
+
+        Args:
+            name: attribute name.
+
+        Returns:
+            True if can be written.
+        """
+        return self.dicttype or self.slotstype and self.slot(name) or not self.readonly(name)
+    # </editor-fold>
+
+    # <editor-fold desc="Es - Inspect">
+    @functools.cache
+    def annotations(self, stack=2): return annotations(self.data, stack=stack) if self.annotationstype_sub else dict()
+
+    @functools.cache
+    def attributes(self, stack=2):
+        # TODO: Examples and classify attrs props etc. defaults, backup/infocls1.py
+        """
+        Attribute Information for Object Class or Class.
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> test = Es(TestDataDictSlotMix)
+            >>> attr = test.attributes()['_TestData__dataclass_default_factory']
+            >>> attr.default, attr.defining, attr.field.default_factory, attr.object, \
+            attr.field.data.type == attr.annotation.hint, attr.object == attr.annotation.default  # doctest: +ELLIPSIS
+            (NotImplemented, <class '....TestData'>, True, {}, True, True)
+            >>> attr.object, attr.annotation.default
+            ({}, {})
+
+        Args:
+            stack: stack index to extract globals and locals (default: 1) or frame.
+
+        Returns:
+            Dict Attribute Information for Object Class or Class.
+        """
+        fields = self.fields.copy()
+        annotation = annotations(self.data, stack=stack) if self.annotationstype_both else dict()
+        attribute = dict()
+        for item in classify_class_attrs(self.cls):
+            e = type(self)(item.object)
+            attribute.update({item.name: Attribute(
+                    annotation=annotation.get(item.name),
+                    default=item.object if item.name not in fields or fields[item.name].init else NotImplemented,
+                    defining=item.defining_class, es=e, field=type(self)(fields.pop(item.name, None)),
+                    kind=Kind[item.kind.split(' ')[0].upper()], name=item.name,
+                    object=item.object, qual=type(self)(e._func).get(Private.QUALNAME, default=item.name))})
+        for k, value in fields.items():
+            defining_cls = self.cls
+            for C in self.mro:
+                c = type(self)(C)
+                if not c.datatype_sub or (c.datatype_sub and k not in c.fields):
+                    break
+                defining_cls = C
+            f = type(self)(value)
+            obj = value.default_factory() if f.default_factory else type(self)(defining_cls).get(k)
+            attribute.update({k: Attribute(annotation=annotation.get(k), default=obj if value.init else NotImplemented,
+                                           defining=defining_cls, es=type(self)(obj), field=f, kind=Kind.DATA, name=k,
+                                           object=obj, qual=k)})
+        return attribute
+
+    @property
+    @functools.cache
+    def cls(self): return self.data if self.type else self.data.__class__
+
+    @property
+    @functools.cache
+    def clsname(self): return self.cls.__name__
+
+    @property
+    @functools.cache
+    def clsqual(self): return self.cls.__qualname__
+
+    @property
+    @functools.cache
+    def es_cls(self): return type(self)(self.cls)
+
+    @property
+    @functools.cache
+    def fields(self): return self.data.__dataclass_fields__ if self.datatype_both else {}
+
+    @property
+    @functools.cache
+    def first_builtin(self): return anyin(self.mro, BUILTINS_CLASSES)
+
+    @functools.cache
+    def get(self, item, default=None):
+        # TODO: get - annotations and Examples.
+        if self.mm and self.container and item in self.data:
+            return self.data.get(item, default)
+        elif type(self)(name := enumvalue(item)).str and self.has(name):
+            try:
+                return object.__getattribute__(self.data, name)
+            except AttributeError:
+                pass
+        return default
+
+    @property
+    @functools.cache
+    def importable_name_cls(self): return noexception(importable_name, self.cls)
+
+    @property
+    @functools.cache
+    def importable_name_data(self): return noexception(importable_name, self.data)
+
+    @property
+    @functools.cache
+    def modname(self):
+        return self.__name__ if self.moduletype else self.__module__ if self.has(Private.MODULE) else None
+
+    @property
+    @functools.cache
+    def mro(self): return self.cls.__mro__
+
+    @property
+    @functools.cache
+    def mro_and_data(self):
+        """
+        Tuple with Class MRO and instance (self.data).
+
+        Examples:
+            >>> from rc import Es, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> Es(dict(a=1)).mro_and_data
+            ({'a': 1}, <class 'dict'>, <class 'object'>)
+
+        Returns:
+            Tuple with Class MRO and instance (self.data).
+        """
+        return (() if self.type else (self.data, )) + self.mro
+
+    def mro_first_data(self, name):
+        """
+        First value of attr found in mro and instance if obj is instance.
+
+        Examples:
+            >>> from rc import Es, Private, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class Test:
+            ...     __repr_newline__ = True
+            >>>
+            >>> test = Test()
+            >>> class Test2(Test):
+            ...     def __init__(self):
+            ...         self.__repr_newline__ = False
+            >>>
+            >>> Es(Test()).mro_first_data(Private.REPR_NEWLINE)
+            True
+            >>> Es(Test2()).mro_first_data(Private.REPR_NEWLINE)
+            False
+            >>> Es(int()).mro_first_data(Private.REPR_NEWLINE)
+            >>> Es(Test()).mro_first_data(Private.REPR_PPROPERTY)
+
+        Returns:
+            First value of attr found in mro and instance if obj is instance.
+        """
+        name = enumvalue(name)
+        for item in self.mro_and_data:
+            if type(self)(item).has(name):
+                return object.__getattribute__(item, name)
+
+    @functools.cache
+    def mro_first_dict(self, name, mro=None):
+        """
+        First value of attr in obj.__class__.__dict__ found in mro.
+
+        Examples:
+            >>> from rc import Es, Private, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class Test:
+            ...     __repr_newline__ = False
+            >>>
+            >>> test = Test()
+            >>> class Test2(Test):
+            ...     def __init__(self):
+            ...         self.__repr_newline__ = False
+            >>>
+            >>> Es(Test()).mro_first_dict(Private.REPR_NEWLINE)
+            False
+            >>> Es(Test2()).mro_first_dict(Private.REPR_NEWLINE)
+            False
+            >>> Es(int()).mro_first_dict(Private.REPR_NEWLINE)
+            NotImplemented
+            >>> Es(Test()).mro_first_dict(Private.REPR_PPROPERTY)
+            NotImplemented
+            >>> A = namedtuple('A', 'a')
+            >>> Es(A).mro_first_dict(Private.SLOTS)
+            ()
+
+        Args:
+            name: attribute name.
+            mro: mro o search in dict (default: self.mro)
+        Returns:
+            First value of attr in obj.__class__.__dict__ found in mro.
+        """
+        name = enumvalue(name)
+        for C in mro or self.mro:
+            if name in C.__dict__:
+                return C.__dict__[name]
+        return NotImplemented
+
+    @functools.cache
+    def mro_first_dict_no_object(self, name):
+        """
+        First value of attr in obj.__class__.__dict__ found in mro excluding object.
+
+        Examples:
+            >>> from rc import Es, Private, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class Test:
+            ...     __repr_newline__ = False
+            >>>
+            >>> test = Test()
+            >>> class Test2(Test):
+            ...     def __init__(self):
+            ...         self.__repr_newline__ = False
+            >>>
+            >>> Es(Test()).mro_first_dict_no_object(Private.REPR_NEWLINE)
+            False
+            >>> Es(Test2()).mro_first_dict_no_object(Private.REPR_NEWLINE)
+            False
+            >>> Es(int()).mro_first_dict_no_object(Private.REPR_NEWLINE)
+            NotImplemented
+            >>> Es(Test()).mro_first_dict_no_object(Private.REPR_PPROPERTY)
+            NotImplemented
+            >>> A = namedtuple('A', 'a')
+            >>> Es(A).mro_first_dict_no_object(Private.SLOTS)
+            ()
+            >>> Es(dict).mro_first_dict_no_object(Private.SLOTS)
+            NotImplemented
+            >>> Es(dict()).mro_first_dict_no_object(Private.SLOTS)
+            NotImplemented
+
+        Returns:
+            First value of attr in obj.__class__.__dict__ found in mro excluding object.
+        """
+        mro = list(self.mro)
+        mro.remove(object)
+        return self.mro_first_dict(enumvalue(name), tuple(mro))
+
+    @functools.cache
+    def mro_values(self, name):
+        """
+        All/accumulated values of attr in mro and obj if instance.
+
+        Examples:
+            >>> from rc import Es, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_hash', '_repr')
+            ...     __ignore_copy__ = (tuple, )
+            ...     __repr_exclude__ = ('_repr', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_prop', '_slot', )
+            ...     __hash_exclude__ = ('_slot', )
+            ...     __ignore_attr__ = ('attr', )
+            ...     __ignore_kwarg__ = ('kwarg', )
+            ...     __ignore_str__ = (tuple, )
+            >>>
+            >>> test = Test()
+            >>> Es(test).mro_values(Private.HASH_EXCLUDE)
+            ('_slot',)
+            >>> Es(test).mro_values(Private.IGNORE_ATTR)  # doctest: +ELLIPSIS
+            (
+                'asdict',
+                'attr',
+                ...
+            )
+            >>> set(Es(test).mro_values(Private.IGNORE_COPY)).difference(Es().mro_values_default(\
+Private.IGNORE_COPY))
+            {<class 'tuple'>}
+            >>> Es(test).mro_values(Private.IGNORE_KWARG)
+            ('kwarg',)
+            >>> set(Es(test).mro_values(Private.IGNORE_STR)).difference(Es().mro_values_default(\
+Private.IGNORE_STR))
+            {<class 'tuple'>}
+            >>> Es(test).mro_values(Private.REPR_EXCLUDE)
+            ('_repr',)
+            >>> Es(test).mro_values(Private.SLOTS)
+            ('_hash', '_prop', '_repr', '_slot')
+            >>> assert sorted(Es(Environs()).mro_values(Private.PICKLE)) == sorted(PICKLE_ATTRS[Environs])
+
+        Returns:
+            All/accumulated values of attr in mro and obj if instance.
+        """
+        name = enumvalue(name)
+        values = tuple({*(value for item in self.mro_and_data
+                          for value in type(self)(item).get(name, default=tuple())), *self.mro_values_default(name)})
+        return tuple(sorted(values)) if values and not type(self)(tuple(values)[0]).type else values
+
+    @functools.cache
+    def mro_values_default(self, name):
+        """
+        Default values for attr in mro and instance.
+
+        Examples:
+            >>> from rc import Es, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_hash', '_repr')
+            ...     __ignore_copy__ = (tuple, )
+            ...     __repr_exclude__ = ('_repr', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_prop', '_slot', )
+            ...     __hash_exclude__ = ('_slot', )
+            ...     __ignore_attr__ = ('attr', )
+            ...     __ignore_kwarg__ = ('kwarg', )
+            ...     __ignore_str__ = (tuple, )
+            >>>
+            >>> test = Test()
+            >>> assert Es(test).mro_values_default(Private.HASH_EXCLUDE) == tuple()
+            >>> assert Es(test).mro_values_default(Private.IGNORE_ATTR) == IgnoreAttr.__args__
+            >>> assert Es(test).mro_values_default(Private.IGNORE_COPY) == IgnoreCopy.__args__
+            >>> assert Es(test).mro_values_default(Private.IGNORE_KWARG) == tuple()
+            >>> assert Es(test).mro_values_default(Private.IGNORE_STR) == IgnoreStr.__args__
+            >>> assert Es(test).mro_values_default(Private.REPR_EXCLUDE) == tuple()
+            >>> assert Es(test).mro_values_default(Private.SLOTS) == tuple()
+            >>> assert sorted(Es(Environs()).mro_values_default(Private.PICKLE)) == sorted(PICKLE_ATTRS[Environs])
+
+        Returns:
+           Default values for attr in mro and instance.
+        """
+        if enumvalue(name) == Private.PICKLE.value:
+            default = set()
+            for C in self.mro:
+                if C in PICKLE_ATTRS:
+                    default.update(PICKLE_ATTRS[C])
+        else:
+            es = Es(name)
+            default = rv.__args__ if (rv := globals().get(to_camel(name.name if es.enum else name))) else tuple()
+        return tuple(sorted(default)) if default and not type(self)(tuple(default)[0]).type else tuple(default)
+
+    @property
+    @functools.cache
+    def name(self): return self.data.__name__ if self.has(Private.NAME) else None
+
+    @classmethod
+    @functools.cache
+    def prop_getter(cls, prop):
+        es = cls(prop)
+        if all([es.property_any, (func := es._func), (name := cls(func).name), name in es.cls.__dict__]):
+            return attrgetter(name)
+        return NotImplemented
+
+    @property
+    @functools.cache
+    def slots(self):
+        """
+        Slots values in mro.
+
+        Examples:
+            >>> from rc import Es, pretty_install
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_data', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_id', )
+            >>>
+            >>> assert Es(Test()).slots == First.__slots__ + Test.__slots__
+
+        Returns:
+            Slots values in mro Tuple.
+        """
+        return self.mro_values(Private.SLOTS)
+
+    @functools.cache
+    def slots_include(self, name):
+        """
+        Accumulated values from slots - Accumulated values from mro attr name.
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> class First:
+            ...     __slots__ = ('_hash', )
+            >>>
+            >>> class Test(First):
+            ...     __slots__ = ('_prop', '_repr', '_slot', )
+            ...     __hash_exclude__ = ('_slot', )
+            ...     __repr_exclude__ = ('_repr', )
+            >>>
+            >>> es = Es(Test())
+            >>> es.slots
+            ('_hash', '_prop', '_repr', '_slot')
+            >>> hash_attrs = es.slots_include(Private.HASH_EXCLUDE)
+            >>> hash_attrs
+            ('_hash', '_prop', '_repr')
+            >>> sorted(hash_attrs + es.mro_values(Private.HASH_EXCLUDE)) == sorted(es.slots)
+            True
+            >>> repr_attrs = es.slots_include(Private.REPR_EXCLUDE)
+            >>> repr_attrs
+            ('_hash', '_prop', '_slot')
+            >>> sorted(repr_attrs + es.mro_values(Private.REPR_EXCLUDE)) == sorted(es.slots)
+            True
+
+        Returns:
+            Accumulated values from slots - Accumulated values from mro attr name.
+        """
+        return tuple(sorted(set(self.slots).difference(self.mro_values(name))))
+
+    @property
+    @functools.cache
+    def super(self): return self.mro[1]
+    # </editor-fold>
+
+    # <editor-fold desc="Es - Utils">
+    @property
+    @functools.cache
+    def deepcopy(self):
+        """
+        Deep copy object
+
+        Tries again after calling :class:`rc.Es.state_methods` in case of PicklingError RecursionError.
+
+        Examples:
+            >>> from copy import deepcopy
+            >>> from rc import Environs, Es
+            >>>
+            >>> deepcopy(Environs()) # doctest: +IGNORE_EXCEPTION_DETAIL
+            Traceback (most recent call last):
+            RecursionError: maximum recursion depth exceeded
+            >>> env = Environs()
+            >>> term = env('TERM')
+            >>> env
+            <Env {'TERM': 'xterm-256color'}>
+            >>> env_copy = env
+            >>> assert id(env_copy) == id(env)
+            >>> env_deepcopy = Es(env).deepcopy
+            >>> env_deepcopy
+            <Env {'TERM': 'xterm-256color'}>
+            >>> assert id(env_deepcopy) != id(env)
+            >>> assert id(env_deepcopy._values) != id(env._values)
+
+        Returns:
+            Deep copied object.
+        """
+        try:
+            return copy.deepcopy(self.data)
+        except (PicklingError, RecursionError):
+            return copy.deepcopy(self.state_methods)
+
+    @property
+    @functools.cache
+    def pickles(self):
+        """
+        Pickles object (dumps).
+
+        Tries again after calling :class:`rc.Es.state_methods` in case of PicklingError RecursionError.
+
+        Returns:
+            Pickle object (bytes) or None if methods added to self.data so it can be called again.
+        """
+        try:
+            return pickle_dumps(self.data)
+        except (PicklingError, RecursionError):
+            return pickle_dumps(self.state_methods)
+
+    def state(self, data=None):
+        """
+        Values for :class:`rc.BaseState` methods:
+            - :meth:`rc.BaseState.__getstate__`: (pickle) when state=None.
+            - :meth:`rc.BaseState.__setstate__`: (unpickle) when state.
+
+        Examples:
+            >>> class Test:
+            ...     __pickle__ = ('attribute', )
+            ...     __slots__ = ('attribute', )
+            >>>
+            >>> test = Test()
+            >>> e = Es(test)
+            >>> e.slots + e.mro_values(Private.PICKLE)
+            ('attribute', 'attribute')
+            >>> status = e.state()
+            >>> status
+            {}
+            >>> reconstruct = e.state(status)
+            >>> reconstruct  # doctest: +ELLIPSIS
+            <utils.Test object at 0x...>
+            >>> reconstruct == e.state(status)
+            True
+            >>>
+            >>> test.attribute = 1
+            >>> new = Es(test)
+            >>> status = new.state()
+            >>> status
+            {'attribute': 1}
+            >>> reconstruct == new.state(status)
+            True
+            >>> reconstruct.attribute
+            1
+
+        Args:
+            data: dict to restore object.
+
+        Returns:
+            State dict (pickle) or restored object from state dict (unpickle).
+        """
+        if data is None:
+            return {attr: object.__getattribute__(self.data, attr) for attr in self.mro_values(Private.PICKLE.value)
+                    if self.has(attr)}
+        for key, value in data.items():
+            object.__setattr__(self.data, key, value)
+        return self.data
+
+    @property
+    @functools.cache
+    def state_methods(self):
+        """
+        Add :class:`rc.BaseState` methods to object if PicklingError or RecursionError if class in mro is
+        in :data `rc.PICKLE_ATTRS`:
+            - :meth:`rc.BaseState.__getstate__`: (pickle) when state=None.
+            - :meth:`rc.BaseState.__setstate__`: (unpickle) when state.
+
+        Raises:
+            PicklingError: Object has one or both state methods.
+            AttributeError: Read-only.
+            NotImplementedError: No mro items in PICKLE_ATTRS.
+
+        Returns:
+            Object with __getstate__ and __setstate__ methods added.
+        """
+
+        def _state(*args):
+            if args and len(args) == 1:
+                return type(self)(args[0]).state()
+            elif args and len(args) == 2:
+                type(self)(args[0]).state(args[1])
+
+        setstate = None
+        if (getstate := self.has(Private.GETSTATE)) or (setstate := self.has(Private.SETSTATE)):
+            raise PicklingError(f'Object {self.data}, has one or both state methods: {getstate=}, {setstate=}')
+        found = False
+        for C in self.mro:
+            if C in PICKLE_ATTRS:
+                for attr in (Private.GETSTATE.value, Private.SETSTATE.value, ):
+                    es = type(self)(self.__class__)
+                    if not es.writeable(attr):
+                        exc = es.readonly(attr)
+                        raise AttributeError(f'Read-only: {self.data=}') from exc
+                self.data.__class__.__getstate__ = _state
+                self.data.__class__.__setstate__ = _state
+                found = True
+        if found:
+            ic(self.data.__getstate__)
+            return self.data
+        else:
+            raise NotImplementedError(f'No mro: {self.mro} items in {PICKLE_ATTRS.keys()=} for {self.data=}')
+
+    @property
+    @functools.cache
+    def unpickles(self):
+        """Unpickles object (loads)."""
+        return pickle_loads(self.data)
+
+    # </editor-fold>
+
+    # TODO: asdict_props
+    # asdict = property(lambda self: dict(data=self.data) | asdict_props(self))
+
+    __class_getitem__ = classmethod(GenericAlias)
+
+
+# </editor-fold>
+# <editor-fold desc="Exceptions">
+class CmdError(Exception):
+    """Thrown if execution of cmd command fails with non-zero status code."""
+
+    def __init__(self, rv):
+        command = rv.args
+        rc = rv.returncode
+        stderr = rv.stderr
+        stdout = rv.stdout
+        super().__init__(f'{command=}', f'{rc=}', f'{stderr=}', f'{stdout=}')
+
+
+class CmdAioError(CmdError):
+    """Thrown if execution of aiocmd command fails with non-zero status code."""
+
+    def __init__(self, rv):
+        super().__init__(rv)
+
+
+# </editor-fold>
+# <editor-fold desc="Types">
+class AnnotationsType(metaclass=ABCMeta):
+    """
+    Annotations Type.
+
+    Examples:
+        >>> named = namedtuple('named', 'a', defaults=('a', ))
+        >>> Named = NamedTuple('Named', a=str)
+        >>>
+        >>> Es(named).annotationstype_sub
+        False
+        >>> Es(named()).annotationstype
+        False
+        >>>
+        >>> Es(Named).annotationstype_sub
+        True
+        >>> Es(Named(a='a')).annotationstype
+        True
+    """
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is AnnotationsType:
+            return Private.ANNOTATIONS.mro_first_dict(C) is not NotImplemented
+        return NotImplemented
+
+
+class AsDictMethodType(metaclass=ABCMeta):
+    """
+    AsDict Method Support (Class, Static and Method).
+
+    Examples:
+        >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
+        >>> class AsDictM: asdict = lambda self, *args, **kwargs: dict()
+        >>> class AsDictP: asdict = property(lambda self: dict())
+        >>> class AsDictStatic: asdict = staticmethod(lambda cls, *args, **kwargs: dict())
+        >>>
+        >>> c = AsDictClass()
+        >>> m = AsDictM()
+        >>> p = AsDictP()
+        >>> s = AsDictStatic()
+        >>>
+        >>> Es(AsDictClass).asdictmethod_sub
+        True
+        >>> Es(c).asdictmethod
+        True
+        >>>
+        >>> Es(AsDictM).asdictmethod_sub
+        True
+        >>> Es(m).asdictmethod
+        True
+        >>>
+        >>> Es(AsDictP).asdictmethod_sub
+        False
+        >>> Es(p).asdictmethod
+        False
+        >>>
+        >>> Es(AsDictStatic).asdictmethod_sub
+        True
+        >>> Es(s).asdictmethod
+        True
+    """
+
+    # noinspection PyUnusedLocal
+    @abstractmethod
+    def asdict(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is AsDictMethodType:
+            value = Public.ASDICT.mro_first_dict(C)
+            es = Es(value)
+            return value is not NotImplemented and any(
+                [es.clsmethod, es.lambdatype, es.method, es.static]) and not es.prop
+        return NotImplemented
+
+
+class AsDictPropertyType(metaclass=ABCMeta):
+    """
+    AsDict Property Type.
+
+    Examples:
+        >>> class AsDictClass: asdict = classmethod(lambda cls, *args, **kwargs: dict())
+        >>> class AsDictM: asdict = lambda self, *args, **kwargs: dict()
+        >>> class AsDictP: asdict = property(lambda self: dict())
+        >>> class AsDictStatic: asdict = staticmethod(lambda cls, *args, **kwargs: dict())
+        >>>
+        >>> c = AsDictClass()
+        >>> m = AsDictM()
+        >>> p = AsDictP()
+        >>> s = AsDictStatic()
+        >>>
+        >>> Es(AsDictClass).asdictproperty_sub
+        False
+        >>> Es(c).asdictproperty
+        False
+        >>>
+        >>> Es(AsDictM).asdictproperty_sub
+        False
+        >>> Es(m).asdictproperty
+        False
+        >>>
+        >>> Es(AsDictP).asdictproperty_sub
+        True
+        >>> Es(p).asdictproperty
+        True
+        >>>
+        >>> Es(AsDictStatic).asdictproperty_sub
+        False
+        >>> Es(s).asdictproperty
+        False
+    """
+
+    @property
+    @abstractmethod
+    def asdict(self):
+        return dict()
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is AsDictPropertyType:
+            return (value := Public.ASDICT.mro_first_dict(C)) is not NotImplemented \
+                   and Es(value).prop
+        return NotImplemented
+
+
+class DataType(metaclass=ABCMeta):
+    """
+    Data Type.
+
+    Examples:
+        >>> from dataclasses import make_dataclass
+        >>>
+        >>> Data = make_dataclass('C', [('a', int, datafield(default=1))])
+        >>> class Dict: a = 1
+        >>>
+        >>> data = Data()
+        >>> d = Dict()
+        >>>
+        >>> Es(Data).datatype_sub
+        True
+        >>> Es(data).datatype
+        True
+        >>> Es(Data).datatype
+        False
+        >>>
+        >>> Es(Dict).datatype_sub
+        False
+        >>> Es(d).datatype
+        False
+    """
+    __annotations__ = dict()
+    __dataclass_fields__ = dict()
+
+    @abstractmethod
+    def __repr__(self) -> str:
+        return str(self)
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is DataType:
+            return Private.ANNOTATIONS.mro_first_dict(C) is not NotImplemented \
+                   and Private.DATACLASS_FIELDS.mro_first_dict(C) is not NotImplemented \
+                   and Private.REPR.mro_first_dict(C) is not NotImplemented
+        return NotImplemented
+
+
+class DictType(metaclass=ABCMeta):
+    """
+    Dict Type.
+
+    Examples:
+        >>> class Dict: a = 1
+        >>> class Slots: a = 1; __slots__ = tuple()
+        >>>
+        >>> d = Dict()
+        >>> s = Slots()
+        >>>
+        >>> Es(Dict).dicttype_sub
+        True
+        >>> Es(d).dicttype
+        True
+        >>>
+        >>> Es(Slots).dicttype_sub
+        False
+        >>> Es(s).dicttype
+        False
+    """
+    __dict__ = dict()
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is DictType:
+            return Private.DICT.mro_first_dict(C) is not NotImplemented
+        return NotImplemented
+
+
+class GetAttrNoBuiltinType(metaclass=ABCMeta):
+    """
+    Get Attr Type (Everything but builtins, except: object and errors)
+
+    Examples:
+        >>> class Dict: a = 1
+        >>> class G: a = 1; get = lambda self, item: self.__getattribute__(item)
+        >>> Named = namedtuple('Named', 'a')
+        >>>
+        >>> d = Dict()
+        >>> dct = dict(a=1)
+        >>> g = G()
+        >>> n = Named('a')
+        >>> t = tuple()
+        >>>
+        >>> Es(Dict).getattrnobuiltintype_sub
+        True
+        >>> Es(d).getattrnobuiltintype
+        True
+        >>>
+        >>> Es(G).getattrnobuiltintype_sub
+        False
+        >>> Es(g).getattrnobuiltintype
+        False
+        >>>
+        >>> Es(dict).getattrnobuiltintype_sub
+        False
+        >>> Es(dct).getattrnobuiltintype
+        False
+        >>>
+        >>> Es(tuple).getattrnobuiltintype_sub
+        False
+        >>> Es(t).getattrnobuiltintype
+        False
+        >>>
+        >>> Es(list).getattrnobuiltintype_sub
+        False
+        >>> Es(list()).getattrnobuiltintype
+        False
+        >>>
+        >>> Es(Named).getattrnobuiltintype_sub
+        True
+        >>> Es(n).getattrnobuiltintype
+        True
+        """
+
+    @abstractmethod
+    def __getattribute__(self, n):
+        return object.__getattribute__(self, n)
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is GetAttrNoBuiltinType:
+            g = Public.GET.mro_first_dict(C)
+            return any([Protected.FIELD_DEFAULTS.mro_first_dict(C) is not NotImplemented,
+                        not allin(C.__mro__, BUILTINS_CLASSES) and g is NotImplemented or
+                        (g is not NotImplemented and not callable(g))])
+        return NotImplemented
+
+
+class GetAttrType(metaclass=ABCMeta):
+    """
+    Get Attr Type (Everything but GetType)
+
+    Examples:
+        >>> class Dict: a = 1
+        >>> class G: a = 1; get = lambda self, item: self.__getattribute__(item)
+        >>> Named = namedtuple('Named', 'a')
+        >>>
+        >>> d = Dict()
+        >>> dct = dict(a=1)
+        >>> g = G()
+        >>> n = Named('a')
+        >>> t = tuple()
+        >>>
+        >>> Es(Dict).getattrtype_sub
+        True
+        >>> Es(d).getattrtype
+        True
+        >>>
+        >>> Es(G).getattrtype_sub
+        False
+        >>> Es(g).getattrtype
+        False
+        >>>
+        >>> Es(dict).getattrtype_sub
+        False
+        >>> Es(dct).getattrtype
+        False
+        >>>
+        >>> Es(tuple).getattrtype_sub
+        True
+        >>> Es(t).getattrtype
+        True
+        >>>
+        >>> Es(list).getattrtype_sub
+        True
+        >>> Es(list()).getattrtype
+        True
+        >>>
+        >>> Es(Named).getattrtype_sub
+        True
+        >>> Es(n).getattrtype
+        True
+        """
+
+    @abstractmethod
+    def __getattribute__(self, n):
+        return object.__getattribute__(self, n)
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is GetAttrType:
+            g = Public.GET.mro_first_dict(C)
+            return any([Protected.FIELD_DEFAULTS.mro_first_dict(C) is not NotImplemented,
+                        g is NotImplemented or (g is not NotImplemented and not callable(g))])
+        return NotImplemented
+
+
+@runtime_checkable
+class GetItemSupportType(Protocol):
+    """Supports __getitem__."""
+    __slots__ = tuple()
+
+    @abstractmethod
+    def __getitem__(self, index):
+        return self[index]
+
+
+@runtime_checkable
+class GetSupportType(Protocol):
+    """Supports get method."""
+    __slots__ = tuple()
+
+    @abstractmethod
+    def get(self, name, default=None):
+        return self, name, default
+
+
+@runtime_checkable
+class GetType(Protocol):
+    """
+    Get Type.
+
+    Examples:
+        >>> class Dict: a = 1
+        >>> class G: a = 1; get = lambda self, item: self.__getattribute__(item)
+        >>> class Slots: a = 1; __slots__ = tuple()
+        >>>
+        >>> d = Dict()
+        >>> dct = dict(a=1)
+        >>> g = G()
+        >>>
+        >>> dct.get('a')
+        1
+        >>> g.get('a')
+        1
+        >>>
+        >>> Es(Dict).gettype_sub
+        False
+        >>> Es(d).gettype
+        False
+        >>>
+        >>> Es(G).gettype_sub
+        True
+        >>> Es(g).gettype
+        True
+        >>>
+        >>> Es(dict).gettype_sub
+        True
+        >>> Es(dct).gettype
+        True
+    """
+
+    @abstractmethod
+    def get(self, name, default=None):
+        pass
+
+
+class NamedType(metaclass=ABCMeta):
+    """
+    named Type.
+
+    Examples:
+        >>> named = namedtuple('named', 'a', defaults=('a', ))
+        >>>
+        >>> Es(named()).namedtype
+        True
+        >>> Es(named).namedtype_sub
+        True
+        >>>
+        >>> Es(named()).tuple
+        True
+        >>> issubclass(named, tuple)
+        True
+    """
+    _fields = tuple()
+    _field_defaults = dict()
+
+    @abstractmethod
+    def _asdict(self):
+        return dict()
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is NamedType:
+            _asdict = Protected.ASDICT.mro_first_dict(C)
+            rv = Protected.FIELD_DEFAULTS.mro_first_dict(C) is not NotImplemented and (
+                    _asdict is not NotImplemented and callable(_asdict)) and Protected.FIELDS.mro_first_dict(
+                C) is not NotImplemented
+            return rv
+        return NotImplemented
+
+
+class NamedAnnotationsType(metaclass=ABCMeta):
+    """
+    named Type.
+
+    Examples:
+        >>> named = namedtuple('named', 'a', defaults=('a', ))
+        >>> Named = NamedTuple('Named', a=str)
+        >>>
+        >>> Es(named()).named_annotationstype
+        False
+        >>> Es(named).named_annotationstype_sub
+        False
+        >>>
+        >>> Es(Named('a')).named_annotationstype
+        True
+        >>> Es(Named).named_annotationstype_sub
+        True
+        >>>
+        >>> Es(named()).tuple
+        True
+        >>> issubclass(named, tuple)
+        True
+    """
+    __annotations__ = dict()
+    _fields = tuple()
+    _field_defaults = dict()
+
+    @abstractmethod
+    def _asdict(self):
+        return dict()
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is NamedAnnotationsType:
+            _asdict = Protected.ASDICT.mro_first_dict(C)
+            _a = _asdict is not NotImplemented and callable(_asdict)
+            value = Private.ANNOTATIONS.mro_first_dict(C)
+            return value is not NotImplemented and Protected.FIELD_DEFAULTS.mro_first_dict(
+                C) is not NotImplemented and _a and Protected.FIELDS.mro_first_dict(C) is not NotImplemented
+        return NotImplemented
+
+
+class SlotsType(metaclass=ABCMeta):
+    """
+    Slots Type.
+
+    Examples:
+        >>> class Dict: a = 1
+        >>> class Slots: a = 1; __slots__ = tuple()
+        >>>
+        >>> d = Dict()
+        >>> s = Slots()
+        >>>
+        >>> Es(Dict).slotstype_sub
+        False
+        >>> Es(d).slotstype
+        False
+        >>>
+        >>> Es(Slots).slotstype_sub
+        True
+        >>> Es(s).slotstype
+        True
+    """
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is SlotsType:
+            return Private.SLOTS.mro_first_dict_no_object(C) is not NotImplemented
+        return NotImplemented
+
+
+# </editor-fold>
+# <editor-fold desc="Classes">
+class BoxKeys(Box):
+    """
+    Creates a Box with values from keys.
+    """
+    def __init__(self, keys, value='lower'):
+        """
+        Creates Box instance.
+
+        Examples:
+            >>> pretty_install()
+            >>>
+            >>> BoxKeys('a b', value=None)
+            <Box: {'a': 'a', 'b': 'b'}>
+            >>> BoxKeys('A B')
+            <Box: {'A': 'a', 'B': 'b'}>
+            >>> BoxKeys('A B', value=list)
+            <Box: {'A': [], 'B': []}>
+
+        Args:
+            keys: keys to use for keys and values.
+            value: Type or function to use to init the Box.
+
+        Returns:
+            Initialize box from keys.
+        """
+        es = Es(value)
+        super().__init__({item: getattr(item, value)() if es.str else item if es.none else value()
+                          for item in to_iter(keys)})
+
+
+class Chain(ChainMap):
+    """Variant of chain that allows direct updates to inner scopes and returns more than one value,
+    not the first one."""
+    rv = ChainRV.UNIQUE
+    default = None
+    maps = list()
+
+    def __init__(self, *maps, rv=ChainRV.UNIQUE, default=None):
+        super().__init__(*maps)
+        self.rv = rv
+        self.default = default
+
+    def __getitem__(self, key):
+        rv = []
+        for mapping in self.maps:
+            if Es(mapping).namedtype:
+                mapping = mapping._asdict()
+            elif hasattr(mapping, 'asdict'):
+                to_dict = getattr(mapping.__class__, 'asdict')
+                if isinstance(to_dict, property):
+                    mapping = mapping.asdict
+                elif callable(to_dict):
+                    mapping = mapping.asdict()
+            if hasattr(mapping, '__getitem__'):
+                try:
+                    value = mapping[key]
+                    if self.rv is ChainRV.FIRST:
+                        return value
+                    if (self.rv is ChainRV.UNIQUE and value not in rv) or self.rv is ChainRV.ALL:
+                        rv.append(value)
+                except KeyError:
+                    pass
+            elif hasattr(mapping, '__getattribute__') and isinstance(key, str) and \
+                    not isinstance(mapping, (tuple, bool, int, str, bytes)):
+                try:
+                    value = getattr(mapping, key)
+                    if self.rv is ChainRV.FIRST:
+                        return value
+                    if (self.rv is ChainRV.UNIQUE and value not in rv) or self.rv is ChainRV.ALL:
+                        rv.append(value)
+                except AttributeError:
+                    pass
+        return self.default if self.rv is ChainRV.FIRST else rv
+
+    def __delitem__(self, key):
+        index = 0
+        deleted = []
+        found = False
+        for mapping in self.maps:
+            if mapping:
+                if not isinstance(mapping, (tuple, bool, int, str, bytes)):
+                    if hasattr(mapping, '__delitem__'):
+                        if key in mapping:
+                            del mapping[key]
+                            if self.rv is ChainRV.FIRST:
+                                found = True
+                    elif hasattr(mapping, '__delattr__') and hasattr(mapping, key) and isinstance(key, str):
+                        delattr(mapping.__class__, key) if key in dir(mapping.__class__) else delattr(mapping, key)
+                        if self.rv is ChainRV.FIRST:
+                            found = True
+                if not mapping:
+                    deleted.append(index)
+                if found:
+                    break
+            index += 1
+        for index in reversed(deleted):
+            del self.maps[index]
+        return self
+
+    def delete(self, key):
+        del self[key]
+        return self
+
+    def __setitem__(self, key, value):
+        found = False
+        for mapping in self.maps:
+            if mapping:
+                if not isinstance(mapping, (tuple, bool, int, str, bytes)):
+                    if hasattr(mapping, '__setitem__'):
+                        if key in mapping:
+                            mapping[key] = value
+                            if self.rv is ChainRV.FIRST:
+                                found = True
+                    elif hasattr(mapping, '__setattr__') and hasattr(mapping, key) and isinstance(key, str):
+                        setattr(mapping, key, value)
+                        if self.rv is ChainRV.FIRST:
+                            found = True
+                if found:
+                    break
+        if not found and not isinstance(self.maps[0], (tuple, bool, int, str, bytes)):
+            if hasattr(self.maps[0], '__setitem__'):
+                self.maps[0][key] = value
+            elif hasattr(self.maps[0], '__setattr__') and isinstance(key, str):
+                setattr(self.maps[0], key, value)
+        return self
+
+    def set(self, key, value):
+        return self.__setitem__(key, value)
+
+
+class pproperty(property):
+    """
+    Print property.
+
+    Examples:
+        >>> pretty_install()
+        >>> class Test:
+        ...     _pp = 0
+        ...     @pproperty
+        ...     def pp(self):
+        ...         self._pp += 1
+        ...         prop = Es(self.__class__.__dict__['pp']).prop
+        ...         pprop = Es(self.__class__.__dict__['pp']).pproperty
+        ...         return self._pp, prop, pprop
+        >>> test = Test()
+        >>> test.pp
+        (1, True, True)
+        >>> test.pp
+        (2, True, True)
+    """
+
+    def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+        super().__init__(fget=fget, fset=fset, fdel=fdel, doc=doc)
+
+
+# </editor-fold>
+# <editor-fold desc="Bases">
+class BaseState:
+    """
+    Deepcopy and Pickle State Base Class.
+
+    Examples:
+        >>> from copy import deepcopy
+        >>>
+        >>> class Test(BaseState):
+        ...     __pickle__ = ('attribute', )
+        ...     __slots__ = ('attribute', )
+        ...     def __init__(self): self.attribute = dict(a=1)
+        >>>
+        >>> test = Test()
+        >>> test_copy = test
+        >>> test_deepcopy = deepcopy(test)
+        >>> assert id(test) == id(test_copy)
+        >>> assert id(test) != id(test_deepcopy)
+        >>> test.attribute['a'] = 2
+        >>> assert id(test.attribute) == id(test_copy.attribute)
+        >>> assert id(test.attribute) != id(test_deepcopy.attribute)
+        >>> assert test_copy.attribute['a'] == 2
+        >>> assert test_deepcopy.attribute['a'] == 1
+    """
+    __pickle__ = ()
+    __slots__ = ()
+    def __getstate__(self): return Es(self).state()
+    def __setstate__(self, state): Es(self).state(state)
+
+
+# </editor-fold>
+# <editor-fold desc="States">
+class StateEnv(Environs, BaseState):
+    """
+    Env Class with Deepcopy and Pickle.
+
+    Examples:
+        >>> from copy import deepcopy
+        >>> from rc import StateEnv
+        >>> import environs
+        >>>
+        >>> env = StateEnv()
+        >>> term = env('TERM')
+        >>> env
+        <StateEnv {'TERM': 'xterm-256color'}>
+        >>> state = env.__getstate__()
+        >>> env_deepcopy = deepcopy(env)
+        >>> env_deepcopy
+        <StateEnv {'TERM': 'xterm-256color'}>
+        >>> assert id(env_deepcopy) != id(env)
+        >>> assert id(env_deepcopy._values) != id(env._values)
+    """
+    def __init__(self, *, eager=True, expand_vars=False):
+        super().__init__(eager=eager, expand_vars=expand_vars)
 
 
 # </editor-fold>
@@ -3729,20 +5452,19 @@ def byellow(msg, bold=False, nl=True, underline=False,
 
 
 # </editor-fold>
-
 # <editor-fold desc="Test">
 class TestAsync:
-    _async_classmethod = varname(1)
-    _classmethod = varname(1)
-    _async_method = varname(1)
-    _method = varname(1)
-    _cprop = varname(1)
-    _async_pprop = varname(1)
-    _pprop = varname(1)
-    _async_prop = varname(1)
-    _prop = varname(1)
-    _async_staticmethod = varname(1)
-    _staticmethod = varname(1)
+    _async_classmethod = varname(1, sep=str())
+    _classmethod = varname(1, sep=str())
+    _async_method = varname(1, sep=str())
+    _method = varname(1, sep=str())
+    _cprop = varname(1, sep=str())
+    _async_pprop = varname(1, sep=str())
+    _pprop = varname(1, sep=str())
+    _async_prop = varname(1, sep=str())
+    _prop = varname(1, sep=str())
+    _async_staticmethod = varname(1, sep=str())
+    _staticmethod = varname(1, sep=str())
 
     @classmethod
     async def async_classmethod(cls): return cls._async_classmethod
@@ -3774,4 +5496,59 @@ class TestAsync:
 
     @staticmethod
     def staticmethod(): return TestAsync._staticmethod
+
+
+@dataclass
+class TestData:
+    __data = varname(1)
+    __dataclass_classvar__: ClassVar[str] = '__dataclass_classvar__'
+    __dataclass_classvar: ClassVar[str] = '__dataclass_classvar'
+    __dataclass_default_factory: Union[dict, str] = datafield(default_factory=dict, init=False)
+    __dataclass_default_factory_init: Union[dict, str] = datafield(default_factory=dict)
+    dataclass_classvar: ClassVar[str] = 'dataclass_classvar'
+    dataclass_default_factory: Union[dict, str] = datafield(default_factory=dict, init=False)
+    dataclass_default_factory_init: Union[dict, str] = datafield(default_factory=dict)
+    dataclass_default: str = datafield(default='dataclass_default', init=False)
+    dataclass_default_init: str = datafield(default='dataclass_default_init')
+    dataclass_initvar: InitVar[str] = 'dataclass_initvar'
+    dataclass_str: str = 'dataclass_integer'
+
+    def __post_init__(self, dataclass_initvar): pass
+
+    __class_getitem__ = classmethod(GenericAlias)
+
+
+class TestDataDictMix(TestData):
+    subclass_annotated_str: str = 'subclass_annotated_str'
+    subclass_classvar: ClassVar[str] = 'subclass_classvar'
+    subclass_str = 'subclass_str'
+
+    def __init__(self, dataclass_initvar='dataclass_initvar_1', subclass_dynamic='subclass_dynamic'):
+        super().__init__()
+        super().__post_init__(dataclass_initvar=dataclass_initvar)
+        self.subclass_dynamic = subclass_dynamic
+
+
+class TestDataDictSlotMix(TestDataDictMix):
+    __slots__ = ('_slot_property', 'slot',)
+
+    # Add init=True dataclass attrs if it subclassed and not @dataclass
+    def __init__(self, dataclass_initvar='dataclass_initvar_2', slot_property='slot_property', slot='slot'):
+        super().__init__()
+        super().__post_init__(dataclass_initvar=dataclass_initvar)
+        self._slot_property = slot_property
+        self.slot = slot
+
+    @pproperty
+    def slot_property(self):
+        return self._slot_property
+
+
+# </editor-fold>
+# <editor-fold desc="Start">
+pretty_install(console=console, expand_all=True)
+# rich.traceback.install(console=console, extra_lines=5, show_locals=True)
+pickle_np.register_handlers()
+
+
 # </editor-fold>

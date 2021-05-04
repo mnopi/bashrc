@@ -14,33 +14,13 @@ class InfoCls1(InfoClsBase):
 
     def __new__(cls, data):
         # TODO: Examples: __new__
-        """
-        New InfoCls1 Instance for Object Class or Class.
+        Attribute = namedtuple('Attribute', 'annotation default defining es field kind name object qual')
 
-        Examples:
-            >>> from rc import InfoCls1
-            >>> from rc import pretty_install
-            >>> from rc import TestDataDictSlotMix
-            >>>
-            >>> pretty_install()
-            >>>
-            >>> test = InfoCls1(TestDataDictSlotMix)
-            >>> attr = test.attribute.get('_TestData__dataclass_default_factory')
-            >>> attr.default, attr.defining, attr.field.datafactory, attr.object, \
-            attr.field.data.type == attr.annotation.hint, attr.object == attr.annotation.default  # doctest: +ELLIPSIS
-            (NotImplemented, <class '....TestData'>, True, {}, True, True)
-
-        Args:
-            data: object
-
-        Returns:
-            New InfoCls1 Instance for Object Class or Class.
-        """
         es = Es(data)
         fields = data.__dataclass_fields__ if es.datatype_sub or es.datatype else {}
         data = data if es.type else data.__class__
         annotation = annotations(data, stack=2) if es.annotationstype_sub else dict()
-        attribute = list()
+        attribute = dict()
         for item in classify_class_attrs(data):
             e = Es(item.object)
             attribute.append(Attribute(
@@ -64,8 +44,8 @@ class InfoCls1(InfoClsBase):
         # TODO: super InfoCls1()
         # noinspection PySuperArguments
         return super(InfoCls1, cls).__new__(
-            cls, stuple(annotation.values()), attribute, anyin(data.__mro__, BUILTINS_CLASSES), data, es,
-            importable_name(data), data.__module__, data.__mro__, data.__name__, data.__qualname__, data.__mro__[1])
+            , attribute, es,
+            )
 
     def __new1__(cls, data):
         # TODO: Examples: __new__

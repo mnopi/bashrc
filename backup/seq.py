@@ -233,7 +233,7 @@ object=<function Seq.first_allin at 0x...>)
         Examples:
             >>> from inspect import classify_class_attrs
             >>> from rc import BUILTINS_CLASSES
-            >>> from rc import Mro
+            >>> from rc import Get
             >>> from rc import pretty_install
             >>> from rc import Seq
             >>> from rc import slist
@@ -393,7 +393,7 @@ defining_class=<class '....stuple'>, object=<function stuple.__repr__ at 0x...>)
         Examples:
             >>> import inspect
             >>> from inspect import classify_class_attrs
-            >>> from rc import Mro
+            >>> from rc import Get
             >>> from rc import pretty_install
             >>> from rc import Seq
             >>> from rc import slist
@@ -408,7 +408,7 @@ defining_class=<class '....stuple'>, object=<function stuple.__repr__ at 0x...>)
             >>> s.value() == slist(dir(slist))
             True
             >>> # noinspection PyUnresolvedReferences
-            >>> s.value(name=Attr.PUBLIC.include) == slist([i for i in dir(slist) if not i.startswith('_')])
+            >>> s.value(name=Access.PUBLIC.include) == slist([i for i in dir(slist) if not i.startswith('_')])
             True
             >>>
             #
@@ -419,7 +419,7 @@ defining_class=<class '....stuple'>, object=<function stuple.__repr__ at 0x...>)
             >>> s.value() == stuple(dir(slist))
             True
             >>> # noinspection PyUnresolvedReferences
-            >>> s.value(name=Attr.PUBLIC.include) == stuple([i for i in dir(slist) if not i.startswith('_')])
+            >>> s.value(name=Access.PUBLIC.include) == stuple([i for i in dir(slist) if not i.startswith('_')])
             True
             >>>
 

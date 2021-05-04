@@ -1,3 +1,7 @@
+from threading import Lock
+_block
+_count
+_owner
 
 @singledispatchmethod
 def asdict(data: Semaphore, convert=True):

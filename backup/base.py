@@ -33,7 +33,7 @@ class Base:
             :class:`function`: repr
         get(cls, name, default=None)
             :class:`function`: Get attribute value.
-        info(self, key=Attr.PRIVATE)
+        info(self, key=Access.PRIVATE)
             :class:`function`: :class:`info`
 
     Examples:
@@ -47,25 +47,25 @@ class Base:
         >>> pretty_install()
         >>> test = TestBase()
         >>>
-        >>> sorted(Mro.hash_exclude.val(test))
+        >>> sorted(Get.hash_exclude.val(test))
         ['_slot']
-        >>> sorted(Mro.ignore_attr.val(test))
+        >>> sorted(Get.ignore_attr.val(test))
         []
-        >>> Mro.ignore_copy.val(test).difference(Mro.ignore_copy.default)
+        >>> Get.ignore_copy.val(test).difference(Get.ignore_copy.default)
         set()
-        >>> sorted(Mro.ignore_kwarg.val(test))
+        >>> sorted(Get.ignore_kwarg.val(test))
         []
-        >>> Mro.ignore_str.val(test).difference(Mro.ignore_str.default)
+        >>> Get.ignore_str.val(test).difference(Get.ignore_str.default)
         set()
-        >>> sorted(Mro.repr_exclude.val(test))
+        >>> sorted(Get.repr_exclude.val(test))
         ['_repr']
-        >>> sorted(Mro.slots.val(test))
+        >>> sorted(Get.slots.val(test))
         ['_hash', '_prop', '_repr', '_slot']
-        >>> Mro.repr_newline.first(test)
+        >>> Get.repr_newline.mro_first_attr_value_in_obj(test)
         True
-        >>> Mro.repr_pproperty.first(test)
+        >>> Get.repr_pproperty.mro_first_attr_value_in_obj(test)
         True
-        >>> Mro.slot(test, '_hash')
+        >>> Get.slot(test, '_hash')
         True
         >>>
         >>> test.info.cls.name
@@ -84,7 +84,7 @@ class Base:
         set()
         >>> sorted(test.info.cls.data_attrs)
         ['_hash', '_prop', '_repr', '_slot', 'classvar', 'initvar']
-        >>> '__slots__' in sorted(test.info().cls.data_attrs)  # info() __call__(key=Attr.ALL)
+        >>> '__slots__' in sorted(test.info().cls.data_attrs)  # info() __call__(key=Access.ALL)
         True
         >>> test.get.__name__ in test.info.cls.method
         True

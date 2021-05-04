@@ -1,3 +1,5 @@
+_STT = TypeVar('_STT')  # stuple
+_STT_co = TypeVar('_STT_co', covariant=True)  # Any type covariant containers.
 
 class stuple(tuple, MetaType, metaclass=Meta):
     __slots__: tuple[str, ...] = ...
