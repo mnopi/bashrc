@@ -21,6 +21,7 @@ seaborn
 snoop
 sorcery
 stack_data
+thefuck
 types-cachetools
 types-frozendict
 types-geoip2

@@ -129,6 +129,9 @@ __all__ = (
     'pickle_np',
     'np',
     'pd',
+    'astprint',
+    'astformat',
+    'Box',
     'Exit',
     'dpathdelete',
     'dpathget',
@@ -150,6 +153,8 @@ __all__ = (
     'Console',
     'pretty_install',
     'traceback_install',
+    'LazyCache',
+    'memoize',
     'var_name',
 
     # Imports - Protected
@@ -199,7 +204,6 @@ __all__ = (
     'Annotation',
     'Attribute',
     'CacheWrapperInfo',
-    'GetEnumMembers',
 
     # Enums
     'EnumBase',
@@ -207,21 +211,12 @@ __all__ = (
     'ChainRV',
     'Executor',
     'Kind',
-    'GetBase',
-    'Get',
     'ModuleBase',
     'Module',
-    'NameBase',
-    'Name',
-    'PrivateBase',
-    'Private',
-    'ProtectedBase',
-    'Protected',
-    'PublicBase',
-    'Public',
+    'NBase',
+    'N',
 
     # Enums - NamedTuple - Typing
-    'AttrUnion',
     'EnumBaseAlias',
 
     # Functions
@@ -240,6 +235,7 @@ __all__ = (
     'effect',
     'enumvalue',
     'get',
+    'getnostr',
     'getset',
     'iseven',
     'in_dict',
@@ -447,6 +443,7 @@ from types import TracebackType as TracebackType
 from types import WrapperDescriptorType as WrapperDescriptorType
 from typing import _alias
 from typing import Any
+from typing import cast
 from typing import ClassVar
 from typing import Final
 from typing import get_args
@@ -465,6 +462,8 @@ from warnings import filterwarnings as filterwarnings
 import jsonpickle.ext.numpy as pickle_np
 import numpy as np
 import pandas as pd
+from astpretty import pprint as astprint
+from astpretty import pformat as astformat
 from box import Box as Box
 from bson import ObjectId as ObjectId
 from click import secho as secho
@@ -505,6 +504,8 @@ from nested_lookup import nested_lookup as nested_lookup
 from rich.console import Console as Console
 from rich.pretty import install as pretty_install
 from rich.traceback import install as traceback_install
+from thefuck.utils import Cache as LazyCache
+from thefuck.utils import memoize as memoize
 from varname import varname as var_name
 
 # <editor-fold desc="Protected">
@@ -571,7 +572,6 @@ Annotation = namedtuple('Annotation', 'any args classvar cls default final hint 
                                       'origin union')
 Attribute = namedtuple('Attribute', 'annotation default defining es field kind name object qual')
 CacheWrapperInfo = namedtuple('CacheWrapperInfo', 'hit passed total')
-GetEnumMembers = namedtuple('GetEnumMembers', 'all pickle private protected public')
 
 
 # </editor-fold>
@@ -808,180 +808,6 @@ class Executor(EnumBase):
         return await loop.run_in_executor(self.value, call)
 
 
-class GetBase(EnumBase):
-    def _generate_next_value_(self, start, count, last_values):
-        return f'__{self.lower()}__' if self.isupper() else self
-
-
-class Get(GetBase):
-    """
-    MRO Helper Calls.
-
-    Private in upper case and public in lower case.
-
-    Examples:
-        >>> Get.ALL.value_str, Get.Environs.value_str, Get._asdict.value_str, Get.name.value_str
-        ('__all__', 'Env', '_asdict', 'name')
-
-    """
-    ALL = auto()
-    ANNOTATIONS = auto()
-    ARGS = auto()
-    ASDICT = auto()
-    BUILTINS = auto()
-    CACHE_CLEAR = auto()
-    CACHE_INFO = auto()
-    CACHED = auto()
-    CODE = auto()
-    CONTAINS = auto()
-    DATACLASS_FIELDS = auto()
-    DATACLASS_PARAMS = auto()
-    DELATTR = auto()
-    DICT = auto()
-    DIR = auto()
-    DOC = auto()
-    EQ = auto()
-    FILE = auto()
-    GET = auto()
-    GETATTRIBUTE = auto()
-    GETITEM = auto()
-    HASH_EXCLUDE = auto()
-    IGNORE_ATTR = ('__ignore_attr__', ('asdict', 'attrs', 'defaults', 'keys', 'kwargs', 'kwargs_dict',
-                                       'public', 'values', 'values_dict', ))
-    """Exclude instance attribute."""
-    IGNORE_COPY = ('__ignore_copy__', IgnoreCopy.__args__)
-    """True or class for repr instead of nested asdict and deepcopy. No deepcopy."""
-    IGNORE_KWARG = auto()
-    IGNORE_STR = ('__ignore_str__', IgnoreStr.__args__)
-    """Use str value for object ."""
-    INIT = auto()
-    INIT_SUBCLASS = auto()
-    LEN = auto()
-    LOADER = auto()
-    MEMBERS = auto()
-    MODULE = auto()
-    MRO = auto()
-    NAME = auto()
-    PACKAGE = auto()
-    PICKLE = auto()
-    POST_INIT = auto()
-    QUALNAME = auto()
-    REDUCE = auto()
-    REDUCE_EX = auto()
-    REPR = auto()
-    REPR_EXCLUDE = auto()
-    REPR_NEWLINE = auto()
-    REPR_PPROPERTY = auto()
-    SETATTR = auto()
-    SLOTS = auto()
-    SPEC = auto()
-    STR = auto()
-    SUBCLASSHOOK = auto()
-    CRLock = CRLock, ('_block', '_count', '_owner', )
-    Environs = Environs, PICKLE_ATTRS[Environs]
-    FrameType = FrameType, ()
-    GitConfigParser = GitConfigParser, ()
-    GitRepo = GitRepo, ()
-    GitSymbolicReference = GitSymbolicReference, ()
-    LockClass = LockClass, ()
-    ObjectId = ObjectId, ()
-    PathLib = PathLib, ()
-    Remote = Remote, ()
-    _asdict = auto()
-    _field_defaults = auto()
-    _fields = auto()
-    name = auto()
-    value = auto()
-
-    @classmethod
-    @functools.cache
-    def getenum_members(cls):
-        """
-        Enum Class Names and Values.
-
-        Examples:
-            >>> pretty_install()
-            >>>
-            >>> members = Get.getenum_members()
-            >>> assert Get.ANNOTATIONS in members.all.values() and Get.ANNOTATIONS in members.private.values() \
-            and Get.ANNOTATIONS not in members.protected.values()
-            >>> assert Get.LockClass in members.pickle.values() \
-            and Get.LockClass not in members.protected.values() and Get.LockClass in members.public.values()
-            >>> assert Get._field_defaults in members.protected.values() \
-            and Get._field_defaults not in members.public.values()
-            >>> assert Get.name in members.public.values() and Get.name not in members.private.values()
-
-        Returns:
-            Enum Class Names and Values Dict.
-        """
-        m = cls.__members__
-        access = Access.classify(keys=True, **{cls[k].value_str: v for k, v in m.items()})
-        return GetEnumMembers(all=access.all, pickle={k: i for k, i in m.items() if cls[k].is_value_class},
-                              private=access.private, protected=access.protected, public=access.public)
-
-    @classmethod
-    @functools.cache
-    def getenum_pickle_classes(cls):
-        """
-        Get Pickle Classes.
-
-        Examples:
-            >>> pretty_install()
-            >>> Get.getenum_pickle_classes()  # doctest: +ELLIPSIS
-            (
-                ...,
-                <class 'environs.Env'>,
-                ...
-            )
-
-        Returns:
-            Tuple of Pickle Classes.
-        """
-        return tuple(map(lambda x: x.value_class, cls.getenum_members().pickle.values()))
-
-    @classmethod
-    @functools.cache
-    def getenum_pickle_members_by_class(cls):
-        """
-        Get Pickle Members by Class.
-
-        Examples:
-            >>> pretty_install()
-            >>> Get.getenum_pickle_members_by_class()  # doctest: +ELLIPSIS
-            {
-                ...,
-                <class 'environs.Env'>: <Get.Environs: (<class 'environs.Env'>, (...))>,
-                ...
-            }
-
-        Returns:
-            Dict of Pickle Members by Class.
-        """
-        return dict(map(lambda x: (x.value_class, x), cls.getenum_members().pickle.values()))
-
-    @property
-    @functools.cache
-    def is_value_class(self):
-        return self.is_value_tuple and Es(self.value[0]).type
-
-    @property
-    @functools.cache
-    def is_value_tuple(self): return Es(self.value).tuple
-
-    @property
-    @functools.cache
-    def value_class(self): return self.value[0] if self.is_value_class else None
-
-    @property
-    @functools.cache
-    def value_default(self): return self.value[1] if self.is_value_tuple else tuple()
-
-    @property
-    @functools.cache
-    def value_str(self): return rv.__name__ if (rv := self.value_class) else self.value[0] \
-        if self.is_value_tuple else self.value
-
-
 class Kind(EnumBase):
     CLASS = 'class method'
     DATA = 'data'
@@ -1006,168 +832,148 @@ class Module(ModuleBase):
     TYPING = auto()
 
 
-class NameBase(EnumBase):
+class NBase(EnumBase):
+    """Access Types Base Enum Class."""
+
     def _generate_next_value_(self, start, count, last_values):
-        return f'__{self}' if self.endswith('__') else self.removesuffix('_')
+        return f'__{self.lower()}__' if self.isupper() else self.removesuffix('_')
 
-
-class Name(NameBase):
-    """Name Enum Class."""
-    all__ = auto()
-    class__ = auto()
-    annotations__ = auto()
-    builtins__ = auto()
-    cached__ = auto()
-    code__ = auto()
-    contains__ = auto()
-    dataclass_fields__ = auto()
-    dataclass_params__ = auto()
-    delattr__ = auto()
-    dict__ = auto()
-    dir__ = auto()
-    doc__ = auto()
-    eq__ = auto()
-    file__ = auto()
-    getattribute__ = auto()
-    len__ = auto()
-    loader__ = auto()
-    members__ = auto()
-    module__ = auto()
-    mro__ = auto()
-    name__ = auto()
-    package__ = auto()
-    qualname__ = auto()
-    reduce__ = auto()
-    repr__ = auto()
-    setattr__ = auto()
-    slots__ = auto()
-    spec__ = auto()
-    str__ = auto()
-    _asdict = auto()
-    add = auto()
-    append = auto()
-    asdict = auto()
-    cls_ = auto()  # To avoid conflict with Name.cls
-    clear = auto()
-    co_name = auto()
-    code_context = auto()
-    copy = auto()
-    count = auto()
-    data = auto()
-    endswith = auto()
-    extend = auto()
-    external = auto()
-    f_back = auto()
-    f_code = auto()
-    f_globals = auto()
-    f_lineno = auto()
-    f_locals = auto()
-    filename = auto()
-    frame = auto()
-    function = auto()
-    get_ = auto()  # To avoid conflict with Name.get
-    globals = auto()
-    index = auto()
-    item = auto()
-    items = auto()
-    keys = auto()
-    kind = auto()
-    lineno = auto()
-    locals = auto()
-    name_ = auto()  # To avoid conflict with Enum.name
-    origin = auto()
-    obj = auto()
-    object = auto()
-    REPO = auto()
-    pop = auto()
-    popitem = auto()
-    PYPI = auto()
-    remove = auto()
-    reverse = auto()
-    self_ = auto()  # To avoid conflict with Enum
-    sort = auto()
-    startswith = auto()
-    tb_frame = auto()
-    tb_lineno = auto()
-    tb_next = auto()
-    update = auto()
-    value_ = auto()  # To avoid conflict with Enum.value
-    values = auto()
-    vars = auto()
-
-    @classmethod
-    @functools.cache
-    def _attrs(cls):
+    def get(self, obj, default=None, setvalue=False):
         """
-        Get map_reduce (dict) attrs lists converted to real names.
+        Get key/attr value.
 
-        Examples:
-            >>> Name._attrs().keys()
-            dict_keys([True, False])
-            >>> Name._attrs().values()  # doctest: +ELLIPSIS
-            dict_values([['__all__', ...], ['_asdict', ...])
+        Args:
+            obj: object.
+            default: None.
+            setvalue: set value if not found.
 
         Returns:
-            [True]: private attrs.
-            [False[: public attrs.
+            Value.
         """
-        return map_reduce(cls.__members__, lambda x: x.endswith('__'), lambda x: cls[x].value)
+        return Es(obj).get(name=self.value, default=default, setvalue=setvalue)
 
-    @classmethod
-    @functools.cache
-    def attrs(cls):
+    def getf(self, obj, default=None):
+        # noinspection PyUnresolvedReferences
         """
-        Get attrs tuple with private converted to real names.
+        Get value from: FrameInfo, FrameType, TracebackType, MutableMapping abd GetAttr.
 
-        Examples:
-            >>> pretty_install()
-            >>> Name.attrs()  # doctest: +ELLIPSIS
-            (
-                '__all__',
-                ...,
-                '_asdict',
-                ...
-            )
+        Use :class:`rc.N.get` for real names.
 
-        Returns:
-            Tuple of attributes and values.
-        """
-        return tuple(collapse(Name._attrs().values()))
-
-    # TODO: Name.get()
-    @singledispatchmethod
-    def get(self, obj: MutableMapping, default=None):
-        """
-        Get value from GetType/MutableMapping.
 
         Examples:
             >>> from ast import unparse
             >>> from inspect import getmodulename
-            >>>
+            >>> from types import FrameType
+            >>> import rc.utils
+            >>> from rc import N
+            >>> from rc import insstack
             >>> pretty_install()
+            >>>
+            #
+            # FrameInfo
+            #
+            >>> f = insstack()[0]
+            >>> assert f == FrameInfo(N.frame.getf(f), str(N.filename.getf(f)), N.lineno.getf(f),\
+            N.function.getf(f), N.code_context.getf(f), N.index.getf(f))
+            >>> assert N.filename.getf(f) == N.FILE.getf(f)
+            >>> Es(f)._source()
+            'f = insstack()[0]\\n'
+            >>> unparse(Es(f).node())
+            'f = insstack()[0]'
+            >>> unparse(Es('pass').node())
+            'pass'
+            >>> assert str(N.FILE.getf(f)) == str(N.filename.getf(f))
+            >>> assert N.NAME.getf(f) == N.co_name.getf(f) == N.function.getf(f)
+            >>> assert N.lineno.getf(f) == N.f_lineno.getf(f) == N.tb_lineno.getf(f)
+            >>> assert N.vars.getf(f) == (f.frame.f_globals | f.frame.f_locals).copy()
+            >>> assert N.vars.getf(f) == (N.f_globals.getf(f) | N.f_locals.getf(f)).copy()
+            >>> assert N.vars.getf(f) == (N.globals.getf(f) | N.locals.getf(f)).copy()
+            >>> assert unparse(Es(f).node()) in N.code_context.getf(f)[0]
+            >>> assert N.SPEC.getf(f).origin == __file__
+            >>>
+            #
+            # FrameType
+            #
+            >>> frameinfo = insstack()[0]
+            >>> from rc import N
+            >>> f: FrameType = frameinfo.frame
+            >>> assert N.filename.getf(f) == N.filename.getf(frameinfo)
+            >>> assert N.frame.getf(f) == N.frame.getf(frameinfo)
+            >>> assert N.lineno.getf(f) == N.lineno.getf(frameinfo)
+            >>> assert N.function.getf(f) == N.function.getf(frameinfo)
+            >>> assert frameinfo == FrameInfo(N.frame.getf(f), str(N.filename.getf(f)), N.lineno.getf(f),\
+            N.function.getf(f), frameinfo.code_context, frameinfo.index)
+            >>> assert N.filename.getf(f) == N.FILE.getf(f)
+            >>> Es(f)._source()
+            'frameinfo = insstack()[0]\\n'
+            >>> unparse(Es(f).node())
+            'frameinfo = insstack()[0]'
+            >>> unparse(Es('pass').node())
+            'pass'
+            >>> assert str(N.FILE.getf(f)) == str(N.filename.getf(f))
+            >>> assert N.NAME.getf(f) == N.co_name.getf(f) == N.function.getf(f)
+            >>> assert N.lineno.getf(f) == N.f_lineno.getf(f) == N.tb_lineno.getf(f)
+            >>> assert N.vars.getf(f) == (f.f_globals | f.f_locals).copy()
+            >>> assert N.vars.getf(f) == (N.f_globals.getf(f) | N.f_locals.getf(f)).copy()
+            >>> assert N.vars.getf(f) == (N.globals.getf(f) | N.locals.getf(f)).copy()
+            >>> assert unparse(Es(f).node()) in N.code_context.getf(frameinfo)[0]
+            >>> assert N.SPEC.getf(f).origin == __file__
+            >>>
+            #
+            # MutaleMapping
+            #
             >>> f = insstack()[0]
             >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
-            >>> Name.filename.get(f), Name.function.get(f), Name.code_context.get(f)[0], Name.source(f)
+            >>> N.filename.getf(f), N.function.getf(f), N.code_context.getf(f)[0], Es(f)._source()  # doctest: +ELLIPSIS
             (
-                PosixPath('<doctest get[7]>'),
+                PosixPath('<doctest ...>'),
                 '<module>',
                 'f = insstack()[0]\\n',
                 'f = insstack()[0]\\n'
             )
-            >>> Name.file__.get(globs_locs)  # doctest: +ELLIPSIS
+            >>> N.FILE.getf(globs_locs)  # doctest: +ELLIPSIS
             PosixPath('/Users/jose/....py')
-            >>> assert Name.file__.get(globs_locs) == PathLib(__file__) == PathLib(Name.spec__.get(globs_locs).origin)
-            >>> assert Name.name__.get(globs_locs) == getmodulename(__file__) == Name.spec__.get(globs_locs).name
-            >>> Name.source(globs_locs)  # doctest: +ELLIPSIS
+            >>> assert N.FILE.getf(globs_locs) == PathLib(__file__) == PathLib(N.SPEC.getf(globs_locs).origin)
+            >>> assert N.NAME.getf(globs_locs) == getmodulename(__file__) == N.SPEC.getf(globs_locs).name
+            >>> Es(globs_locs)._source()  # doctest: +ELLIPSIS
             '# -*- coding: utf-8 -*-\\n...
-            >>> Name.source(__file__)  # doctest: +ELLIPSIS
+            >>> Es(__file__)._source()  # doctest: +ELLIPSIS
             '# -*- coding: utf-8 -*-\\n...
-            >>> assert Name.source(globs_locs) == Name.source(__file__)
-            >>> unparse(Name.node(globs_locs)) == unparse(Name.node(__file__))  # Unparse does not have encoding line
+            >>> assert Es(globs_locs)._source() == Es(__file__)._source()
+            >>> unparse(Es(globs_locs).node()) == unparse(Es(__file__).node())  # Unparse does not have encoding line
             True
-            >>> Name.source(f) in unparse(Name.node(globs_locs))
+            >>> Es(f)._source() in unparse(Es(globs_locs).node())
             True
-            >>> Name.source(f) in unparse(Name.node(__file__))
+            >>> Es(f)._source() in unparse(Es(__file__).node())
+            True
+            >>>
+
+            #
+            # GetAttr
+            #
+            >>> f = insstack()[0]
+            >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
+
+            >>> N.FILE.getf(globs_locs)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> N.FILE.getf(rc.utils)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> globs_locs.get('__spec__'), N.SPEC.getf(globs_locs)  # doctest: +ELLIPSIS
+            (
+                ModuleSpec(name='...', loader=<_frozen_importlib_external.SourceFileLoader ...>, origin='....py'),
+                ModuleSpec(name='...', loader=<_frozen_importlib_external.SourceFileLoader ...>, origin='....py')
+            )
+            >>> PathLib(N.SPEC.getf(globs_locs).origin)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> PathLib(N.SPEC.getf(rc.utils).origin)  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> N.SPEC.getf(rc.utils).name == rc.utils.__name__
+            True
+            >>> N.SPEC.getf(rc.utils).name.split('.')[0] == rc.utils.__package__
+            True
+            >>> N.NAME.getf(rc.utils) == rc.utils.__name__
+            True
+            >>> N.PACKAGE.getf(rc.utils) == rc.utils.__package__
             True
 
         Args:
@@ -1177,505 +983,25 @@ class Name(NameBase):
         Returns:
             Value from get() method
         """
-        if self is Name.file__:
-            return self.path(obj)
-        return obj.get(self.value, default)
-
-    @get.register
-    def get_getattrtype(self, obj: object, default=None):
-        """
-        Get value of attribute from GetAttrType.
-
-        Examples:
-            >>> from ast import unparse
-            >>> from inspect import getmodulename
-            >>> import rc.utils
-            >>>
-            >>> pretty_install()
-            >>> f = insstack()[0]
-            >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
-
-            # >>> Name.file__.get(globs_locs)  # doctest: +ELLIPSIS
-            # PosixPath('/Users/jose/....py')
-            # >>> Name.file__.get(rc.utils)  # doctest: +ELLIPSIS
-            # PosixPath('/Users/jose/....py')
-
-            >>> globs_locs.get('__spec__'), Name.spec__.get(globs_locs)
-
-            # >>> PathLib(Name.spec__.get(globs_locs).origin)  # doctest: +ELLIPSIS
-            # PosixPath('/Users/jose/....py')
-            # >>> PathLib(Name.spec__.get(rc.utils).origin)  # doctest: +ELLIPSIS
-            # PosixPath('/Users/jose/....py')
-            # >>> Name.spec__.get(rc.utils).name == rc.utils.__name__
-            # True
-            # >>> Name.spec__.get(rc.utils).name.split('.')[0] == rc.utils.__package__
-            # True
-            # >>> Name.name__.get(rc.utils) == rc.utils.__name__
-            # True
-            # >>> Name.package__.get(rc.utils) == rc.utils.__package__
-            # True
-
-        Args:
-            obj: object
-            default: None
-
-        Returns:
-            Value from __getattribute__ method.
-        """
-        ic(obj, isinstance(obj, MutableMapping))
-        if self is Name.file__:
-            try:
-                p = object.__getattribute__(obj, Name.file__.value)
-                return PathLib(p)
-            except AttributeError:
-                return self.path(obj)
-        try:
-            ic(self.value)
-            return object.__getattribute__(obj, self.value)
-        except AttributeError:
-            return default
-
-    @get.register
-    def get_frameinfo(self, obj: FrameInfo, default=None):
-        """
-        Get value of attribute from FrameInfo.
-
-        Examples:
-            >>> from ast import unparse
-            >>>
-            >>> f = insstack()[0]
-            >>> assert f == FrameInfo(Name.frame.get(f), str(Name.filename.get(f)), Name.lineno.get(f),\
-            Name.function.get(f), Name.code_context.get(f), Name.index.get(f))
-            >>> assert Name.filename.get(f) == Name.file__.get(f)
-            >>> Name.source(f)
-            'f = insstack()[0]\\n'
-            >>> unparse(Name.node(f))
-            'f = insstack()[0]'
-            >>> unparse(Name.node('pass'))
-            'pass'
-            >>> assert str(Name.file__.get(f)) == str(Name.filename.get(f))
-            >>> assert Name.name__.get(f) == Name.co_name.get(f) == Name.function.get(f)
-            >>> assert Name.lineno.get(f) == Name.f_lineno.get(f) == Name.tb_lineno.get(f)
-            >>> assert Name.vars.get(f) == (f.frame.f_globals | f.frame.f_locals).copy()
-            >>> assert Name.vars.get(f) == (Name.f_globals.get(f) | Name.f_locals.get(f)).copy()
-            >>> assert Name.vars.get(f) == (Name.globals.get(f) | Name.locals.get(f)).copy()
-            >>> assert unparse(Name.node(f)) in Name.code_context.get(f)[0]
-            >>> assert Name.spec__.get(f).origin == __file__
-
-        Args:
-            obj: object
-            default: None
-
-        Returns:
-            Value from FrameInfo method
-        """
-        if self in [Name.file__, Name.filename]:
-            return PathLib(obj.filename)
-        if self in [Name.name__, Name.co_name, Name.function]:
-            return obj.function
-        if self in [Name.lineno, Name.f_lineno, Name.tb_lineno]:
-            return obj.lineno
-        if self in [Name.f_globals, Name.globals]:
-            return obj.frame.f_globals
-        if self in [Name.f_locals, Name.locals]:
-            return obj.frame.f_locals
-        if self in [Name.frame, Name.tb_frame]:
-            return obj.frame
-        if self is Name.vars:
-            return (obj.frame.f_globals | obj.frame.f_locals).copy()
-        if self in [Name.code__, Name.f_code]:
-            return obj.frame.f_code
-        if self in [Name.f_back, Name.tb_next]:
-            return obj.frame.f_back
-        if self is Name.index:
-            return obj.index
-        if self is Name.code_context:
-            return obj.code_context
-        return self.get((obj.frame.f_globals | obj.frame.f_locals).copy(), default=default)
-
-    @get.register
-    @functools.cache
-    def get_frametype(self, obj: FrameType, default=None):
-        """
-        Get value of attribute from FrameType.
-
-        Examples:
-            >>> from ast import unparse
-            >>>
-            >>> frameinfo = insstack()[0]
-            >>> f = frameinfo.frame
-            >>> assert Name.filename.get(f) == Name.filename.get(frameinfo)
-            >>> assert Name.frame.get(f) == Name.frame.get(frameinfo)
-            >>> assert Name.lineno.get(f) == Name.lineno.get(frameinfo)
-            >>> assert Name.function.get(f) == Name.function.get(frameinfo)
-            >>> assert frameinfo == FrameInfo(Name.frame.get(f), str(Name.filename.get(f)), Name.lineno.get(f),\
-            Name.function.get(f), frameinfo.code_context, frameinfo.index)
-            >>> assert Name.filename.get(f) == Name.file__.get(f)
-            >>> Name.source(f)
-            'frameinfo = insstack()[0]\\n'
-            >>> unparse(Name.node(f))
-            'frameinfo = insstack()[0]'
-            >>> unparse(Name.node('pass'))
-            'pass'
-            >>> assert str(Name.file__.get(f)) == str(Name.filename.get(f))
-            >>> assert Name.name__.get(f) == Name.co_name.get(f) == Name.function.get(f)
-            >>> assert Name.lineno.get(f) == Name.f_lineno.get(f) == Name.tb_lineno.get(f)
-            >>> assert Name.vars.get(f) == (f.f_globals | f.f_locals).copy()
-            >>> assert Name.vars.get(f) == (Name.f_globals.get(f) | Name.f_locals.get(f)).copy()
-            >>> assert Name.vars.get(f) == (Name.globals.get(f) | Name.locals.get(f)).copy()
-            >>> assert unparse(Name.node(f)) in Name.code_context.get(frameinfo)[0]
-            >>> assert Name.spec__.get(f).origin == __file__
-
-        Args:
-            obj: object
-            default: None
-
-        Returns:
-            Value from FrameType method
-        """
-        if self in [Name.file__, Name.filename]:
-            return self.path(obj)
-        if self in [Name.name__, Name.co_name, Name.function]:
-            return obj.f_code.co_name
-        if self in [Name.lineno, Name.f_lineno, Name.tb_lineno]:
-            return obj.f_lineno
-        if self in [Name.f_globals, Name.globals]:
-            return obj.f_globals
-        if self in [Name.f_locals, Name.locals]:
-            return obj.f_locals
-        if self in [Name.frame, Name.tb_frame]:
-            return obj
-        if self is Name.vars:
-            return (obj.f_globals | obj.f_locals).copy()
-        if self in [Name.code__, Name.f_code]:
-            return obj.f_code
-        if self in [Name.f_back, Name.tb_next]:
-            return obj.f_back
-        return self.get((obj.f_globals | obj.f_locals).copy(), default=default)
-
-    @get.register
-    @functools.cache
-    def get_tracebacktype(self, obj: TracebackType, default=None):
-        """
-        Get value of attribute from TracebackType.
-
-        Args:
-            obj: object
-            default: None
-
-        Returns:
-            Value from TracebackType method
-        """
-        if self in [Name.file__, Name.filename]:
-            return self.path(obj)
-        if self in [Name.name__, Name.co_name, Name.function]:
-            return obj.tb_frame.f_code.co_name
-        if self in [Name.lineno, Name.f_lineno, Name.tb_lineno]:
-            return obj.tb_lineno
-        if self in [Name.f_globals, Name.globals]:
-            return obj.tb_frame.f_globals
-        if self in [Name.f_locals, Name.locals]:
-            return obj.tb_frame.f_locals
-        if self in [Name.frame, Name.tb_frame]:
-            return obj.tb_frame
-        if self is Name.vars:
-            return (obj.tb_frame.f_globals | obj.tb_frame.f_locals).copy()
-        if self in [Name.code__, Name.f_code]:
-            return obj.tb_frame.f_code
-        if self in [Name.f_back, Name.tb_next]:
-            return obj.tb_next
-        return self.get((obj.tb_frame.f_globals | obj.tb_frame.f_locals).copy(), default=default)
+        return Es(obj).getf(name=self, default=default)
 
     @property
+    @functools.cache
     def getter(self):
         """
-        Attr getter with real name for private and public which conflicts with Enum.
+        Attr Getter.
 
         Examples:
             >>> import rc.utils
+            >>> from rc import N
             >>>
-            >>> Name.module__.getter(tuple)
+            >>> N.MODULE.getter(tuple)
             'builtins'
-            >>> Name.name__.getter(tuple)
+            >>> N.NAME.getter(tuple)
             'tuple'
-            >>> Name.file__.getter(rc.utils)  # doctest: +ELLIPSIS
+            >>> N.FILE.getter(rc.utils)  # doctest: +ELLIPSIS
             '/Users/jose/....py'
-
-        Returns:
-            Attr getter with real name for private and public which conflicts with Enum.
         """
-        return attrgetter(self.value)
-
-    def has(self, obj):
-        """
-        Checks if has attr with real name for private and public which conflicts with Enum.
-
-        Examples:
-            >>> import rc.utils
-            >>>
-            >>> Name.module__.has(tuple)
-            True
-            >>> Name.name__.has(tuple)
-            True
-            >>> Name.file__.has(tuple)
-            False
-            >>> Name.file__.has(rc.utils)
-            True
-
-        Returns:
-            Checks if has attr with real name for private and public which conflicts with Enum.
-        """
-        return hasattr(obj, self.value)
-
-    @classmethod
-    def node(cls, obj, complete=False, line=False):
-        """
-        Get node of object.
-
-        Examples:
-            >>> from ast import unparse
-            >>> from inspect import getmodulename
-            >>>
-            >>> pretty_install()
-            >>> f = insstack()[0]
-            >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
-            >>> Name.filename.get(f), Name.function.get(f), Name.code_context.get(f)[0], Name.source(f) \
-             # doctest: +ELLIPSIS
-            (
-                PosixPath('<doctest ...node[...]>'),
-                '<module>',
-                'f = insstack()[0]\\n',
-                'f = insstack()[0]\\n'
-            )
-            >>> Name.file__.get(globs_locs)  # doctest: +ELLIPSIS
-            PosixPath('/Users/jose/....py')
-            >>> assert Name.file__.get(globs_locs) == PathLib(__file__) == PathLib(Name.spec__.get(globs_locs).origin)
-            >>> assert Name.name__.get(globs_locs) == getmodulename(__file__) == Name.spec__.get(globs_locs).name
-            >>> Name.source(globs_locs)  # doctest: +ELLIPSIS
-            '# -*- coding: utf-8 -*-\\n...
-            >>> Name.source(__file__)  # doctest: +ELLIPSIS
-            '# -*- coding: utf-8 -*-\\n...
-            >>> assert Name.source(globs_locs) == Name.source(__file__)
-            >>> unparse(Name.node(globs_locs)) == unparse(Name.node(__file__))  # Unparse does not have encoding line
-            True
-            >>> Name.source(f) in unparse(Name.node(globs_locs))
-            True
-            >>> Name.source(f) in unparse(Name.node(__file__))
-            True
-
-        Args:
-            obj: object.
-            complete: return complete node for file (always for module and frame corresponding to module)
-                or object node (default=False)
-            line: return line
-
-        Returns:
-            Node.
-        """
-        return ast.parse(cls.source(obj, complete, line) or str(obj))
-
-    @classmethod
-    def path(cls, obj):
-        """
-        Get path of object.
-
-        Examples:
-            >>> from ast import unparse
-            >>> from inspect import getmodulename
-            >>>
-            >>> pretty_install()
-            >>> frameinfo = insstack()[0]
-            >>> globs_locs = (frameinfo.frame.f_globals | frameinfo.frame.f_locals).copy()
-            >>> Name.path(Name.path)  # doctest: +ELLIPSIS
-            PosixPath('/Users/jose/....py')
-            >>> Name.path(__file__)  # doctest: +ELLIPSIS
-            PosixPath('/Users/jose/....py')
-            >>> Name.path(allin)  # doctest: +ELLIPSIS
-            PosixPath('/Users/jose/....py')
-            >>> Name.path(dict(a=1))
-            PosixPath("{'a': 1}")
-
-        Args:
-            obj: object.
-
-        Returns:
-            Path.
-        """
-        es = Es(obj)
-        if es.mm:
-            f = obj.get(Name.file__.value)
-        elif es.frameinfo:
-            f = obj.filename
-        else:
-            try:
-                f = getsourcefile(obj) or getfile(obj)
-            except TypeError:
-                f = None
-        return PathLib(f or str(obj))
-
-    @classmethod
-    @functools.cache
-    def private(cls):
-        """
-        Get private attrs tuple converted to real names.
-
-        Examples:
-            >>> pretty_install()
-            >>> Name.private()  # doctest: +ELLIPSIS
-            (
-                '__all__',
-                ...
-            )
-
-        Returns:
-            Tuple of private attrs converted to real names.
-        """
-        return tuple(cls._attrs()[True])
-
-    @classmethod
-    @functools.cache
-    def public(cls):
-        """
-        Get public attrs tuple.
-
-        Examples:
-            >>> pretty_install()
-            >>> Name.public()  # doctest: +ELLIPSIS
-            (
-                '_asdict',
-                ...
-            )
-
-        Returns:
-            Tuple of public attrs.
-        """
-        return tuple(cls._attrs()[False])
-
-    @classmethod
-    def _source(cls, obj, line=False):
-        f = cls.file__.get(obj) or obj
-        if (p := PathLib(f)).is_file():
-            if s := token_open(p):
-                if line:
-                    return s, 1
-                return s
-
-    @classmethod
-    def source(cls, obj, complete=False, line=False):
-        """
-        Get source of object.
-
-        Examples:
-            >>> from ast import unparse
-            >>> from inspect import getmodulename
-            >>> import rc.utils
-            >>>
-            >>> pretty_install()
-            >>>
-            >>> Name.source(__file__)  # doctest: +ELLIPSIS
-            '# -*- coding: utf-8 -*-\\n...
-            >>> Name.source(__file__, complete=True)  # doctest: +ELLIPSIS
-            '# -*- coding: utf-8 -*-\\n...
-            >>>
-            >>> Name.source(Name.source)  # doctest: +ELLIPSIS
-            '    @classmethod\\n    def source(cls, obj, complete=False, line=False):\\n...'
-            >>> Name.source(Name.source, complete=True)  # doctest: +ELLIPSIS
-            '# -*- coding: utf-8 -*-\\n...
-            >>> Name.source(Name.source).splitlines()[1] in Name.source(Name.source, complete=True)
-            True
-            >>>
-            >>> Name.source(allin)  # doctest: +ELLIPSIS
-            'def allin(origin, destination):\\n...'
-            >>> Name.source(allin, line=True)  # doctest: +ELLIPSIS
-            (
-                'def allin(origin, destination):\\n...',
-                ...
-            )
-            >>> Name.source(allin, complete=True)  # doctest: +ELLIPSIS
-            '# -*- coding: utf-8 -*-\\n...
-            >>> Name.source(allin, complete=True, line=True)  # doctest: +ELLIPSIS
-            (
-                '# -*- coding: utf-8 -*-\\n...,
-                ...
-            )
-            >>> Name.source(allin).splitlines()[0] in Name.source(allin, complete=True)
-            True
-            >>>
-            >>> Name.source(dict(a=1))
-            "{'a': 1}"
-            >>> Name.source(dict(a=1), complete=True)
-            "{'a': 1}"
-            >>>
-            >>> Name.source(rc.utils)  # doctest: +ELLIPSIS
-            '# -*- coding: utf-8 -*-\\n...
-            >>> Name.source(rc.utils, complete=True)  # doctest: +ELLIPSIS
-            '# -*- coding: utf-8 -*-\\n...
-            >>>
-            >>> frameinfo = insstack()[0]
-            >>> Name.source(frameinfo), frameinfo.function
-            ('frameinfo = insstack()[0]\\n', '<module>')
-            >>> Name.source(frameinfo, complete=True), frameinfo.function
-            ('frameinfo = insstack()[0]\\n', '<module>')
-            >>>
-            >>> frametype = frameinfo.frame
-            >>> Name.source(frametype), frametype.f_code.co_name
-            ('frameinfo = insstack()[0]\\n', '<module>')
-            >>> Name.source(frameinfo, complete=True), frametype.f_code.co_name
-            ('frameinfo = insstack()[0]\\n', '<module>')
-            >>>
-            >>> Name.source(None)
-            'None'
-
-        Args:
-            obj: object.
-            complete: return complete source file (always for module and frame corresponding to module)
-                or object source (default=False)
-            line: return line
-
-        Returns:
-            Source.
-        """
-        es = Es(obj)
-        if any([es.moduletype, (es.frameinfo and obj.function == FUNCTION_MODULE),
-                (es.frametype and obj.f_code.co_name == FUNCTION_MODULE) or
-                (es.tracebacktype and obj.tb_frame.f_code.co_name == FUNCTION_MODULE) or
-                complete]):
-            if source := cls._source(obj, line):
-                return source
-
-        try:
-            if line:
-                lines, lnum = getsourcelines(obj.frame if es.frameinfo else obj)
-                return ''.join(lines), lnum
-            return getsource(obj.frame if es.frameinfo else obj)
-        except (OSError, TypeError):
-            if source := cls._source(obj, line):
-                return source
-            if line:
-                return str(obj), 1
-            return str(obj)
-
-
-class PrivateBase(EnumBase):
-    """Access Types Base Enum Class."""
-
-    def _generate_next_value_(self, start, count, last_values):
-        return f'__{self.lower()}__'
-
-    def _get(self, obj, default=None):
-        return obj.get(self.value, default)
-
-    def getattr(self, obj, default=None):
-        return obj.get(self.value, default)
-    def get(self, obj, default=None):
-        es = Es(obj)
-        if es.mm:
-            if self is Private.FILE
-
-    @property
-    @functools.cache
-    def getter(self):
-        """Attr Getter."""
         return attrgetter(self.value)
 
     def has(self, obj):
@@ -1683,16 +1009,25 @@ class PrivateBase(EnumBase):
         Checks if Object has attr.
 
         Examples:
-            >>> from rc import Es, Private, pretty_install
+            >>> from rc import Es, N, pretty_install
             >>> pretty_install()
+            >>> import rc.utils
             >>>
             >>> class Test:
             ...     __repr_newline__ = True
             >>>
-            >>> Private.REPR_NEWLINE.has(Test())
+            >>> N.REPR_NEWLINE.has(Test())
             True
-            >>> Private.REPR_EXCLUDE.has(Test())
+            >>> N.REPR_EXCLUDE.has(Test())
             False
+            >>> N.MODULE.has(tuple)
+            True
+            >>> N.NAME.has(tuple)
+            True
+            >>> N.FILE.has(tuple)
+            False
+            >>> N.FILE.has(rc.utils)
+            True
 
         Args:
             obj: object.
@@ -1700,7 +1035,7 @@ class PrivateBase(EnumBase):
         Returns:
             True if object has attribute.
         """
-        return Es(obj).has(self)
+        return Es(obj).has(self.value)
 
     def mro_first_data(self, obj):
         """
@@ -1717,12 +1052,12 @@ class PrivateBase(EnumBase):
             ...     def __init__(self):
             ...         self.__repr_newline__ = False
             >>>
-            >>> Private.REPR_NEWLINE.mro_first_data(Test())
+            >>> N.REPR_NEWLINE.mro_first_data(Test())
             True
-            >>> Private.REPR_NEWLINE.mro_first_data(Test2())
+            >>> N.REPR_NEWLINE.mro_first_data(Test2())
             False
-            >>> Private.REPR_NEWLINE.mro_first_data(int())
-            >>> Private.REPR_PPROPERTY.mro_first_data(Test())
+            >>> N.REPR_NEWLINE.mro_first_data(int())
+            >>> N.REPR_PPROPERTY.mro_first_data(Test())
 
         Returns:
             First value of attr found in mro and instance if obj is instance.
@@ -1744,16 +1079,16 @@ class PrivateBase(EnumBase):
             ...     def __init__(self):
             ...         self.__repr_newline__ = False
             >>>
-            >>> Private.REPR_NEWLINE.mro_first_dict(Test())
+            >>> N.REPR_NEWLINE.mro_first_dict(Test())
             False
-            >>> Private.REPR_NEWLINE.mro_first_dict(Test2())
+            >>> N.REPR_NEWLINE.mro_first_dict(Test2())
             False
-            >>> Private.REPR_NEWLINE.mro_first_dict(int())
+            >>> N.REPR_NEWLINE.mro_first_dict(int())
             NotImplemented
-            >>> Private.REPR_PPROPERTY.mro_first_dict(Test())
+            >>> N.REPR_PPROPERTY.mro_first_dict(Test())
             NotImplemented
             >>> A = namedtuple('A', 'a')
-            >>> Private.SLOTS.mro_first_dict(A)
+            >>> N.SLOTS.mro_first_dict(A)
             ()
 
         Returns:
@@ -1776,20 +1111,20 @@ class PrivateBase(EnumBase):
             ...     def __init__(self):
             ...         self.__repr_newline__ = False
             >>>
-            >>> Private.REPR_NEWLINE.mro_first_dict_no_object(Test())
+            >>> N.REPR_NEWLINE.mro_first_dict_no_object(Test())
             False
-            >>> Private.REPR_NEWLINE.mro_first_dict_no_object(Test2())
+            >>> N.REPR_NEWLINE.mro_first_dict_no_object(Test2())
             False
-            >>> Private.REPR_NEWLINE.mro_first_dict_no_object(int())
+            >>> N.REPR_NEWLINE.mro_first_dict_no_object(int())
             NotImplemented
-            >>> Private.REPR_PPROPERTY.mro_first_dict_no_object(Test())
+            >>> N.REPR_PPROPERTY.mro_first_dict_no_object(Test())
             NotImplemented
             >>> A = namedtuple('A', 'a')
-            >>> Private.SLOTS.mro_first_dict_no_object(A)
+            >>> N.SLOTS.mro_first_dict_no_object(A)
             ()
-            >>> Private.SLOTS.mro_first_dict_no_object(dict)
+            >>> N.SLOTS.mro_first_dict_no_object(dict)
             NotImplemented
-            >>> Private.SLOTS.mro_first_dict_no_object(dict())
+            >>> N.SLOTS.mro_first_dict_no_object(dict())
             NotImplemented
 
         Returns:
@@ -1817,32 +1152,31 @@ class PrivateBase(EnumBase):
             ...     __ignore_str__ = (tuple, )
             >>>
             >>> test = Test()
-            >>> Private.HASH_EXCLUDE.mro_values(test)
+            >>> N.HASH_EXCLUDE.mro_values(test)
             ('_slot',)
-            >>> Private.IGNORE_ATTR.mro_values(test)  # doctest: +ELLIPSIS
+            >>> N.IGNORE_ATTR.mro_values(test)  # doctest: +ELLIPSIS
             (
                 'asdict',
                 'attr',
                 ...
             )
-            >>> set(Private.IGNORE_COPY.mro_values(test)).difference(Private.IGNORE_COPY.mro_values_default(test))
+            >>> set(N.IGNORE_COPY.mro_values(test)).difference(N.IGNORE_COPY.mro_values_default(test))
             {<class 'tuple'>}
-            >>> Private.IGNORE_KWARG.mro_values(test)
+            >>> N.IGNORE_KWARG.mro_values(test)
             ('kwarg',)
-            >>> set(Private.IGNORE_STR.mro_values(test)).difference(Private.IGNORE_STR.mro_values_default(test))
+            >>> set(N.IGNORE_STR.mro_values(test)).difference(N.IGNORE_STR.mro_values_default(test))
             {<class 'tuple'>}
-            >>> Private.REPR_EXCLUDE.mro_values(test)
+            >>> N.REPR_EXCLUDE.mro_values(test)
             ('_repr',)
-            >>> Private.SLOTS.mro_values(test)
+            >>> N.SLOTS.mro_values(test)
             ('_hash', '_prop', '_repr', '_slot')
-            >>> assert sorted(Private.PICKLE.mro_values(Environs())) == sorted(PICKLE_ATTRS[Environs])
+            >>> assert sorted(N.PICKLE.mro_values(Environs())) == sorted(PICKLE_ATTRS[Environs])
 
         Returns:
             All/accumulated values of attr in mro and obj if instance.
         """
         return Es(obj).mro_values(self)
 
-    @functools.cache
     def mro_values_default(self, obj):
         """
         Default values for attr in mro and instance.
@@ -1864,14 +1198,14 @@ class PrivateBase(EnumBase):
             ...     __ignore_str__ = (tuple, )
             >>>
             >>> test = Test()
-            >>> assert Private.HASH_EXCLUDE.mro_values_default(test) == tuple()
-            >>> assert Private.IGNORE_ATTR.mro_values_default(test) == IgnoreAttr.__args__
-            >>> assert Private.IGNORE_COPY.mro_values_default(test) == IgnoreCopy.__args__
-            >>> assert Private.IGNORE_KWARG.mro_values_default(test) == tuple()
-            >>> assert Private.IGNORE_STR.mro_values_default(test) == IgnoreStr.__args__
-            >>> assert Private.REPR_EXCLUDE.mro_values_default(test) == tuple()
-            >>> assert Private.SLOTS.mro_values_default(test) == tuple()
-            >>> assert sorted(Private.PICKLE.mro_values_default(Environs())) == sorted(PICKLE_ATTRS[Environs])
+            >>> assert N.HASH_EXCLUDE.mro_values_default(test) == tuple()
+            >>> assert N.IGNORE_ATTR.mro_values_default(test) == IgnoreAttr.__args__
+            >>> assert N.IGNORE_COPY.mro_values_default(test) == IgnoreCopy.__args__
+            >>> assert N.IGNORE_KWARG.mro_values_default(test) == tuple()
+            >>> assert N.IGNORE_STR.mro_values_default(test) == IgnoreStr.__args__
+            >>> assert N.REPR_EXCLUDE.mro_values_default(test) == tuple()
+            >>> assert N.SLOTS.mro_values_default(test) == tuple()
+            >>> assert sorted(N.PICKLE.mro_values_default(Environs())) == sorted(PICKLE_ATTRS[Environs])
 
         Returns:
            Default values for attr in mro and instance.
@@ -1891,11 +1225,11 @@ class PrivateBase(EnumBase):
             >>> class Test(First):
             ...     __slots__ = ('_id', )
             >>>
-            >>> Protected.DATA.slot(Test())
+            >>> N._data.slot(Test())
             True
-            >>> Protected.ID.slot(Test())
+            >>> N._id.slot(Test())
             True
-            >>> Public.IP.slot(Test())
+            >>> N.ip.slot(Test())
             False
 
         Args:
@@ -1922,18 +1256,18 @@ class PrivateBase(EnumBase):
             ...     __repr_exclude__ = ('_repr', )
             >>>
             >>> test = Test()
-            >>> slots = Private.SLOTS.mro_values(test)
+            >>> slots = N.SLOTS.mro_values(test)
             >>> slots
             ('_hash', '_prop', '_repr', '_slot')
-            >>> hash_attrs = Private.HASH_EXCLUDE.slots_include(test)
+            >>> hash_attrs = N.HASH_EXCLUDE.slots_include(test)
             >>> hash_attrs
             ('_hash', '_prop', '_repr')
-            >>> sorted(hash_attrs + Private.HASH_EXCLUDE.mro_values(test)) == sorted(slots)
+            >>> sorted(hash_attrs + N.HASH_EXCLUDE.mro_values(test)) == sorted(slots)
             True
-            >>> repr_attrs = Private.REPR_EXCLUDE.slots_include(test)
+            >>> repr_attrs = N.REPR_EXCLUDE.slots_include(test)
             >>> repr_attrs
             ('_hash', '_prop', '_slot')
-            >>> sorted(repr_attrs + Private.REPR_EXCLUDE.mro_values(test)) == sorted(slots)
+            >>> sorted(repr_attrs + N.REPR_EXCLUDE.mro_values(test)) == sorted(slots)
             True
 
         Returns:
@@ -1942,8 +1276,8 @@ class PrivateBase(EnumBase):
         return Es(obj).slots_include(self)
 
 
-class Private(PrivateBase):
-    """Private Access Attributes Enum Class.."""
+class N(NBase):
+    """N Access Attributes Enum Class.."""
     ALL = auto()
     ANNOTATIONS = auto()
     ARGS = auto()
@@ -1995,126 +1329,111 @@ class Private(PrivateBase):
     SPEC = auto()
     STR = auto()
     SUBCLASSHOOK = auto()
-
-
-class ProtectedBase(PrivateBase):
-    def _generate_next_value_(self, start, count, last_values):
-        return f'_{self.lower()}'
-
-
-class Protected(ProtectedBase):
-    """Protected Access Attributes Enum Class."""
-    ASDICT = auto()
-    CLS = auto()
-    COPY = auto()
-    COUNT = auto()
-    DATA = auto()
-    EXTEND = auto()
-    EXTERNAL = auto()
-    FIELD_DEFAULTS = auto()
-    FIELDS = auto()
-    FILE = auto()
-    FILENAME = auto()
-    FRAME = auto()
-    FUNC = auto()
-    FUNCTION = auto()
-    GET = auto()
-    GLOBALS = auto()
-    ID = auto()
-    INDEX = auto()
-    IP = auto()
-    ITEM = auto()
-    ITEMS = auto()
-    KEY = auto()
-    KEYS = auto()
-    KIND = auto()
-    LOCALS = auto()
-    NAME = auto()
-    ORIGIN = auto()
-    OBJ = auto()
-    OBJECT = auto()
-    PATH = auto()
-    REPO = auto()
-    RV = auto()
-    PYPI = auto()
-    REMOVE = auto()
-    REVERSE = auto()
-    SORT = auto()
-    UPDATE = auto()
-    VALUE = auto()
-    VALUES = auto()
-    VARS = auto()
-
-
-class PublicBase(PrivateBase):
-    def _generate_next_value_(self, start, count, last_values):
-        return self.lower()
-
-
-class Public(PublicBase):
-    """Public Access Attributes Enum Class."""
-    ADD = auto()
-    APPEND = auto()
-    ASDICT = auto()
-    CLS = auto()
-    CLEAR = auto()
-    CO_NAME = auto()
-    CODE_CONTEXT = auto()
-    COPY = auto()
-    COUNT = auto()
-    DATA = auto()
-    ENDSWITH = auto()
-    EXTEND = auto()
-    EXTERNAL = auto()
-    F_BACK = auto()
-    F_CODE = auto()
-    F_GLOBALS = auto()
-    F_LINENO = auto()
-    F_LOCALS = auto()
-    FILE = auto()
-    FILENAME = auto()
-    FRAME = auto()
-    FUNC = auto()
-    FUNCTION = auto()
-    GET = auto()
-    GLOBALS = auto()
-    ID = auto()
-    INDEX = auto()
-    IP = auto()
-    ITEM = auto()
-    ITEMS = auto()
-    KEY = auto()
-    KEYS = auto()
-    KIND = auto()
-    LINENO = auto()
-    LOCALS = auto()
-    NAME = auto()
-    ORIGIN = auto()
-    OBJ = auto()
-    OBJECT = auto()
-    PATH = auto()
-    REPO = auto()
-    RV = auto()
-    POP = auto()
-    POPITEM = auto()
-    PYPI = auto()
-    REMOVE = auto()
-    REVERSE = auto()
-    SELF = auto()
-    SORT = auto()
-    STARTSWITH = auto()
-    TB_FRAME = auto()
-    TB_LINENO = auto()
-    TB_NEXT = auto()
-    UPDATE = auto()
-    VALUE = auto()
-    VALUES = auto()
-    VARS = auto()
+    _asdict = auto()
+    _cls = auto()
+    _copy = auto()
+    _count = auto()
+    _data = auto()
+    _extend = auto()
+    _external = auto()
+    _field_defaults = auto()
+    _fields = auto()
+    _file = auto()
+    _filename = auto()
+    _frame = auto()
+    _func = auto()
+    _function = auto()
+    _get = auto()
+    _globals = auto()
+    _id = auto()
+    _index = auto()
+    _ip = auto()
+    _item = auto()
+    _items = auto()
+    _key = auto()
+    _keys = auto()
+    _kind = auto()
+    _locals = auto()
+    _name = auto()
+    _node = auto()
+    _origin = auto()
+    _obj = auto()
+    _object = auto()
+    _path = auto()
+    _repo = auto()
+    _RV = auto()
+    _pypi = auto()
+    _remove = auto()
+    _reverse = auto()
+    _sort = auto()
+    _source = auto()
+    _update = auto()
+    _value = auto()
+    _values = auto()
+    _vars = auto()
+    add = auto()
+    append = auto()
+    asdict = auto()
+    cls = auto()
+    clear = auto()
+    co_name = auto()
+    code_context = auto()
+    copy = auto()
+    count = auto()
+    data = auto()
+    endswith = auto()
+    extend = auto()
+    external = auto()
+    f_back = auto()
+    f_code = auto()
+    f_globals = auto()
+    f_lineno = auto()
+    f_locals = auto()
+    file = auto()
+    filename = auto()
+    frame = auto()
+    func = auto()
+    function = auto()
+    get_ = auto()  # value: get: To avoid conflict with N.get()
+    globals = auto()
+    id = auto()
+    index = auto()
+    ip = auto()
+    item = auto()
+    items = auto()
+    key = auto()
+    keys = auto()
+    kind = auto()
+    lineno = auto()
+    locals = auto()
+    name = auto()
+    node = auto()
+    origin = auto()
+    obj = auto()
+    object = auto()
+    path = auto()
+    repo = auto()
+    rv = auto()
+    pop = auto()
+    popitem = auto()
+    pypi = auto()
+    remove = auto()
+    reverse = auto()
+    self_ = auto()  # value: 'self': To avoid conflict with Enum
+    sort = auto()
+    source = auto()
+    startswith = auto()
+    tb_frame = auto()
+    tb_lineno = auto()
+    tb_next = auto()
+    update = auto()
+    value = auto()
+    values = auto()
+    vars = auto()
 
 
 # </editor-fold>
 # <editor-fold desc="Enums - Typing">
-AttrUnion = Union[str, Private, Protected, Public]
 EnumBaseAlias = Alias(EnumBase, 1, name=EnumBase.__name__)
 
 
@@ -2182,7 +1501,7 @@ def annotations(obj, stack=1, sequence=False):
         ...     def __post_init__(self, initvar: int, initvar_optional: Optional[int]):
         ...         self.a = initvar
         >>>
-        >>> ann = annotations(Test, sequence=False)
+        >>> ann = annotations(Test)
         >>> ann['any'].any, ann['any'].cls, ann['any'].default
         (True, typing.Any, None)
         >>> ann['classvar'].classvar, ann['classvar'].cls, ann['classvar'].default
@@ -2315,7 +1634,7 @@ def annotations_init(cls, stack=2, optional=True, **kwargs):
         cls: cls instance with default values.
     """
     values = dict()
-    for name, a in annotations(cls, stack=stack, sequence=False).items():
+    for name, a in annotations(cls, stack=stack).items():
         if v := kwargs.get(name):
             value = v
         elif a.origin == Union and not optional:
@@ -2581,7 +1900,7 @@ def enumvalue(data):
     Examples:
         >>> pretty_install()
         >>>
-        >>> enumvalue(Private.ANNOTATIONS)
+        >>> enumvalue(N.ANNOTATIONS)
         '__annotations__'
         >>> enumvalue(None)
 
@@ -2639,6 +1958,28 @@ def get(data, *args, default=None, one=True, recursive=False, with_keys=False):
         return rv({arg: data.get(arg, default) for arg in args})
 
     return rv({attr: getattr(data, attr, default) for attr in args})
+
+
+@cache
+def getnostr(data, attr='value'):
+    """
+    Get attr if data is not str.
+
+    Examples:
+        >>> from rc import getnostr
+        >>> simple = Simple(value=1)
+        >>> assert getnostr(simple) == 1
+        >>> assert getnostr(simple, None) == simple
+        >>> assert getnostr('test') == 'test'
+
+    Args:
+        data: object.
+        attr: attribute name (default: 'value').
+
+    Returns:
+        Attr value if not str.
+    """
+    return (data if isinstance(data, str) else getattr(data, attr)) if attr else data
 
 
 def getset(data, name, default=None, setvalue=True):
@@ -2892,11 +2233,11 @@ def to_camel(text, replace=True):
     Convert to Camel
 
     Examples:
-        >>> to_camel(Private.IGNORE_ATTR.name)
+        >>> to_camel(N.IGNORE_ATTR.name)
         'IgnoreAttr'
-        >>> to_camel(Private.IGNORE_ATTR.name, replace=False)
+        >>> to_camel(N.IGNORE_ATTR.name, replace=False)
         'Ignore_Attr'
-        >>> to_camel(Private.IGNORE_ATTR.value, replace=False)
+        >>> to_camel(N.IGNORE_ATTR.value, replace=False)
         '__Ignore_Attr__'
 
     Args:
@@ -3132,6 +2473,8 @@ class Es:
         data: Any
             object to provide information (default: None)
         """
+    FrameBase = namedtuple('FrameBase', 'back code frame function globals lineno locals name package path source vars')
+    Source = namedtuple('Source', 'code code_line complete complete_line context')
     __slots__ = ('data', )
     def __init__(self, data=None): self.data = data
     def __call__(self, *args): return isinstance(self.data, args)
@@ -3142,6 +2485,14 @@ class Es:
     def __repr__(self): return f'{self.__class__.__name__}({self.data})'
     def __setstate__(self, state): self.data = state['data']
     def __str__(self): return str(self.data)
+
+    # <editor-fold desc="Es - Frame">
+    class Frame(FrameBase):
+        """Frame Class."""
+        __slots__ = ()
+        def __new__(cls, *args, **kwargs): return super().__new__(cls, *args, **kwargs)
+
+    # </editor-fold>
 
     # <editor-fold desc="Es - Protected">
     @property
@@ -3451,26 +2802,26 @@ class Es:
     @functools.cache
     def has(self, name):
         """
-        Checks if Object has attr.
+        Has Attribute/Key.
 
         Examples:
-            >>> from rc import Es, Private, pretty_install
+            >>> from rc import Es, N, pretty_install
             >>> pretty_install()
             >>>
             >>> class Test:
             ...     __repr_newline__ = True
-            >>>
-            >>> Es(Test()).has(Private.REPR_NEWLINE)
-            True
-            >>> Es(Test()).has(Private.REPR_EXCLUDE)
-            False
+            >>> assert Es(Test()).has(N.REPR_NEWLINE.value) is True
+            >>> assert Es(Test()).has(N.REPR_EXCLUDE.value) is False
+            >>> assert Es(dict(a=1)).has('a') is True
+            >>> assert Es(dict(a=1)).has('b') is False
 
         Args:
-            name: attribute name.
+            name: attribute or key name.
+
         Returns:
-            True if object has attribute.
+            True object/dict has attribute/key.
         """
-        return hasattr(self.data, enumvalue(name))
+        return name in self.data if self.mm else hasattr(self.data, name)
 
     @property
     @functools.cache
@@ -3521,7 +2872,7 @@ class Es:
 
     @property
     @functools.cache
-    def lst(self): return self.list or self.set or self.tuple
+    def lst(self): return self.list or self.settype or self.tuple
 
     @property
     @functools.cache
@@ -3585,7 +2936,7 @@ class Es:
 
     @property
     @functools.cache
-    def mlst(self): return self.mm or self.list or self.set or self.tuple
+    def mlst(self): return self.mm or self.list or self.settype or self.tuple
 
     @property
     @functools.cache
@@ -3706,11 +3057,11 @@ class Es:
 
     @property
     @functools.cache
-    def set(self): return self(set)
+    def setter(self): return self.prop and self.data.fset is not None
 
     @property
     @functools.cache
-    def setter(self): return self.prop and self.data.fset is not None
+    def settype(self): return self(set)
 
     @property
     @functools.cache
@@ -3738,11 +3089,11 @@ class Es:
             >>> class Test(First):
             ...     __slots__ = ('_id', )
             >>>
-            >>> Es(Test()).slot(Protected.DATA)
+            >>> Es(Test()).slot(N._data)
             True
-            >>> Es(Test()).slot(Protected.ID)
+            >>> Es(Test()).slot(N._id)
             True
-            >>> Es(Test()).slot(Protected.IP)
+            >>> Es(Test()).slot(N._ip)
             False
 
         Returns:
@@ -3877,7 +3228,7 @@ class Es:
                     default=item.object if item.name not in fields or fields[item.name].init else NotImplemented,
                     defining=item.defining_class, es=e, field=type(self)(fields.pop(item.name, None)),
                     kind=Kind[item.kind.split(' ')[0].upper()], name=item.name,
-                    object=item.object, qual=type(self)(e._func).get(Private.QUALNAME, default=item.name))})
+                    object=item.object, qual=type(self)(e._func).get(N.QUALNAME.value, default=item.name))})
         for k, value in fields.items():
             defining_cls = self.cls
             for C in self.mro:
@@ -3916,18 +3267,6 @@ class Es:
     @functools.cache
     def first_builtin(self): return anyin(self.mro, BUILTINS_CLASSES)
 
-    @functools.cache
-    def get(self, item, default=None):
-        # TODO: get - annotations and Examples.
-        if self.mm and self.container and item in self.data:
-            return self.data.get(item, default)
-        elif type(self)(name := enumvalue(item)).str and self.has(name):
-            try:
-                return object.__getattribute__(self.data, name)
-            except AttributeError:
-                pass
-        return default
-
     @property
     @functools.cache
     def importable_name_cls(self): return noexception(importable_name, self.cls)
@@ -3939,7 +3278,7 @@ class Es:
     @property
     @functools.cache
     def modname(self):
-        return self.__name__ if self.moduletype else self.__module__ if self.has(Private.MODULE) else None
+        return self.__name__ if self.moduletype else self.__module__ if self.has(N.MODULE.value) else None
 
     @property
     @functools.cache
@@ -3968,7 +3307,7 @@ class Es:
         First value of attr found in mro and instance if obj is instance.
 
         Examples:
-            >>> from rc import Es, Private, pretty_install
+            >>> from rc import Es, N, pretty_install
             >>> pretty_install()
             >>>
             >>> class Test:
@@ -3979,12 +3318,12 @@ class Es:
             ...     def __init__(self):
             ...         self.__repr_newline__ = False
             >>>
-            >>> Es(Test()).mro_first_data(Private.REPR_NEWLINE)
+            >>> Es(Test()).mro_first_data(N.REPR_NEWLINE)
             True
-            >>> Es(Test2()).mro_first_data(Private.REPR_NEWLINE)
+            >>> Es(Test2()).mro_first_data(N.REPR_NEWLINE)
             False
-            >>> Es(int()).mro_first_data(Private.REPR_NEWLINE)
-            >>> Es(Test()).mro_first_data(Private.REPR_PPROPERTY)
+            >>> Es(int()).mro_first_data(N.REPR_NEWLINE)
+            >>> Es(Test()).mro_first_data(N.REPR_PPROPERTY)
 
         Returns:
             First value of attr found in mro and instance if obj is instance.
@@ -3992,7 +3331,7 @@ class Es:
         name = enumvalue(name)
         for item in self.mro_and_data:
             if type(self)(item).has(name):
-                return object.__getattribute__(item, name)
+                return item.__getattribute__(name)
 
     @functools.cache
     def mro_first_dict(self, name, mro=None):
@@ -4000,7 +3339,7 @@ class Es:
         First value of attr in obj.__class__.__dict__ found in mro.
 
         Examples:
-            >>> from rc import Es, Private, pretty_install
+            >>> from rc import Es, N, pretty_install
             >>> pretty_install()
             >>>
             >>> class Test:
@@ -4011,16 +3350,16 @@ class Es:
             ...     def __init__(self):
             ...         self.__repr_newline__ = False
             >>>
-            >>> Es(Test()).mro_first_dict(Private.REPR_NEWLINE)
+            >>> Es(Test()).mro_first_dict(N.REPR_NEWLINE)
             False
-            >>> Es(Test2()).mro_first_dict(Private.REPR_NEWLINE)
+            >>> Es(Test2()).mro_first_dict(N.REPR_NEWLINE)
             False
-            >>> Es(int()).mro_first_dict(Private.REPR_NEWLINE)
+            >>> Es(int()).mro_first_dict(N.REPR_NEWLINE)
             NotImplemented
-            >>> Es(Test()).mro_first_dict(Private.REPR_PPROPERTY)
+            >>> Es(Test()).mro_first_dict(N.REPR_PPROPERTY)
             NotImplemented
             >>> A = namedtuple('A', 'a')
-            >>> Es(A).mro_first_dict(Private.SLOTS)
+            >>> Es(A).mro_first_dict(N.SLOTS)
             ()
 
         Args:
@@ -4041,7 +3380,7 @@ class Es:
         First value of attr in obj.__class__.__dict__ found in mro excluding object.
 
         Examples:
-            >>> from rc import Es, Private, pretty_install
+            >>> from rc import Es, N, pretty_install
             >>> pretty_install()
             >>>
             >>> class Test:
@@ -4052,20 +3391,20 @@ class Es:
             ...     def __init__(self):
             ...         self.__repr_newline__ = False
             >>>
-            >>> Es(Test()).mro_first_dict_no_object(Private.REPR_NEWLINE)
+            >>> Es(Test()).mro_first_dict_no_object(N.REPR_NEWLINE)
             False
-            >>> Es(Test2()).mro_first_dict_no_object(Private.REPR_NEWLINE)
+            >>> Es(Test2()).mro_first_dict_no_object(N.REPR_NEWLINE)
             False
-            >>> Es(int()).mro_first_dict_no_object(Private.REPR_NEWLINE)
+            >>> Es(int()).mro_first_dict_no_object(N.REPR_NEWLINE)
             NotImplemented
-            >>> Es(Test()).mro_first_dict_no_object(Private.REPR_PPROPERTY)
+            >>> Es(Test()).mro_first_dict_no_object(N.REPR_PPROPERTY)
             NotImplemented
             >>> A = namedtuple('A', 'a')
-            >>> Es(A).mro_first_dict_no_object(Private.SLOTS)
+            >>> Es(A).mro_first_dict_no_object(N.SLOTS)
             ()
-            >>> Es(dict).mro_first_dict_no_object(Private.SLOTS)
+            >>> Es(dict).mro_first_dict_no_object(N.SLOTS)
             NotImplemented
-            >>> Es(dict()).mro_first_dict_no_object(Private.SLOTS)
+            >>> Es(dict()).mro_first_dict_no_object(N.SLOTS)
             NotImplemented
 
         Returns:
@@ -4097,27 +3436,27 @@ class Es:
             ...     __ignore_str__ = (tuple, )
             >>>
             >>> test = Test()
-            >>> Es(test).mro_values(Private.HASH_EXCLUDE)
+            >>> Es(test).mro_values(N.HASH_EXCLUDE)
             ('_slot',)
-            >>> Es(test).mro_values(Private.IGNORE_ATTR)  # doctest: +ELLIPSIS
+            >>> Es(test).mro_values(N.IGNORE_ATTR)  # doctest: +ELLIPSIS
             (
                 'asdict',
                 'attr',
                 ...
             )
-            >>> set(Es(test).mro_values(Private.IGNORE_COPY)).difference(Es().mro_values_default(\
-Private.IGNORE_COPY))
+            >>> set(Es(test).mro_values(N.IGNORE_COPY)).difference(Es().mro_values_default(\
+N.IGNORE_COPY))
             {<class 'tuple'>}
-            >>> Es(test).mro_values(Private.IGNORE_KWARG)
+            >>> Es(test).mro_values(N.IGNORE_KWARG)
             ('kwarg',)
-            >>> set(Es(test).mro_values(Private.IGNORE_STR)).difference(Es().mro_values_default(\
-Private.IGNORE_STR))
+            >>> set(Es(test).mro_values(N.IGNORE_STR)).difference(Es().mro_values_default(\
+N.IGNORE_STR))
             {<class 'tuple'>}
-            >>> Es(test).mro_values(Private.REPR_EXCLUDE)
+            >>> Es(test).mro_values(N.REPR_EXCLUDE)
             ('_repr',)
-            >>> Es(test).mro_values(Private.SLOTS)
+            >>> Es(test).mro_values(N.SLOTS)
             ('_hash', '_prop', '_repr', '_slot')
-            >>> assert sorted(Es(Environs()).mro_values(Private.PICKLE)) == sorted(PICKLE_ATTRS[Environs])
+            >>> assert sorted(Es(Environs()).mro_values(N.PICKLE)) == sorted(PICKLE_ATTRS[Environs])
 
         Returns:
             All/accumulated values of attr in mro and obj if instance.
@@ -4149,19 +3488,19 @@ Private.IGNORE_STR))
             ...     __ignore_str__ = (tuple, )
             >>>
             >>> test = Test()
-            >>> assert Es(test).mro_values_default(Private.HASH_EXCLUDE) == tuple()
-            >>> assert Es(test).mro_values_default(Private.IGNORE_ATTR) == IgnoreAttr.__args__
-            >>> assert Es(test).mro_values_default(Private.IGNORE_COPY) == IgnoreCopy.__args__
-            >>> assert Es(test).mro_values_default(Private.IGNORE_KWARG) == tuple()
-            >>> assert Es(test).mro_values_default(Private.IGNORE_STR) == IgnoreStr.__args__
-            >>> assert Es(test).mro_values_default(Private.REPR_EXCLUDE) == tuple()
-            >>> assert Es(test).mro_values_default(Private.SLOTS) == tuple()
-            >>> assert sorted(Es(Environs()).mro_values_default(Private.PICKLE)) == sorted(PICKLE_ATTRS[Environs])
+            >>> assert Es(test).mro_values_default(N.HASH_EXCLUDE) == tuple()
+            >>> assert Es(test).mro_values_default(N.IGNORE_ATTR) == IgnoreAttr.__args__
+            >>> assert Es(test).mro_values_default(N.IGNORE_COPY) == IgnoreCopy.__args__
+            >>> assert Es(test).mro_values_default(N.IGNORE_KWARG) == tuple()
+            >>> assert Es(test).mro_values_default(N.IGNORE_STR) == IgnoreStr.__args__
+            >>> assert Es(test).mro_values_default(N.REPR_EXCLUDE) == tuple()
+            >>> assert Es(test).mro_values_default(N.SLOTS) == tuple()
+            >>> assert sorted(Es(Environs()).mro_values_default(N.PICKLE)) == sorted(PICKLE_ATTRS[Environs])
 
         Returns:
            Default values for attr in mro and instance.
         """
-        if enumvalue(name) == Private.PICKLE.value:
+        if enumvalue(name) == N.PICKLE.value:
             default = set()
             for C in self.mro:
                 if C in PICKLE_ATTRS:
@@ -4173,7 +3512,7 @@ Private.IGNORE_STR))
 
     @property
     @functools.cache
-    def name(self): return self.data.__name__ if self.has(Private.NAME) else None
+    def name(self): return self.data.__name__ if self.has(N.NAME.value) else None
 
     @classmethod
     @functools.cache
@@ -4204,7 +3543,7 @@ Private.IGNORE_STR))
         Returns:
             Slots values in mro Tuple.
         """
-        return self.mro_values(Private.SLOTS)
+        return self.mro_values(N.SLOTS)
 
     @functools.cache
     def slots_include(self, name):
@@ -4225,21 +3564,21 @@ Private.IGNORE_STR))
             >>> es = Es(Test())
             >>> es.slots
             ('_hash', '_prop', '_repr', '_slot')
-            >>> hash_attrs = es.slots_include(Private.HASH_EXCLUDE)
+            >>> hash_attrs = es.slots_include(N.HASH_EXCLUDE)
             >>> hash_attrs
             ('_hash', '_prop', '_repr')
-            >>> sorted(hash_attrs + es.mro_values(Private.HASH_EXCLUDE)) == sorted(es.slots)
+            >>> sorted(hash_attrs + es.mro_values(N.HASH_EXCLUDE)) == sorted(es.slots)
             True
-            >>> repr_attrs = es.slots_include(Private.REPR_EXCLUDE)
+            >>> repr_attrs = es.slots_include(N.REPR_EXCLUDE)
             >>> repr_attrs
             ('_hash', '_prop', '_slot')
-            >>> sorted(repr_attrs + es.mro_values(Private.REPR_EXCLUDE)) == sorted(es.slots)
+            >>> sorted(repr_attrs + es.mro_values(N.REPR_EXCLUDE)) == sorted(es.slots)
             True
 
         Returns:
             Accumulated values from slots - Accumulated values from mro attr name.
         """
-        return tuple(sorted(set(self.slots).difference(self.mro_values(name))))
+        return tuple(sorted(set(self.slots).difference(self.mro_values(enumvalue(name)))))
 
     @property
     @functools.cache
@@ -4284,6 +3623,295 @@ Private.IGNORE_STR))
 
     @property
     @functools.cache
+    def frame(self):
+        """
+        Get Frame Class.
+
+        Examples:
+            >>> from ast import unparse
+            >>> from inspect import getmodulename
+            >>> import rc.utils
+            >>> from rc import *
+            >>>
+            >>> pretty_install()
+            >>>
+            #
+            # FrameInfo
+            #
+            >>> f = insstack()[0]
+            # TODO: Aqui lo dejo probar el frame.
+
+
+        Returns:
+            :class:`rc.Es.Frame`.
+        """
+        if not all([self.frameinfo, self.frametype, self.tracebacktype]):
+            return
+        if self.frameinfo:
+            frame = self.data.frame
+            back = frame.f_back
+            lineno = self.data.lineno
+        elif self.frametype:
+            frame = self.data
+            back = self.data.f_back
+            lineno = self.data.f_lineno
+        else:
+            frame = self.data.tb_frame
+            back = self.data.tb_next
+            lineno = self.data.tb_lineno
+
+        code = frame.f_code
+        f_globals = frame.f_globals.copy()
+        f_locals = frame.f_locals.copy()
+        function = code.co_name
+        v = f_globals | f_locals
+        name = v.get(N.NAME.value) or function
+
+        return self.Frame(back=back, code=code, frame=frame, function=function, globals=f_globals, lineno=lineno,
+                          locals=f_locals, name=name,
+                          package=v.get(N.PACKAGE.value) or name.split('.')[0],
+                          path=self.path, source=self.source, vars=v)
+
+    @functools.cache
+    def get(self, name=None, default=None, setvalue=False):
+        """
+        Get key/attr value.
+
+        Examples:
+            >>> from rc import Es, pretty_install, N, insstack
+            >>> import rc.utils
+            >>> from ast import unparse
+            >>> pretty_install()
+            >>> d = Es(dict(a=1))
+            >>> simple = Es(Simple(b=2))
+            >>> assert d.get('a') == 1
+            >>> assert simple.get('b') == 2
+            >>> assert d.get(N.data.value) is None and d.has(N.data.value) is False
+            >>> assert simple.get(N.data.value) is None and simple.has(N.data.value) is False
+            >>> assert d.get(N.data.value, setvalue=True) is None and d.has(N.data.value) is True
+            >>> assert simple.get(N.data.value, setvalue=True) is None and simple.has(N.data.value) is True
+
+        Args:
+            name: attribute or key name if not name returns :class:`rc.Es.Frame` (default: None).
+            default: default.
+            setvalue: setvalue if not found.
+
+        Returns:
+            Value or :class:`rc.Es.Frame`.
+        """
+        if name is None:
+            return self.frame
+        if self.has(name):
+            return self.data.get(name, default) if self.mm else getattr(self.data, cast(str, name), default)
+        if setvalue:
+            return self.set(name=name, value=default)
+        return default
+
+    @functools.cache
+    def getf(self, name=None, default=None):
+        """
+        Get value from: FrameInfo, FrameType, TracebackType, MutableMapping abd GetAttr.
+
+        Use :class:`rc.Es.get` for real names.
+
+        Args:
+            name: attribute or key name if not name returns :class:`rc.Es.Frame` (default: None).
+            default: default.
+
+        Returns:
+            Value or :class:`rc.Es.Frame`.
+        """
+        if name is None:
+            return self.frame
+
+        name = enumvalue(name)
+        if name in [N.FILE.value, N.filename.value]:
+            return self.path
+
+        if self.frameinfo:
+            return self.getfinfo(name=name, default=default)
+        elif self.frametype:
+            return self.getftype(name=name, default=default)
+        elif self.tracebacktype:
+            return self.getftrace(name=name, default=default)
+        name = enumvalue(name)
+        rv = self.get(name=name, default=default)
+        return rv
+
+    @functools.cache
+    def getfinfo(self, name=None, default=None):
+        if name is None:
+            return self.frame
+        name = enumvalue(name)
+        if name in [N.NAME.value, N.co_name.value, N.function.value]:
+            return self.data.function
+        if name in [N.lineno.value, N.f_lineno.value, N.tb_lineno.value]:
+            return self.data.lineno
+        if name in [N.f_globals.value, N.globals.value]:
+            return self.data.frame.f_globals
+        if name in [N.f_locals.value, N.locals.value]:
+            return self.data.frame.f_locals
+        if name in [N.frame.value, N.tb_frame.value]:
+            return self.data.frame
+        if name == N.vars.value:
+            return (self.data.frame.f_globals | self.data.frame.f_locals).copy()
+        if name in [N.CODE.value, N.f_code.value]:
+            return self.data.frame.f_code
+        if name in [N.f_back.value, N.tb_next.value]:
+            return self.data.frame.f_back
+        if name == N.index.value:
+            return self.data.index
+        if name == N.code_context.value:
+            return self.data.code_context
+        if name in [N.FILE.value, N.filename.value]:
+            return self.path
+        return type(self)((self.data.frame.f_globals | self.data.frame.f_locals).copy()).get(name=name, default=default)
+
+    @functools.cache
+    def getftype(self, name=None, default=None):
+        if name is None:
+            return self.frame
+        name = enumvalue(name)
+        if name in [N.NAME.value, N.co_name.value, N.function.value]:
+            return self.data.f_code.co_name
+        if name in [N.lineno.value, N.f_lineno.value, N.tb_lineno.value]:
+            return self.data.f_lineno
+        if name in [N.f_globals.value, N.globals.value]:
+            return self.data.f_globals
+        if name in [N.f_locals.value, N.locals.value]:
+            return self.data.f_locals
+        if name in [N.frame.value, N.tb_frame.value]:
+            return self.data
+        if name == N.vars.value:
+            return (self.data.f_globals | self.data.f_locals).copy()
+        if name in [N.CODE.value, N.f_code.value]:
+            return self.data.f_code
+        if name in [N.f_back.value, N.tb_next.value]:
+            return self.data.f_back
+        if name in [N.FILE, N.filename]:
+            return self.path
+        return type(self)((self.data.f_globals | self.data.f_locals).copy()).get(name=name, default=default)
+
+    @functools.cache
+    def getftrace(self, name=None, default=None):
+        if name is None:
+            return self.frame
+        name = enumvalue(name)
+        if name in [N.NAME.value, N.co_name.value, N.function.value]:
+            return self.data.tb_frame.f_code.co_name
+        if name in [N.lineno.value, N.f_lineno.value, N.tb_lineno.value]:
+            return self.data.tb_lineno
+        if name in [N.f_globals.value, N.globals.value]:
+            return self.data.tb_frame.f_globals
+        if name in [N.f_locals.value, N.locals.value]:
+            return self.data.tb_frame.f_locals
+        if name in [N.frame.value, N.tb_frame.value]:
+            return self.data.tb_frame
+        if name == N.vars.value:
+            return (self.data.tb_frame.f_globals | self.data.tb_frame.f_locals).copy()
+        if name in [N.CODE.value, N.f_code.value]:
+            return self.data.tb_frame.f_code
+        if name in [N.f_back.value, N.tb_next.value]:
+            return self.data.tb_next
+        if name in [N.FILE.value, N.filename.value]:
+            return self.path
+        return type(self)((self.data.tb_frame.f_globals | self.data.tb_frame.f_locals).copy()).get(name=name,
+                                                                                                   default=default)
+
+    @functools.cache
+    def node(self, complete=False, line=False):
+        """
+        Get node of object.
+
+        Examples:
+            >>> from ast import unparse
+            >>> from inspect import getmodulename
+            >>> from rc import N
+            >>> from rc import Es
+            >>>
+            >>> pretty_install()
+            >>> f = insstack()[0]
+            >>> globs_locs = (f.frame.f_globals | f.frame.f_locals).copy()
+            >>> N.filename.getf(f), N.function.getf(f), N.code_context.getf(f)[0], Es(f)._source() \
+             # doctest: +ELLIPSIS
+            (
+                PosixPath('<doctest ...node[...]>'),
+                '<module>',
+                'f = insstack()[0]\\n',
+                'f = insstack()[0]\\n'
+            )
+            >>> es = Es(globs_locs)
+            >>> file = PathLib(es.get(N.FILE.value))
+            >>> name = es.get(N.NAME.value)
+            >>> node_globs_locs = Es(globs_locs).node()  # N.node(globs_locs)
+            >>> node_file = Es(__file__).node()   # N.node(__file__)
+            >>> source_file = Es(__file__)._source()   # N._source(__file__)
+            >>> source_frameinfo = Es(f)._source()   # N._source(f)
+            >>> source_globs_locs = Es(globs_locs)._source()  # N._source(globs_locs)
+            >>> spec = es.get(N.SPEC.value)
+            >>> file  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> source_file  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> source_globs_locs  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> assert file == PathLib(__file__) == PathLib(spec.origin)
+            >>> assert name == getmodulename(__file__) == spec.name
+            >>> assert source_globs_locs == source_file
+            >>> assert unparse(node_globs_locs) == unparse(node_file)  # Unparse does not have encoding line
+            >>> assert source_frameinfo in unparse(node_globs_locs)
+            >>> assert source_frameinfo in unparse(node_file)
+
+        Args:
+            complete: return complete node for file (always for module and frame corresponding to module)
+                or object node (default=False)
+            line: return line
+
+        Returns:
+            Node.
+        """
+        return ast.parse(self._source(complete=complete, line=line) or str(self.data))
+
+    @property
+    @functools.cache
+    def path(self):
+        """
+        Get path of object.
+
+        Examples:
+            >>> from ast import unparse
+            >>> from inspect import getmodulename
+            >>> from rc import N, pretty_install, insstack, Es, allin
+            >>> import rc.utils
+            >>>
+            >>> pretty_install()
+            >>> frameinfo = insstack()[0]
+            >>> globs_locs = (frameinfo.frame.f_globals | frameinfo.frame.f_locals).copy()
+            >>> Es(N.getf).path  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> Es(rc.utils.__file__).path  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> Es(allin).path  # doctest: +ELLIPSIS
+            PosixPath('/Users/jose/....py')
+            >>> Es(dict(a=1)).path
+            PosixPath("{'a': 1}")
+
+        Returns:
+            Path.
+        """
+        if self.mm:
+            f = self.data.get(N.FILE.value)
+        elif self.frameinfo:
+            f = self.data.filename
+        else:
+            try:
+                f = getsourcefile(self.data) or getfile(self.data)
+            except TypeError:
+                f = None
+        return PathLib(f or str(self.data))
+
+    @property
+    @functools.cache
     def pickles(self):
         """
         Pickles object (dumps).
@@ -4298,6 +3926,317 @@ Private.IGNORE_STR))
         except (PicklingError, RecursionError):
             return pickle_dumps(self.state_methods)
 
+    def set(self, name, value=None):
+        """
+        Get key/attr value.
+
+        Examples:
+            >>> from rc import Es, pretty_install, N
+            >>> pretty_install()
+            >>> dct = Es(dict(a=1))
+            >>> simple = Es(Simple(b=2))
+            >>> assert dct.set(N.data.value) is None and dct.has(N.data.value) is True
+            >>> assert simple.set(N.data.value) is None and simple.has(N.data.value) is True
+
+
+        Args:
+            name: name.
+            value: default.
+
+        Returns:
+            Value.
+        """
+        self.data.__setitem__(name, value) if self.mm else self.data.__setattr__(name, value)
+        return value
+
+    @functools.cache
+    def _source(self, complete=False, line=False):
+        """
+        Get source of object.
+
+        Examples:
+            >>> from ast import unparse
+            >>> from inspect import getmodulename
+            >>> import rc.utils
+            >>> from rc import N
+            >>>
+            >>> pretty_install()
+            >>>
+
+            #
+            # Class Method
+            #
+            >>> source_classmethod = Es(TestAsync.async_classmethod)._source()
+            >>> source_classmethod_complete = Es(TestAsync.async_classmethod)._source(complete=True)
+            >>> source_classmethod
+            '    @classmethod\\n    async def async_classmethod(cls): return cls._async_classmethod\\n'
+            >>> source_classmethod_complete  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+
+            >>> assert source_classmethod.splitlines()[1] in source_classmethod_complete
+            >>>
+
+            #
+            # Dict
+            #
+            >>> source_dict = Es(dict(a=1))._source()
+            >>> source_dict_complete = Es(dict(a=1))._source(complete=True)
+            >>>
+            >>> source_dict
+            "{'a': 1}"
+            >>> source_dict_complete
+            "{'a': 1}"
+            >>>
+
+            #
+            # File
+            #
+            >>>
+            >>> source_file = Es(__file__)._source()
+            >>> source_file_complete = Es(__file__)._source(complete=True)
+            >>>
+            >>> source_file  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> source_file_complete  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>>
+
+            #
+            # FrameInfo
+            #
+            >>> frameinfo = insstack()[0]
+            >>>
+            >>> source_frameinfo = Es(frameinfo)._source()
+            >>> source_frameinfo_complete = Es(frameinfo)._source(complete=True)
+            >>>
+            >>> source_frameinfo, frameinfo.function
+            ('frameinfo = insstack()[0]\\n', '<module>')
+            >>> source_frameinfo_complete, frameinfo.function
+            ('frameinfo = insstack()[0]\\n', '<module>')
+            >>>
+
+            #
+            # FrameType
+            #
+            >>> frametype = frameinfo.frame
+            >>>
+            >>> source_frametype = Es(frametype)._source()
+            >>> source_frametype_complete = Es(frametype)._source(complete=True)
+            >>>
+            >>> source_frametype, frametype.f_code.co_name
+            ('frameinfo = insstack()[0]\\n', '<module>')
+            >>> source_frametype_complete, frametype.f_code.co_name
+            ('frameinfo = insstack()[0]\\n', '<module>')
+            >>>
+
+            #
+            # Function
+            #
+            >>> source_function = Es(allin)._source()
+            >>> source_function_line = Es(allin)._source(line=True)
+            >>> source_function_complete = Es(allin)._source(complete=True)
+            >>> source_function_complete_line = Es(allin)._source(complete=True, line=True)
+            >>>
+            >>> source_function  # doctest: +ELLIPSIS
+            'def allin(origin, destination):\\n...'
+            >>> source_function_line  # doctest: +ELLIPSIS
+            (
+                'def allin(origin, destination):\\n...',
+                ...
+            )
+            >>> source_function_complete  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> source_function_complete_line  # doctest: +ELLIPSIS
+            (
+                '# -*- coding: utf-8 -*-\\n...,
+                ...
+            )
+            >>>
+            >>> assert source_function.splitlines()[0] in source_function_complete
+            >>>
+
+            #
+            # Module
+            #
+            >>> source_module = Es(rc.utils)._source()
+            >>> source_module_complete = Es(rc.utils)._source(complete=True)
+            >>>
+            >>> source_module  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> source_module_complete  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>>
+
+            #
+            # Other
+            #
+            >>> Es()._source()
+            'None'
+            >>> unparse(Es('pass').node())
+            'pass'
+
+        Args:
+            complete: return complete source file (always for module and frame corresponding to module)
+                or object source (default=False)
+            line: return line
+
+        Returns:
+            Source.
+        """
+        if any([self.moduletype, (self.frameinfo and self.data.function == FUNCTION_MODULE),
+                (self.frametype and self.data.f_code.co_name == FUNCTION_MODULE) or
+                (self.tracebacktype and self.data.tb_frame.f_code.co_name == FUNCTION_MODULE) or
+                complete]):
+            if source := self._source_open(line):
+                return source
+
+        try:
+            if line:
+                lines, lnum = getsourcelines(self.data.frame if self.frameinfo else self.data)
+                return ''.join(lines), lnum
+            return getsource(self.data.frame if self.frameinfo else self.data)
+        except (OSError, TypeError):
+            if source := self._source_open(line):
+                return source
+            if line:
+                return str(self.data), 1
+            return str(self.data)
+
+    @functools.cache
+    def _source_open(self, line=False):
+        f = self.getf(N.FILE.value) or self.data
+        if (p := PathLib(f)).is_file():
+            if s := token_open(p):
+                if line:
+                    return s, 1
+                return s
+
+    @property
+    @functools.cache
+    def source(self):
+        """
+        Get source of object.
+
+        Examples:
+            >>> from ast import unparse
+            >>> from inspect import getmodulename
+            >>> import rc.utils
+            >>> from rc import *
+            >>>
+            >>> pretty_install()
+            >>>
+
+            #
+            # Class Method
+            #
+            >>> source_classmethod = Es(TestAsync.async_classmethod).source
+            >>> source_classmethod.code
+            '    @classmethod\\n    async def async_classmethod(cls): return cls._async_classmethod\\n'
+            >>> source_classmethod.complete  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+
+            >>> assert source_classmethod.code.splitlines()[1] in source_classmethod.complete
+            >>>
+
+            #
+            # Dict
+            #
+            >>> source_dict = Es(dict(a=1)).source
+            >>>
+            >>> source_dict.code
+            "{'a': 1}"
+            >>> source_dict.complete
+            "{'a': 1}"
+            >>>
+
+            #
+            # File
+            #
+            >>>
+            >>> source_file = Es(rc.utils.__file__).source
+            >>>
+            >>> source_file.code  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> source_file.complete  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>>
+
+            #
+            # FrameInfo
+            #
+            >>> frameinfo = insstack()[0]
+            >>>
+            >>> source_frameinfo = Es(frameinfo).source
+            >>>
+            >>> source_frameinfo.code, frameinfo.function
+            ('frameinfo = insstack()[0]\\n', '<module>')
+            >>> source_frameinfo.complete, frameinfo.function
+            ('frameinfo = insstack()[0]\\n', '<module>')
+            >>>
+
+            #
+            # FrameType
+            #
+            >>> frametype = frameinfo.frame
+            >>>
+            >>> source_frametype = Es(frametype).source
+            >>>
+            >>> source_frametype.code, frametype.f_code.co_name
+            ('frameinfo = insstack()[0]\\n', '<module>')
+            >>> source_frametype.complete, frametype.f_code.co_name
+            ('frameinfo = insstack()[0]\\n', '<module>')
+            >>>
+
+            #
+            # Function
+            #
+            >>> source_function = Es(allin).source
+            >>>
+            >>> source_function.code  # doctest: +ELLIPSIS
+            'def allin(origin, destination):\\n...'
+            >>> source_function.code_line  # doctest: +ELLIPSIS
+            (
+                'def allin(origin, destination):\\n...',
+                ...
+            )
+            >>> source_function.complete  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> source_function.complete_line  # doctest: +ELLIPSIS
+            (
+                '# -*- coding: utf-8 -*-\\n...,
+                ...
+            )
+            >>>
+            >>> assert source_function.code.splitlines()[0] in source_function.complete
+            >>>
+
+            #
+            # Module
+            #
+            >>> source_module = Es(rc.utils).source
+            >>>
+            >>> source_module.code  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>> source_module.complete  # doctest: +ELLIPSIS
+            '# -*- coding: utf-8 -*-\\n...
+            >>>
+
+            #
+            # Other
+            #
+            >>> Es().source.code
+            'None'
+            >>> unparse(Es('pass').node())
+            'pass'
+
+        Returns:
+            :class:`rc.ES.Source`.
+        """
+        return self.Source(code=self._source(), code_line=self._source(line=True),
+                           complete=self._source(complete=True),
+                           complete_line=self._source(complete=True, line=True),
+                           context=tuple(self.data.code_context) if self.frameinfo else tuple())
+
     def state(self, data=None):
         """
         Values for :class:`rc.BaseState` methods:
@@ -4311,7 +4250,7 @@ Private.IGNORE_STR))
             >>>
             >>> test = Test()
             >>> e = Es(test)
-            >>> e.slots + e.mro_values(Private.PICKLE)
+            >>> e.slots + e.mro_values(N.PICKLE)
             ('attribute', 'attribute')
             >>> status = e.state()
             >>> status
@@ -4339,10 +4278,10 @@ Private.IGNORE_STR))
             State dict (pickle) or restored object from state dict (unpickle).
         """
         if data is None:
-            return {attr: object.__getattribute__(self.data, attr) for attr in self.mro_values(Private.PICKLE.value)
+            return {attr: self.data.__getattribute__(attr) for attr in self.mro_values(N.PICKLE.value)
                     if self.has(attr)}
         for key, value in data.items():
-            object.__setattr__(self.data, key, value)
+            self.data.__setattr__(key, value)
         return self.data
 
     @property
@@ -4370,12 +4309,12 @@ Private.IGNORE_STR))
                 type(self)(args[0]).state(args[1])
 
         setstate = None
-        if (getstate := self.has(Private.GETSTATE)) or (setstate := self.has(Private.SETSTATE)):
+        if (getstate := self.has(N.GETSTATE.value)) or (setstate := self.has(N.SETSTATE.value)):
             raise PicklingError(f'Object {self.data}, has one or both state methods: {getstate=}, {setstate=}')
         found = False
         for C in self.mro:
             if C in PICKLE_ATTRS:
-                for attr in (Private.GETSTATE.value, Private.SETSTATE.value, ):
+                for attr in (N.GETSTATE.value, N.SETSTATE.value,):
                     es = type(self)(self.__class__)
                     if not es.writeable(attr):
                         exc = es.readonly(attr)
@@ -4384,7 +4323,6 @@ Private.IGNORE_STR))
                 self.data.__class__.__setstate__ = _state
                 found = True
         if found:
-            ic(self.data.__getstate__)
             return self.data
         else:
             raise NotImplementedError(f'No mro: {self.mro} items in {PICKLE_ATTRS.keys()=} for {self.data=}')
@@ -4447,7 +4385,7 @@ class AnnotationsType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is AnnotationsType:
-            return Private.ANNOTATIONS.mro_first_dict(C) is not NotImplemented
+            return N.ANNOTATIONS.mro_first_dict(C) is not NotImplemented
         return NotImplemented
 
 
@@ -4495,7 +4433,7 @@ class AsDictMethodType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is AsDictMethodType:
-            value = Public.ASDICT.mro_first_dict(C)
+            value = N.asdict.mro_first_dict(C)
             es = Es(value)
             return value is not NotImplemented and any(
                 [es.clsmethod, es.lambdatype, es.method, es.static]) and not es.prop
@@ -4546,7 +4484,7 @@ class AsDictPropertyType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is AsDictPropertyType:
-            return (value := Public.ASDICT.mro_first_dict(C)) is not NotImplemented \
+            return (value := N.asdict.mro_first_dict(C)) is not NotImplemented \
                    and Es(value).prop
         return NotImplemented
 
@@ -4586,9 +4524,9 @@ class DataType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is DataType:
-            return Private.ANNOTATIONS.mro_first_dict(C) is not NotImplemented \
-                   and Private.DATACLASS_FIELDS.mro_first_dict(C) is not NotImplemented \
-                   and Private.REPR.mro_first_dict(C) is not NotImplemented
+            return N.ANNOTATIONS.mro_first_dict(C) is not NotImplemented \
+                   and N.DATACLASS_FIELDS.mro_first_dict(C) is not NotImplemented \
+                   and N.REPR.mro_first_dict(C) is not NotImplemented
         return NotImplemented
 
 
@@ -4618,7 +4556,7 @@ class DictType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is DictType:
-            return Private.DICT.mro_first_dict(C) is not NotImplemented
+            return N.DICT.mro_first_dict(C) is not NotImplemented
         return NotImplemented
 
 
@@ -4675,8 +4613,8 @@ class GetAttrNoBuiltinType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is GetAttrNoBuiltinType:
-            g = Public.GET.mro_first_dict(C)
-            return any([Protected.FIELD_DEFAULTS.mro_first_dict(C) is not NotImplemented,
+            g = N.get_.mro_first_dict(C)
+            return any([N._field_defaults.mro_first_dict(C) is not NotImplemented,
                         not allin(C.__mro__, BUILTINS_CLASSES) and g is NotImplemented or
                         (g is not NotImplemented and not callable(g))])
         return NotImplemented
@@ -4735,8 +4673,8 @@ class GetAttrType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is GetAttrType:
-            g = Public.GET.mro_first_dict(C)
-            return any([Protected.FIELD_DEFAULTS.mro_first_dict(C) is not NotImplemented,
+            g = N.get_.mro_first_dict(C)
+            return any([N._field_defaults.mro_first_dict(C) is not NotImplemented,
                         g is NotImplemented or (g is not NotImplemented and not callable(g))])
         return NotImplemented
 
@@ -4828,9 +4766,9 @@ class NamedType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is NamedType:
-            _asdict = Protected.ASDICT.mro_first_dict(C)
-            rv = Protected.FIELD_DEFAULTS.mro_first_dict(C) is not NotImplemented and (
-                    _asdict is not NotImplemented and callable(_asdict)) and Protected.FIELDS.mro_first_dict(
+            _asdict = N._asdict.mro_first_dict(C)
+            rv = N._field_defaults.mro_first_dict(C) is not NotImplemented and (
+                    _asdict is not NotImplemented and callable(_asdict)) and N._fields.mro_first_dict(
                 C) is not NotImplemented
             return rv
         return NotImplemented
@@ -4870,11 +4808,11 @@ class NamedAnnotationsType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is NamedAnnotationsType:
-            _asdict = Protected.ASDICT.mro_first_dict(C)
+            _asdict = N._asdict.mro_first_dict(C)
             _a = _asdict is not NotImplemented and callable(_asdict)
-            value = Private.ANNOTATIONS.mro_first_dict(C)
-            return value is not NotImplemented and Protected.FIELD_DEFAULTS.mro_first_dict(
-                C) is not NotImplemented and _a and Protected.FIELDS.mro_first_dict(C) is not NotImplemented
+            value = N.ANNOTATIONS.mro_first_dict(C)
+            return value is not NotImplemented and N._field_defaults.mro_first_dict(
+                C) is not NotImplemented and _a and N._fields.mro_first_dict(C) is not NotImplemented
         return NotImplemented
 
 
@@ -4903,7 +4841,7 @@ class SlotsType(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is SlotsType:
-            return Private.SLOTS.mro_first_dict_no_object(C) is not NotImplemented
+            return N.SLOTS.mro_first_dict_no_object(C) is not NotImplemented
         return NotImplemented
 
 

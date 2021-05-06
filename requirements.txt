@@ -1,3 +1,4 @@
+astpretty[typed]
 bump2version
 click_completion
 colorama
