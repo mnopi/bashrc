@@ -68,7 +68,6 @@ from .path import PathIs
 from .path import PathSuffix
 from .utils import FRAME_SYS_INIT
 from .utils import FUNCTION_MODULE
-from .utils import Base
 from .utils import delete
 from .utils import dict_sort
 from .utils import annotations_init
@@ -109,7 +108,7 @@ class FrameId(Enum):
     # FUNCDISPATCH = ('return funcs[Call().ASYNC]', 'wrapper bapy', 'core', 1)
 
 
-class Frame(Base, NodeVisitor):
+class Frame(NodeVisitor):
     __file = Path(__file__)
     __path = __file.path
     __package = __path.name

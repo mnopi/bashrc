@@ -1,20 +1,33 @@
 # -*- coding: utf-8 -*-
 """Path Module."""
 __all__ = (
+    'grp',
+    'inspect',
+    'os',
+    'pathlib',
+    'pwd',
+    'sys',
+    'tokenize',
+
     'AUTHORIZED_KEYS',
     'FILE_DEFAULT',
+
     'GITCONFIG',
     'GITHUB_ORGANIZATION',
     'ID_RSA',
     'ID_RSA_PUB',
+
     'SSH_CONFIG',
     'SSH_CONFIG_TEXT',
     'SSH_DIR',
+
     'SUDO_USER',
     'SUDO',
     'SUDO_DEFAULT',
+
     'FindUp',
     'GitTop',
+
     'PathInstallScript',
     'PathIs',
     'PathMode',
@@ -31,43 +44,45 @@ __all__ = (
 )
 
 # noinspection PyCompatibility
-import grp
-import inspect
-import os
-import pathlib
+import grp as grp
+import inspect as inspect
+import os as os
+import pathlib as pathlib
 # noinspection PyCompatibility
-import pwd
-import sys
-import tokenize
-from collections import namedtuple
-from contextlib import contextmanager
-from contextlib import suppress
-from enum import auto
-from enum import Enum
-from importlib.util import module_from_spec
-from importlib.util import spec_from_file_location
-from os import chdir
-from os import getenv
-from os import PathLike
-from os import system
-from shlex import quote
-from shlex import split
-from shutil import rmtree
-from site import getsitepackages
-from site import USER_SITE
-from subprocess import run
-from tempfile import TemporaryDirectory
+import pwd as pwd
+import sys as sys
+import tokenize as tokenize
+from collections import namedtuple as namedtuple
+from contextlib import contextmanager as contextmanager
+from contextlib import suppress as suppress
+from enum import auto as auto
+from enum import Enum as Enum
+from importlib.util import module_from_spec as module_from_spec
+from importlib.util import spec_from_file_location as spec_from_file_location
+from os import getenv as chdir
+from os import getenv as getenv
+from os import PathLike as PathLike
+from os import system as system
+from pathlib import Path as PathLib
+from shlex import quote as shquote
+from shlex import split as shsplit
+from shutil import rmtree as rmtree
+from site import getsitepackages as getsitepackages
+from site import USER_SITE as USER_SITE
+from subprocess import run as subrun
+from tempfile import TemporaryDirectory as TemporaryDirectory
 from typing import Any
 from typing import Optional
 from typing import Union
 
-import setuptools.command.install
-from box import Box
-from furl import furl
-from git import GitConfigParser
-from jinja2 import Template
-from psutil import MACOS
-from setuptools import find_packages
+from box import Box as Box
+from furl import furl as furl
+from git import GitConfigParser as GitConfigParser
+from jinja2 import Template as Template
+from psutil import MACOS as MACOS
+from setuptools import Distribution as SetUpToolsDistribution
+from setuptools import find_packages as find_packages
+from setuptools.command.install import install as SetUpToolsInstall
 
 
 AUTHORIZED_KEYS = 'authorized_keys'
@@ -90,7 +105,7 @@ FindUp = namedtuple('FindUp', 'path previous')
 GitTop = namedtuple('GitTop', 'name origin path')
 
 
-class PathInstallScript(setuptools.command.install.install):
+class PathInstallScript(SetUpToolsInstall):
     def run(self):
         # does not call install.run() by design
         # noinspection PyUnresolvedReferences
@@ -98,7 +113,7 @@ class PathInstallScript(setuptools.command.install.install):
 
     @classmethod
     def path(cls):
-        dist = setuptools.Distribution({'cmdclass': {'install': cls}})
+        dist = SetUpToolsDistribution({'cmdclass': {'install': cls}})
         dist.dry_run = True  # not sure if necessary, but to be safe
         dist.parse_config_files()
         command = dist.get_command_obj('install')
@@ -156,7 +171,7 @@ class PathSuffix(Enum):
         return self.value if self.name == 'NO' else f'.{self.name.lower()}'
 
 
-class Path(pathlib.Path, pathlib.PurePosixPath):
+class Path(PathLib, pathlib.PurePosixPath):
     """Path Helper Class."""
 
     __slots__ = ('_previous', )
@@ -269,12 +284,12 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
 
     def chmod(self, mode=None):
         system(f'{user.sudo("chmod", SUDO_DEFAULT)} {mode or (755 if self.resolved.is_dir() else 644)} '
-               f'{quote(self.resolved.text)}')
+               f'{shquote(self.resolved.text)}')
         return self
 
     def chown(self, group=None, u=None):
         system(f'{user.sudo("chown", SUDO_DEFAULT)} {u or user.name}:{group or user.gname} '
-               f'{quote(self.resolved.text)}')
+               f'{shquote(self.resolved.text)}')
         return self
 
     @property
@@ -457,7 +472,7 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
         """
         file = None
         if not (p := (self / (name or str())).resolved).is_dir() and not (file := p._is_file()):
-            system(f'{user.sudo("mkdir", su)} -p -m {mode or 755} {quote(p.text)}')
+            system(f'{user.sudo("mkdir", su)} -p -m {mode or 755} {shquote(p.text)}')
         if file:
             raise NotADirectoryError(f'{file=} is file and not dir', f'{(self / (name or str())).resolved}')
         p.chown(group=group, u=u)
@@ -780,7 +795,7 @@ class Path(pathlib.Path, pathlib.PurePosixPath):
             if not p.parent:
                 p.parent.mkdir(name=name, group=group or user.gname, mode=mode, su=su, u=u or user.name)
 
-            system(f'{user.sudo("touch", su)} {quote(p.text)}')
+            system(f'{user.sudo("touch", su)} {shquote(p.text)}')
         if file:
             raise NotADirectoryError(f'{file=} is file and not dir', f'{(self / (name or str())).resolved}')
         p.chmod(mode=mode)
@@ -798,7 +813,7 @@ class PathGit(Enum):
         if (path and ((path := Path(path).resolved).exists() or (path := Path.cwd() / path).resolve().exists())) \
                 or (path := Path.cwd().resolved):
             with Path(path).cd:
-                if path := run(split(self.value), capture_output=True, text=True).stdout.removesuffix('\n'):
+                if path := subrun(shsplit(self.value), capture_output=True, text=True).stdout.removesuffix('\n'):
                     return Path(path) if self is PathGit.PATH else furl(path)
         return rv
 

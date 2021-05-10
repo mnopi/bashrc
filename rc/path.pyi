@@ -18,7 +18,7 @@ from furl import furl
 from git import GitConfigParser
 from jinja2 import Template
 
-_P = TypeVar('_Private', bound='Path')
+_P = TypeVar('_P', bound='Path')
 _PI = TypeVar('_PI', bound='PathIs')
 _PM = TypeVar('_PM', bound='PathMode')
 _POp = TypeVar('_POp', bound='PathOption')
@@ -30,16 +30,19 @@ _S  = TypeVar('_S', bound=str)
 __all__: tuple
 AUTHORIZED_KEYS: str
 FILE_DEFAULT: bool
+
 GITCONFIG: str
 GITHUB_ORGANIZATION: str
 ID_RSA: str
 ID_RSA_PUB: str
+
 SSH_CONFIG: dict[str, str]
 SSH_CONFIG_TEXT: str
 SSH_DIR: str
 SUDO_USER: str
 SUDO: bool
 SUDO_DEFAULT: bool
+
 class PathInstallScript(setuptools.command.install.install):
     def run(self): ...
     @classmethod
@@ -216,5 +219,8 @@ class User:
     def __hash__(self) -> int: ...
     @staticmethod
     def sudo(command, su: bool = ...) -> str: ...
+
+
+
 FindUp = NamedTuple('FindUp', path=Optional[Path], previous=Optional[Path])
 GitTop = NamedTuple('GitTop', name=str, origin=furl, path=Path)

@@ -17,6 +17,7 @@ jsonpickle
 more-itertools
 nested-lookup
 pandas
+paramiko
 pip
 psutil
 pydantic
