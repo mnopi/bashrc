@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SharedFileColors">
+    <fileColor scope="rccore" color="004212" />
+    <fileColor scope="rcimp" color="420009" />
+    <fileColor scope="Non-Project Files" color="Yellow" />
     <fileColor scope="tests" color="240200" />
     <fileColor scope="rc" color="420136" />
     <fileColor scope="scripts" color="003042" />

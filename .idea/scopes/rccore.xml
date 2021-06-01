@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="rccore" pattern="file[bashrc]:rccore//*||file[bashrc]:rccore-stubs//*" />
+</component>

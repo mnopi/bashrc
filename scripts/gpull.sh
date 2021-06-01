@@ -13,7 +13,8 @@ if name="$( source gtop 2>&1 )"; then
     if error="$( git pull --no-rebase --quiet --no-stat 2>&1 )"; then
       info.sh "${name}" pull; exit 0
     else
-      if error1="$( git pull --no-rebase --quiet --no-stat origin master 2>&1 )"; then
+      branch="$( git rev-parse --abbrev-ref HEAD )"
+      if error1="$( git pull --no-rebase --quiet --no-stat origin "${branch}" 2>&1 )"; then
         info.sh "${name}" pull; exit 0
       else
         error.sh "${name}" pull "${error}\n ${error1}"; exit 1
