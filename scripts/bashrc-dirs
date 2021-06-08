@@ -31,11 +31,13 @@ export PYCHARM_OPTIONS="${PYCHARM}/options"
 export PYCHARM_SCRATCHES="${PYCHARM}/${SCRATCHES_NAME}"
 export PYCHARM_PLUGINS="${PYCHARM}/plugins"
 
-export LOG_BASENAME="${USERNAME}"
-export LOG="/var/log/${USERNAME}"
-sudo mkdir -p "${LOG}" >/dev/null 2>&1
-sudo chown -R "${USERNAME}":"$( id -g "${USERNAME}" )" "${LOG}" >/dev/null 2>&1
-sudo /bin/chmod -R g+s "${LOG}"
+export LOG_BASENAME="log"
+export LOG="${USERHOME}/${LOG_BASENAME}"
+mkdir -p "${LOG}" >/dev/null 2>&1
+
+#sudo mkdir -p "${LOG}" >/dev/null 2>&1
+#sudo chown -R "${USERNAME}":"$( id -g "${USERNAME}" )" "${LOG}" >/dev/null 2>&1
+#sudo /bin/chmod -R g+s "${LOG}"
 
 export APPLICATIONS="${MACDEV}/applications"
 export PACKAGES="${MACDEV}/packages"

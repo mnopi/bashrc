@@ -210,6 +210,13 @@ function containerip() {
   docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$INSTANCE_NAME"
 }
 
+function cprebash() {
+  if test -n "${DARWIN}"; then
+    cp "${BASH_RC_PROJECT}/scripts/"* "${BREW}"  || return 1
+    rebash
+  fi
+}; export -f upall
+
 function csrutilcheck() {
   if ! csrutil status | grep disabled >/dev/null 2>&1; then
     echo " - Disable csrutil to continue: csrutil disable"
