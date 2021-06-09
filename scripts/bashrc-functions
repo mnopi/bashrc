@@ -215,7 +215,7 @@ function cprebash() {
     cp "${BASH_RC_PROJECT}/scripts/"* "${BREW}"  || return 1
     rebash
   fi
-}; export -f upall
+}; export -f cprebash
 
 function csrutilcheck() {
   if ! csrutil status | grep disabled >/dev/null 2>&1; then
