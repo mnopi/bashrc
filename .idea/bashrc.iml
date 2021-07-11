@@ -9,6 +9,14 @@
     <orderEntry type="module" module-name="tmp" />
     <orderEntry type="module" module-name="tmp" />
     <orderEntry type="module" module-name="tmp" />
+    <orderEntry type="module" module-name="vendoring" />
+    <orderEntry type="module" module-name="pyproject-toml" />
+    <orderEntry type="module" module-name="req2toml" />
+  </component>
+  <component name="PackageRequirementsSettings">
+    <option name="requirementsPath" value="$MODULE_DIR$/requirements/requirements_dev.txt" />
+    <option name="versionSpecifier" value="Greater or equal (&gt;=x.y.z)" />
+    <option name="removeUnused" value="true" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="format" value="GOOGLE" />

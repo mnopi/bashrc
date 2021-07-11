@@ -1,0 +1,41 @@
+[metadata]
+author = {{ distro._setup_cfg['author'] }}
+author_email = {{ distro._setup_cfg['author_email'] }}
+description = {{ distro._setup_cfg['description'] }}
+long_description = file: README.md
+long_description_content_type = text/markdown
+name = {{ distro.name }}
+url = {{ distro._setup_cfg['url'] }}
+version = {{ distro._pyproject_toml['tool'][conf['distro']['tool']]['version'] }}
+
+[options]
+{% if 'cmdclass' in setup['options'] %}
+cmdclass =
+{% for k, v in setup['options']['cmdclass'].items() %}
+    {{ k }} = {{ v }}
+{% endfor %}
+{% endif %}
+
+{% if 'include_package_data' in setup['options'] %}
+include_package_data = {{ setup['options']['include_package_data'] }}
+{% else %}
+include_package_data = True
+{% endif %}
+
+{% if 'install_requires' in setup['options'] %}
+install_requires =
+{% for i in setup['options']['install_requires'] %}
+    {{ i }}
+{% endfor %}
+{% endif %}
+
+{% if 'packages' in setup['options'] %}
+packages =
+{% for i in setup['options']['packages'] %}
+    {{ i }}
+{% endfor %}
+{% endif %}
+
+python_requires = {{ setup['options']['python_requires'] }}
+
+zip_safe = {{ setup['options']['zip_safe'] }}

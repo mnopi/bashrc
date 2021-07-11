@@ -1,0 +1,5 @@
+[tool.rc]
+cmdclass = { install = 'rc.Install' }
+find = { exclude = [ 'backup', 'doc', 'tests', 'tmp', 'venv' ] }
+entry_points = { rc = 'rc:app' }
+version = '0.31.90'

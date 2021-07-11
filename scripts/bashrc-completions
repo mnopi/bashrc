@@ -1,0 +1,277 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2207
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
+[[ ! "${TIMES-}" ]] || start="$( date +%s )"
+
+if ! shopt -oq posix && [[ "${BASH_VERSINFO[0]}" -gt 3 ]]; then
+  if [[ -f /usr/share/bash-completion/bash_completion ]]; then
+    source /usr/share/bash-completion/bash_completion
+  elif [[ -f /etc/bash_completion ]]; then
+    source /etc/bash_completion
+  elif [[ -f "${HOMEBREW_PREFIX}"/etc/profile.d/bash_completion.sh ]]; then
+    # shellcheck disable=SC2034
+    BASH_COMPLETION_COMPAT_DIR="${HOMEBREW_PREFIX}/etc/bash_completion.d"
+    # shellcheck disable=SC1090
+    source "${HOMEBREW_PREFIX}"/etc/profile.d/bash_completion.sh
+  fi
+fi
+
+if test -f "${USERHOME}/.bash_completion"; then
+  # shellcheck disable=SC1090
+  source "${USERHOME}/.bash_completion"
+fi
+
+if test -d "${USERHOME}/.bash_completions"; then
+  if ls "${USERHOME}/.bash_completions"/*.sh > /dev/null 2>&1; then
+    for file in "${USERHOME}/.bash_completions"/*.sh; do
+      # shellcheck disable=SC1090
+      source "${file}"
+    done
+  fi
+fi
+
+# shellcheck disable=SC1090
+! test -e /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc || \
+  source /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc
+
+_rc_completion() {
+    local IFS=$'
+'
+    # shellcheck disable=SC2086
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   _RC_COMPLETE=complete_bash "$1" ) )
+    return 0
+}; complete -o default -F _rc_completion rc
+
+_bapy_completion() {
+    local IFS=$'
+'
+    # shellcheck disable=SC2086
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   _BAPY_COMPLETE=complete_bash $1 ) )
+    return 0
+}; complete -o default -F _bapy_completion bapy
+
+_daemon_completion() {
+    local IFS=$'
+'
+    # shellcheck disable=SC2086
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   _PEN_COMPLETE=complete_bash $1 ) )
+    return 0
+}; complete -o default -F _daemon_completion daemon
+
+_pen_completion() {
+    local IFS=$'
+'
+    # shellcheck disable=SC2086
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   _PEN_COMPLETE=complete_bash $1 ) )
+    return 0
+}; complete -o default -F _pen_completion pen
+
+_upins_completion() {
+    local IFS=$'
+'
+    # shellcheck disable=SC2086
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   _UPINS_COMPLETE=complete_bash $1 ) )
+    return 0
+}; complete -o default -F _upins_completion upins
+
+_gall_completion() {
+    local IFS=$'
+'
+    # shellcheck disable=SC2086
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   _GALL_COMPLETE=complete_bash $1 ) )
+    return 0
+}; complete -o default -F _gall_completion gall
+
+_makecomplete() {
+  COMPREPLY=()
+
+  # https://www.gnu.org/software/make/manual/html_node/Makefile-Names.html
+  local files=()
+  for f in 'GNUmakefile' 'makefile' 'Makefile' ; do
+    [ -f "$f" ] && files+=("$f")
+  done
+
+  [ "${#files[@]}" -eq 0 ] && return 0
+
+  # collect all targets
+  local targets=()
+  local line
+  for f in "${files[@]}" ; do
+    while IFS='' read -r line ; do
+      targets+=("$line")
+    done < <(grep -oE '^[a-zA-Z0-9_-]+:([^=]|$)' "$f" | cut -d':' -f1)
+  done
+
+  [ "${#targets[@]}" -eq 0 ] && return 0
+
+  # use the targets for completion
+  # shellcheck disable=SC2086
+  while IFS='' read -r line ; do
+    COMPREPLY+=("$line")
+  done < <(compgen -W "$(tr ' ' '\n' <<<"${targets[@]}" | sort -u)" -- ${COMP_WORDS[COMP_CWORD]})
+
+  return 0
+}
+complete -o nospace -F _makecomplete make
+complete -o nospace -F _makecomplete gnumake
+# shellcheck disable=SC2016
+complete -o nospace -S = -W '$(printenv | awk -F= "{print \$1}")' export
+_installcomp() {
+  local REMOTE_GEMS
+  if [ -z "$REMOTE_GEMS" ]
+  then
+    # shellcheck disable=SC2207
+    REMOTE_GEMS=( $(gem list --remote --no-versions | tr '\n' ' ') )
+  fi
+
+  local cur=${COMP_WORDS[COMP_CWORD]}
+  # shellcheck disable=SC2086
+  COMPREPLY=( $(compgen -W "${REMOTE_GEMS[*]}" -- $cur) )
+}
+_uninstallcomp() {
+  local LOCAL_GEMS
+  if [ -z "$LOCAL_GEMS" ]
+  then
+    # shellcheck disable=SC2207
+    LOCAL_GEMS=( $(gem list --no-versions | sed 's/\*\*\* LOCAL GEMS \*\*\*//' | tr '\n' ' ') )
+  fi
+
+  local cur=${COMP_WORDS[COMP_CWORD]}
+  # shellcheck disable=SC2086
+  COMPREPLY=( $(compgen -W "${LOCAL_GEMS[*]}" -- $cur) )
+}
+_gem() {
+  local cur=${COMP_WORDS[COMP_CWORD]}
+  local prev=${COMP_WORDS[COMP_CWORD-1]}
+  case $prev in
+    install)
+      _installcomp
+      return 0
+      ;;
+    uninstall)
+      _uninstallcomp
+      return 0
+      ;;
+  esac
+  local \
+  commands=(build cert check cleanup contents dependency environment fetch generate_index help install list lock \
+  outdated owner pristine push query rdoc search server sources specification stale uninstall unpack update which)
+  # shellcheck disable=SC2086
+  COMPREPLY=( $(compgen -W "${commands[*]}" -- $cur) )
+}
+complete -F _gem gem
+# bash completion for go tool
+# https://github.com/posener/complete
+# https://pkg.go.dev/github.com/posener/complete?tab=doc
+# Install gocomplete:
+# go get -u github.com/posener/complete/gocomplete
+# gocomplete -install
+if command -v gocomplete > /dev/null 2>&1 && command -v  go > /dev/null 2>&1; then
+  complete -C "${GOBIN}"/gocomplete go
+fi
+# npm (Node Package Manager) completion
+# https://docs.npmjs.com/cli/completion
+if command -v npm &>/dev/null
+then
+  if test -f "${NPM}"; then
+    eval "$( ${NPM} completion )"
+  fi
+fi
+# nvm (Node Version Manager) completion
+if [ "$NVM_DIR" ] && [ -r "$NVM_DIR"/bash_completion ];
+then
+  # shellcheck disable=SC1090
+  . "$NVM_DIR"/bash_completion
+fi
+
+#[[ -x "$(which pipenv)" ]] && eval "$(pipenv --completion)"
+# Bash completion support for ssh.
+export COMP_WORDBREAKS=${COMP_WORDBREAKS/\:/}
+_sshcomplete() {
+    local CURRENT_PROMPT="${COMP_WORDS[COMP_CWORD]}"
+    if [[ ${CURRENT_PROMPT} == *@*  ]] ; then
+      local OPTIONS="-P ${CURRENT_PROMPT/@*/}@ -- ${CURRENT_PROMPT/*@/}"
+    else
+      local OPTIONS=" -- ${CURRENT_PROMPT}"
+    fi
+
+    # parse all defined hosts from .ssh/config and files included there
+    for fl in "$HOME/.ssh/config" \
+        $(grep "^\s*Include" "$HOME/.ssh/config" |
+            awk '{for (i=2; i<=NF; i++) print $i}' |
+            sed -Ee "s|^([^/~])|$HOME/.ssh/\1|" -e "s|^~/|$HOME/|")
+    do
+        if [ -r "$fl" ]; then
+            # shellcheck disable=SC2006,SC2086
+            COMPREPLY=( "${COMPREPLY[@]}" $(compgen -W "$(grep -i ^Host "$fl" |grep -v '[*!]' | \
+             awk '{for (i=2; i<=NF; i++) print $i}' )" ${OPTIONS}) )
+        fi
+    done
+
+    # parse all hosts found in .ssh/known_hosts
+    if [ -r "$HOME/.ssh/known_hosts" ]; then
+
+        if grep -v -q -e '^ ssh-rsa' "$HOME/.ssh/known_hosts" ; then
+          # shellcheck disable=SC2007,SC2086
+          COMPREPLY=( "${COMPREPLY[@]}" $(compgen -W "$( awk '{print $1}' "$HOME/.ssh/known_hosts" | \
+          grep -v ^\| | cut -d, -f 1 | sed -e 's/\[//g' | sed -e 's/\]//g' | cut -d: -f1 | \
+          grep -v ssh-rsa)" ${OPTIONS}) )
+        fi
+    fi
+
+    # parse hosts defined in /etc/hosts
+    # shellcheck disable=SC2206
+    if [ -r /etc/hosts ]; then
+        # shellcheck disable=SC2206,SC2086
+        COMPREPLY=( ${COMPREPLY[@]} $(compgen -W "$( grep -v '^[[:space:]]*$' /etc/hosts | grep -v '^#' | \
+        awk '{for (i=2; i<=NF; i++) print $i}' )" ${OPTIONS}) )
+    fi
+
+    return 0
+}
+complete -o default -o nospace -F _sshcomplete ssh scp slogin
+
+
+# shellcheck disable=SC2016
+complete -o nospace -S = -W '$(printenv | awk -F= "{print \$1}")' export
+
+_pip_completion()
+{
+    # shellcheck disable=SC2207
+    COMPREPLY=( $( COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   PIP_AUTO_COMPLETE=1 $1 ) )
+}
+complete -o default -F _pip_completion pip3.9
+complete -o default -F _pip_completion pip3
+complete -o default -F _pip_completion pip
+
+if test -n "${DARWIN}"; then
+if [[ -f /usr/local/bin/ansible ]]; then
+_play() {
+  local PLAYBOOKS_ANSIBLE PLAYBOOKS_DEBUG_AND_PLAY
+  PLAYBOOKS_ANSIBLE="$( find "${ANSIBLE}" -mindepth 1 -maxdepth 1 \
+  -type f \( -name "*.yml" ! -name "requirements.yml" \) -exec basename {} \; | sed 's/.yml//g' )"
+  PLAYBOOKS_DEBUG_AND_PLAY="$( find "${ANSIBLE}" -type f -name "*.yml" \( -path "*/debug/*" -or -path "*/play*/*" \) \
+   -exec basename {} \; | sed 's/.yml//g')"
+  # shellcheck disable=SC2207,SC2086
+  COMPREPLY=( $( compgen -W "${PLAYBOOKS_ANSIBLE} ${PLAYBOOKS_DEBUG_AND_PLAY}" -- ${COMP_WORDS[1]} ) )
+}
+complete -F _play play
+fi
+fi
+[[ ! "${TIMES-}" ]] || { end="$( date +%s )"; export runtime=$((end-start)); times.sh starting runtime; }
+unset start end runtime starting
+

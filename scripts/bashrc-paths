@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
+[[ ! "${TIMES-}" ]] || start="$( date +%s )"
+
+unset PATH
+PATH='/usr/bin:/usr/sbin:/bin:/sbin:.'
+
+if test -e "/usr/local/opt/python@3.9"; then
+  PYTHON39_HOME="/usr/local/opt/python@3.9"
+fi
+
+for dir in /Library/Developer/CommandLineTools/usr/bin \
+            /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin \
+            /usr/local/opt/ruby/bin \
+            /Applications/"${PYCHARM_NAME}".app/Contents/MacOS \
+            "${PYTHON39_HOME}/bin"; do
+  ! test -d "${dir}" || PATH="${dir}:${PATH}"
+done
+
+if test -d "/home/linuxbrew/.linuxbrew/sbin"; then
+  BREW_S="/home/linuxbrew/.linuxbrew/sbin"; PATH="${BREW_S}:${PATH}"
+else
+  BREW_S="/usr/local/sbin"
+fi
+
+if test -d "/home/linuxbrew/.linuxbrew/bin"; then
+  BREW="/home/linuxbrew/.linuxbrew/bin"; PATH="${BREW}:${PATH}"
+else
+  BREW="/usr/local/bin"
+fi
+
+! test -n "${GOPATH}" || PATH="${GOPATH//://bin:}/bin:${PATH}"
+
+for dir in "/usr/local/sbin" "/usr/local/bin" \
+           "${PEN}/scripts" "${PEN}/bin" \
+           "${USERHOME}/scripts" "${USERHOME}/bin" \
+           "${ICLOUD}/bin" "${ICLOUD}/scripts" \
+           "${MACDEV}/bin" "${MACDEV}/scripts"; do
+  ! test -d "${dir}" || PATH="${dir}:${PATH}"
+done
+
+INFOPATH="${BREW}/../share/info"
+debug.sh PATH
+
+if isuserdarwin.sh; then
+  launchctl setenv PATH "${PATH}"
+  sudo /bin/launchctl setenv PATH "${PATH}"
+  sudo launchctl config system path "${PATH}" >/dev/null 2>&1
+  sudo launchctl config user path "${PATH}" >/dev/null 2>&1
+fi
+
+
+if test -e "/usr/local/opt/python@3.9/bin"; then
+  PYTHON39="${PYTHON39_HOME}/bin/python3.9"
+fi
+
+if ! test -n "${DARWIN}"; then
+  if test -e "/bin/python3.9"; then
+    PYTHON39="/bin/python3.9"
+  fi
+fi
+
+if test -e "/usr/local/bin/npm"; then
+  NPM="/usr/local/bin/npm"
+fi
+if ! test -n "${DARWIN}"; then
+  if test -e "/bin/npm"; then
+    NPM="/bin/npm"
+  fi
+fi
+
+if ! test -n "${DARWIN}"; then
+  SUDO=sudo; export SUDO
+fi
+
+if test -n "${DARWIN}"; then
+  PYTHON39_PACKAGES="/usr/local/lib/python3.9/site-packages"
+else
+  PYTHON39_PACKAGES="/usr/local/lib/python3.9/dist-packages"
+fi
+
+DOMAINED_DIR="${PYTHON39_PACKAGES}/domained"; export DOMAINED_DIR
+DOMAINED_PATH="${DOMAINED_DIR}/domained.py"; export DOMAINED_PATH
+
+export PYTHON39_HOME PYTHON39 NPM PYTHON39_PACKAGES
+
+debug.sh PATH INFOPATH MANPATH BREW
+export PATH INFOPATH MANPATH BREW
+[[ ! "${TIMES-}" ]] || { end="$( date +%s )"; export runtime=$((end-start)); times.sh starting runtime; }
+unset start end runtime
+
+unset starting dir

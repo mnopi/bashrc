@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# source
+
+if ! isuser.sh; then
+  error.sh "can not be done with root"; exit 1
+fi
+
+if path="$( git rev-parse --show-toplevel 2>&1 )"; then
+  cd "${path}" || { error.sh cd "${path}"; return 1; }
+  basename "${path}"; return 0
+else
+  error.sh "${path}" "not a git dir"; return 1
+fi
+
+unset path

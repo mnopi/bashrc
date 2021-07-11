@@ -3,6 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/bashrc.iml" filepath="$PROJECT_DIR$/.idea/bashrc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../pyproject-toml/.idea/pyproject-toml.iml" filepath="$PROJECT_DIR$/../pyproject-toml/.idea/pyproject-toml.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../req2toml/.idea/req2toml.iml" filepath="$PROJECT_DIR$/../req2toml/.idea/req2toml.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Downloads/vendoring/.idea/vendoring.iml" filepath="$PROJECT_DIR$/../Downloads/vendoring/.idea/vendoring.iml" />
     </modules>
   </component>
 </project>

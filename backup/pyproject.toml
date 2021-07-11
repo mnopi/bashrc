@@ -1,0 +1,39 @@
+[project]
+name = 'bashrc'
+authors = [ {email = 'jose@icloud.com'}, {name = 'jose'} ]
+version = '0.31.90'
+requires-python = '>= 3.9'
+dependencies = [ 'build', 'furl', 'gitpython', 'psutil', 'strip-ansi', 'typer', ]
+entry-points = { rc = 'bashrc:app' }
+urls = { homepage = 'https://github.com' }
+optional-dependencies = { dev = ['jupyter'], test = ['pytest'] }
+
+[build-system]
+requires = ['setuptools>=45.0', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[tool.darglint]
+strictness = 'long'
+docstring_style = 'google'
+
+
+[tool.pytest]
+log_level = 'ERROR'
+norecursedirs = ['*.egg', '.eggs', 'dist', 'build', 'docs', '.tox', '.git', '__pycache__', 'backup', 'scripts']
+doctest_optionflags = ['NUMBER', 'NORMALIZE_WHITESPACE', 'IGNORE_EXCEPTION_DETAIL']
+filterwarnings = [
+    'ignore:please use dns.resolver.resolve\(\) instead:DeprecationWarning',
+    'ignore:invalid escape sequence \\:DeprecationWarning',
+    "ignore:private variables, such as '_Name__.*, will be normal attributes in 3.10:DeprecationWarning"
+]
+addopts = [
+    '--ignore-glob */backup/*',
+    '--ignore-glob */data/*',
+    '--ignore-glob */debug/*',
+    '--ignore-glob */examples/*',
+    '--strict-markers',
+    '--tb=auto',
+    '-rA',
+    '--doctest-modules',
+    '--doctest-continue-on-failure'
+]

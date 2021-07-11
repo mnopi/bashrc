@@ -1,0 +1,10 @@
+build
+bump2version
+icecream
+jupyter
+pip
+pytest
+rich
+setuptools
+setuptools-scm[toml]>=6.0
+wheel

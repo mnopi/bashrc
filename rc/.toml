@@ -1,0 +1,62 @@
+[app]
+add_completion = false
+context_settings = {help_option_names = ['-h', '--help'], color = true}
+
+[log]
+default = { level_file = 'DEBUG', level_std = 'SUCCESS' }
+format_extra = '<cyan>{time:MM-DD HH:mm:ss}</cyan> <w>|</> <level>{level: <8}</level> <w>|</> <cyan>{name}</cyan>:<level>{function}</level>:<cyan>{line}</cyan> <w>|</> <level>{extra}</level> <w>|</> <cyan>{message}</cyan>'
+number = { TRACE = 5, DEBUG = 10, INFO = 20, SUCCESS = 25, WARNING = 30, ERROR = 40, CRITICAL = 50 }
+
+[distro]
+exclude = {manifest = ['.bumpversion.cfg', '.gitignore', '.idea'], packages = ['backup', 'doc', 'tests', 'tmp', 'venv']}
+repr = [
+    'name',
+    'home',
+    'branch',
+    'branchdefault',
+    'branches',
+    'default',
+    'detached',
+    'detached_exc',
+    'dict',
+    'dirty',
+    'doit',
+    'doproject',
+    'has_changes',
+    'https',
+    'modules',
+    'packages',
+    'piphttps',
+    'pipssh',
+    'porcelain',
+    'py',
+    'pyproject_toml',
+    'pypi',
+    'remotediff',
+    'remotes',
+    'requirements',
+    'rm',
+    'scripts',
+    'setup',
+    'setup_cfg',
+    'setup_py',
+    'ssh',
+    'untracked_files',
+    'url']
+tool = 'rc'
+
+[build-system]
+requires = ['build', 'setuptools>=45.0', 'wheel', ]
+build-backend = 'setuptools.build_meta'
+
+[options]
+include_package_data = true
+zip_safe = false
+[options.packages.find]
+exclude = [
+    'backup',
+    'doc',
+    'tests',
+    'tmp',
+    'venv',
+]

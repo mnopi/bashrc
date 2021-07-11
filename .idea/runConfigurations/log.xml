@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="pytest | varname" type="tests" factoryName="py.test" folderName="pytest" singleton="false">
+  <configuration default="false" name="log" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
     <module name="bashrc" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -19,11 +19,13 @@
         <ENTRY IS_ENABLED="true" PARSER="runconfig" />
       </ENTRIES>
     </EXTENSION>
-    <option name="_new_keywords" value="&quot;&quot;" />
-    <option name="_new_parameters" value="&quot;&quot;" />
-    <option name="_new_additionalArguments" value="&quot;&quot;" />
-    <option name="_new_target" value="&quot;$PROJECT_DIR$/tests/test_varname.py&quot;" />
-    <option name="_new_targetType" value="&quot;PATH&quot;" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tests/log.py" />
+    <option name="PARAMETERS" value="" />
+    <option name="SHOW_COMMAND_LINE" value="true" />
+    <option name="EMULATE_TERMINAL" value="false" />
+    <option name="MODULE_MODE" value="false" />
+    <option name="REDIRECT_INPUT" value="false" />
+    <option name="INPUT_FILE" value="" />
     <method v="2" />
   </configuration>
 </component>

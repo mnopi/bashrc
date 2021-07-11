@@ -1,0 +1,12 @@
+build>=0.5.1
+environs>=9.3.2
+envtoml>=0.1.2
+furl>=2.1.2
+gitpython>=3.1.18
+loguru>=0.5.3
+psutil>=5.8.0
+pyicloud>=0.10.2
+requests[security,socks]>=2.25.1
+semver>=2.13.0
+strip_ansi>=0.1.1
+typer>=0.3.2

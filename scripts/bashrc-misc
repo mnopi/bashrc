@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+export starting="${BASH_SOURCE[0]}"; debug.sh starting
+[[ ! "${TIMES-}" ]] || start="$( date +%s )"
+
+## SHOPT
+options="globstar direxpand checkwinsize histappend autocd cdable_vars dotglob hostcomplete no_empty_cmd_completion"
+# shellcheck disable=SC2034
+globstar="yes"
+# shellcheck disable=SC2034
+direxpand="yes"
+# shellcheck disable=SC2034
+checkwinsize="yes"
+# shellcheck disable=SC2034
+histappend="yes"
+# shellcheck disable=SC2034
+autocd="no"
+# shellcheck disable=SC2034
+cdable_vars="yes"
+# shellcheck disable=SC2034
+dotglob="no"
+# shellcheck disable=SC2034
+hostcomplete="no"
+# shellcheck disable=SC2034
+no_empty_cmd_completion="yes"
+
+for option in ${options}; do
+  if [[ "${!option}" == "yes" ]]; then
+    if [[ "${option}" =~ globstar|direxpand ]] && [[ "${BASH_VERSINFO[0]}" -gt 3 ]]; then
+      shopt -s "${option}"
+    fi
+    if ! [[ "${option}" =~ globstar|direxpand ]]; then
+      if [[ "${option}" != "autocd" ]]; then
+        shopt -s "${option}"
+      elif test -n "${PS1}"; then
+        shopt -s "${option}"
+      fi
+    fi
+  else
+    shopt -u "${option}"
+  fi
+done
+
+#if [[ "${TERMINAL_EMULATOR}" != 'JetBrains-JediTerm' ]]; then
+#    # shellcheck disable=SC1090
+# source "$( command -v  bash-wakatime.sh )" > /dev/null 2>&1
+#fi
+
+shopt -s histappend
+
+## SSH TUNNEL MONGO
+mongossh.sh
+
+## DIRCOLORS
+if [[ "$( uname -s )" == "Linux" ]]  && test -f /usr/bin/dircolors; then
+  eval "$( /usr/bin/dircolors -b )"
+fi
+
+## MACOS
+paper.sh
+
+if isuserdarwin.sh; then
+  sudo rm -rf ~/Applications ~/Movies ~/Music ~/Pictures ~/Public ~/Sites >/dev/null 2>&1
+  chmod go-rwx ~/.netrc >/dev/null 2>&1
+  chmod -R go-rwx ~/.ssh >/dev/null 2>&1
+  ! test -e /private/var/vm/sleepimage || sudo rm -rf /private/var/vm/sleepimage >/dev/null 2>&1
+  cp -rf "${PYCHARM_OPTIONS}/atom-icon-associations.xml" \
+         "${PYCHARM_OPTIONS}/atom-icon-associations.xml~bk" >/dev/null 2>&1
+fi
+
+if [[ "${DARWIN-}" ]]; then
+  sudo ulimit -n "${MAXFILES}"
+  sudo ulimit -u "${MAXPROC}"
+  chmod -R u+w  "${HOME}/.go" > /dev/null 2>&1
+fi
+
+if [[ "$(id -u)" == "0" ]]; then
+  cp -r -p "${USERHOME}/.waka"* "${HOME}" > /dev/null 2>&1
+fi
+
+##.ssh
+sudo chmod -R go-rw "${USERHOME}/.ssh"
+[[ ! "${DEBUG-}" ]] || start="$( date +%s )"
+
+## PS1
+## xterm title set to host@user:dir lo hace con esto: \[\e]0;\h@\u: \w\a\]
+SSH_THE_SAME="yes"
+if [[ "$( id -u )" == "0" ]] || [[ "${SUDO_UID-}" ]]; then
+    PS1="\[\e]0;\h@\u: \w\a\]${ROJO}\h${INVERSO} ${AZUL}\w${INVERSO} ${ROJO}#${INVERSO} "
+else
+  if [[ "$(uname -s)" == "Darwin" ]] || [[ "${SSH_THE_SAME-}" ]]; then
+    PS1="\[\e]0;\h@\u: \w\a\]${VERDE}\h${INVERSO} ${AZUL}\w${INVERSO} ${VERDE}\$${INVERSO} "
+  else
+    PS1="\[\e]0;\h@\u: \w\a\]${VERDE}\h${INVERSO} ${AZULCLARO}\u${INVERSO} ${AZUL}\w${INVERSO} ${VERDE}\$${INVERSO} "
+  fi
+fi
+export PS1
+
+[[ ! "${TIMES-}" ]] || { end="$( date +%s )"; export runtime=$((end-start)); times.sh starting runtime; }
+unset start end runtime
+
+unset starting option end
