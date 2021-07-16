@@ -7,7 +7,7 @@ from rc import conf
 from rc import Env
 from rc import getlog
 from rc import LOG
-from rc import LogCall
+from rc import Logger
 from rc import Pname
 from rc import trace
 
@@ -63,7 +63,8 @@ def log_log():
     log.info('tests')
 
 
-@trace(l=getlog(std_default=True, copy=True), add_end=('test', ), released=LogCall.INFO, start=LogCall.ERROR)
+@trace(l=getlog(std_default=True, copy=True), add_end=('test', ), add_start=(), method_end=Logger.info,
+       method_start=Logger.error)
 def log_trace_loguru_default():
     name = log_trace_loguru_default.__name__
     log.info(name)
@@ -71,8 +72,11 @@ def log_trace_loguru_default():
     log_trace_loguru_default.action = Action.RELEASED
 
 
-@trace(l=getlog(std_add=('name', 'module',), copy=True), add_end=('test', ), released=LogCall.SUCCESS,
-       start=LogCall.ERROR)
+std_add = ('file', 'file.path', 'module', 'name', 'process', 'process.name', 'thread', 'thread.name')
+
+
+@trace(l=getlog(std_add=std_add, copy=True), add_end=('test', ), add_start=(), method_end=Logger.success,
+       method_start=Logger.error)
 def log_trace_std_add_name():
     name = log_trace_std_add_name.__name__
     log.info(name)
@@ -81,7 +85,7 @@ def log_trace_std_add_name():
 
 
 # noinspection PyUnusedLocal
-@trace(add_end=('test',), add_start=True, released=LogCall.SUCCESS, start=LogCall.WARNING)
+@trace(add_end=('test',), add_start=True, method_end=Logger.success, method_start=Logger.warning)
 def log_trace_globals(arg1, kwarg_1='kwarg_1'):
     name = log_trace_globals.__name__
     log.info(name)

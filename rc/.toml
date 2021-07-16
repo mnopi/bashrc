@@ -1,62 +1,107 @@
 [app]
-add_completion = false
-context_settings = {help_option_names = ['-h', '--help'], color = true}
-
-[log]
-default = { level_file = 'DEBUG', level_std = 'SUCCESS' }
-format_extra = '<cyan>{time:MM-DD HH:mm:ss}</cyan> <w>|</> <level>{level: <8}</level> <w>|</> <cyan>{name}</cyan>:<level>{function}</level>:<cyan>{line}</cyan> <w>|</> <level>{extra}</level> <w>|</> <cyan>{message}</cyan>'
-number = { TRACE = 5, DEBUG = 10, INFO = 20, SUCCESS = 25, WARNING = 30, ERROR = 40, CRITICAL = 50 }
-
-[distro]
-exclude = {manifest = ['.bumpversion.cfg', '.gitignore', '.idea'], packages = ['backup', 'doc', 'tests', 'tmp', 'venv']}
-repr = [
-    'name',
-    'home',
-    'branch',
-    'branchdefault',
-    'branches',
-    'default',
-    'detached',
-    'detached_exc',
-    'dict',
-    'dirty',
-    'doit',
-    'doproject',
-    'has_changes',
-    'https',
-    'modules',
-    'packages',
-    'piphttps',
-    'pipssh',
-    'porcelain',
-    'py',
-    'pyproject_toml',
-    'pypi',
-    'remotediff',
-    'remotes',
-    'requirements',
-    'rm',
-    'scripts',
-    'setup',
-    'setup_cfg',
-    'setup_py',
-    'ssh',
-    'untracked_files',
-    'url']
-tool = 'rc'
+    add_completion = false
+    context_settings = {help_option_names = ['-h', '--help'], color = true}
 
 [build-system]
-requires = ['build', 'setuptools>=45.0', 'wheel', ]
-build-backend = 'setuptools.build_meta'
+    requires = ['build', 'setuptools>=45.0', "setuptools_scm[toml]>=6.0", 'wheel', ]
+    build-backend = 'setuptools.build_meta'
 
-[options]
-include_package_data = true
-zip_safe = false
-[options.packages.find]
-exclude = [
-    'backup',
-    'doc',
-    'tests',
-    'tmp',
-    'venv',
-]
+[log]
+    common = { backtrace = true, diagnose = true }
+    default = { level_file = 'DEBUG', level_json = 'TRACE', level_std = 'SUCCESS' }
+    file = { retention = '10 days', rotation = '500 MB', compression = 'zip', enqueue = true, colorize = true }
+    json = { retention = '2 days', rotation = '500 MB', compression = 'zip', enqueue = true, serialize = true}
+    number = { TRACE = 5, DEBUG = 10, INFO = 20, SUCCESS = 25, WARNING = 30, ERROR = 40, CRITICAL = 50 }
+    [log.color]
+        trace = 'light-black'
+        debug = 'light-blue'
+        info = 'light-magenta'
+        success = [ 'green', 'bold' ]
+        warning = [ 'yellow', 'bold' ]
+        error = [ 'red', 'bold' ]
+        critical = [ 'RED', 'bold' ]
+        extra = 'level'
+        file = 'level'
+        'file.path' = 'level'
+        function = 'cyan'
+        level = 'level'
+        line = 'cyan'
+        message = 'level'
+        module = 'level'
+        name = 'cyan'
+        process = 'level'
+        'process.name' = 'level'
+        thread = 'level'
+        'thread.name' = 'level'
+        time = 'light-black'
+        colon = 'light-white'
+        vertical = 'light-white'
+    [log.map]
+        file = ': <7'
+        'file.path' = ': <30'
+        function = ': <15'
+        level = ': <8'
+        line = ': <5'
+        module = ': <10'
+        name = ': <10'
+        process = ': <7'
+        'process.name' = ': <10'
+        thread = ': <7'
+        'thread.name' = ': <10'
+
+[distro]
+    repr = [
+        'name',
+        'home',
+        'branch',
+        'branchdefault',
+        'branches',
+        'default',
+        'detached',
+        'detached_exc',
+        'dirty',
+        'doit',
+        'doproject',
+        'github',
+        'has_changes',
+        'https',
+        'manifest_in',
+        'modules',
+        'packages',
+        'piphttps',
+        'pipssh',
+        'porcelain',
+        'py',
+        'pyproject_toml',
+        'pyproject_toml_load',
+        'pyproject_toml_path',
+        'pypi',
+        'remotediff',
+        'remotes',
+        'requirements',
+        'rm',
+        'scripts',
+        'setup_cfg',
+        'setup_py',
+        'ssh',
+        'untracked_files',
+        'url']
+    tool = 'rc'
+
+[tool]
+    [tool.global]
+        verbose = 0
+    [tool.exclude]
+        manifest = ['.bumpversion.cfg', '.gitignore', '.idea']
+    [tool.options]
+        include_package_data = true
+        python_requires = '>= 3.9'
+    [tool.options.cmdclass]
+        egg_info = 'rc.egg_info'
+        sdist = 'rc.sdist'
+    [tool.options.entry_points]
+        'setuptools.file_finders' = ['rc = rc:setupls']
+    [tool.options.packages.find]
+        exclude = ['backup', 'doc', 'tests', 'tmp', 'venv']
+    [tool.options.py_modules.find]
+        exclude = ['setup']

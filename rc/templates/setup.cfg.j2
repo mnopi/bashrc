@@ -1,41 +1,109 @@
-[metadata]
-author = {{ distro._setup_cfg['author'] }}
-author_email = {{ distro._setup_cfg['author_email'] }}
-description = {{ distro._setup_cfg['description'] }}
-long_description = file: README.md
-long_description_content_type = text/markdown
-name = {{ distro.name }}
-url = {{ distro._setup_cfg['url'] }}
-version = {{ distro._pyproject_toml['tool'][conf['distro']['tool']]['version'] }}
+{% if 'global' in tool %}
+[global]
+{% for k, v in tool.global.items() %}
+{{ k }} = {{ v }}
+{% endfor %}
 
+{% endif %}
+{% if 'metadata' in tool %}
+[metadata]
+{% if 'author' in tool.metadata %}
+author = {{ tool.metadata.author }}
+{% endif %}
+{% if 'author_email' in tool.metadata %}
+author_email = {{ tool.metadata.author_email }}
+{% endif %}
+{% if 'name' in tool.metadata %}
+name = {{ tool.metadata.name }}
+{% endif %}
+{% if 'url' in tool.metadata %}
+url = {{ tool.metadata.url }}
+{% endif %}
+{% if 'version' in tool.metadata %}
+version = {{ tool.metadata.version }}
+{% endif %}
+
+{% endif %}
+{% if 'options' in tool %}
 [options]
-{% if 'cmdclass' in setup['options'] %}
+{% if 'cmdclass' in tool.options %}
 cmdclass =
-{% for k, v in setup['options']['cmdclass'].items() %}
+{% for k, v in tool.options.cmdclass.items() %}
     {{ k }} = {{ v }}
 {% endfor %}
 {% endif %}
-
-{% if 'include_package_data' in setup['options'] %}
-include_package_data = {{ setup['options']['include_package_data'] }}
-{% else %}
-include_package_data = True
+{% if 'include_package_data' in tool.options %}
+include_package_data = {{ tool.options.include_package_data }}
 {% endif %}
-
-{% if 'install_requires' in setup['options'] %}
+{% if 'package_data' in tool.options %}
+package_data =
+{% for k, v in tool.options.package_data.items() %}
+    {{ k }} =
+{% for value in v %}
+        {{ value }}
+{% endfor %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% if 'install_requires' in tool.options %}
 install_requires =
-{% for i in setup['options']['install_requires'] %}
+{% for i in tool.options.install_requires %}
     {{ i }}
 {% endfor %}
 {% endif %}
-
-{% if 'packages' in setup['options'] %}
+{% if 'packages' in tool.options %}
 packages =
-{% for i in setup['options']['packages'] %}
+{% for i in tool.options.packages %}
+    {{ i }}
+{% endfor %}
+{% elif 'modules' in tool.options %}
+py_modules =
+{% for i in tool.options.modules %}
     {{ i }}
 {% endfor %}
 {% endif %}
+python_requires = {{ tool.options.python_requires }}
+{% if 'scripts' in tool.options  %}
+scripts =
+{% for i in tool.options.scripts %}
+    {{ i }}
+{% endfor %}
+{% endif %}
+zip_safe = False
 
-python_requires = {{ setup['options']['python_requires'] }}
+{% if 'entry_points' in tool.options  %}
+[options.entry_points]
+{% for entry_key, entry_value in tool.options.entry_points.items() %}
+{{ entry_key }} =
+{% if entry_key == 'console_scripts' %}
+{% for k, v in entry_value.items() %}
+    {{ k }} = {{ v }}
+{% endfor %}
+{% else %}
+{% for i in entry_value %}
+    {{ i }}
+{% endfor %}
+{% endif %}
+{% endfor %}
 
-zip_safe = {{ setup['options']['zip_safe'] }}
+{% endif %}
+{% if 'extras_require' in tool.options %}
+[options.extras_require]
+{% for k, v in tool.options.extras_require.items() %}
+{{ k }} =
+{% for i in v %}
+    {{ i }}
+{% endfor %}
+{% endfor %}
+
+{% endif %}
+{% for k, v in tool.items() %}
+    {% if k not in ['global', 'metadata', 'options'] %}
+[{{ k }}]
+    {% for key, value in v.items() %}
+{{ key }} = {{ value }}
+    {% endfor %}
+
+    {% endif %}
+{% endfor %}
+

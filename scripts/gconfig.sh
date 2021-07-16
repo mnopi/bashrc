@@ -19,10 +19,31 @@ case "${username}" in
     ;;
 esac
 
-git config --global user.name "${REALNAME}" || exit 1
+git config --global user.name "${username}" || exit 1
 git config --global user.username "${username}" || exit 1
 git config --global github.username "${username}" || exit 1
 git config --global user.email "${email}" || exit 1
+
+# Start - Alias
+git config --global alias.addurl 'remote add origin --'
+# shellcheck disable=SC2016
+git config --global alias.isurl '!f() { git ls-remote "$1" CHECK_GIT_REMOTE_URL_REACHABILITY; }; f'
+if test -f "${USERHOME}/.mailmap"; then
+  git config --global alias.private "filter-repo --mailmap ${USERHOME}/.mailmap --force"
+fi
+git config --global alias.top 'git rev-parse --show-toplevel'
+# shellcheck disable=SC2016
+git config --global alias.token '!echo $GITHUB_TOKEN'
+# shellcheck disable=SC2016
+git config --global alias.worktoken '!echo $GITHUB_WORK_TOKEN'
+# shellcheck disable=SC2016
+git config --global alias.usertoken '!echo $GITHUB_USER_TOKEN'
+
+# shellcheck disable=SC2016
+git config --global alias.url '!f() { git ls-remote "${1:-origin}" CHECK_GIT_REMOTE_URL_REACHABILITY; }; f'
+
+# End - Alias
+
 if [[ "$(uname -s)" == "Darwin" ]]; then
   git config --global credential.helper osxkeychain
 else

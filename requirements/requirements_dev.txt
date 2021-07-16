@@ -1,10 +1,14 @@
-build
+-r requirements.txt
+build>=0.5.1
 bump2version
 icecream
 jupyter
+nox
 pip
+pre-commit
 pytest
 rich
 setuptools
-setuptools-scm[toml]>=6.0
+tox
+twine
 wheel

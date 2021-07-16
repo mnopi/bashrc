@@ -6,30 +6,12 @@ Bash Utils Module.
 Import always logger from loguru to have it in globals when using getlog() or trace().
     - logger is unconfigured.
     - log is configured logger.
-
-
->>> # noinspection PyUnresolvedReferences
->>> from loguru import logger
->>> from rc import Action
->>> from rc import Env
->>> from rc import getlog
->>> from rc import LogCall
->>> from rc import trace
->>>
->>> # noinspection PyShadowingNames
->>> env = Env()  # env.top.logger unconfigured imported logger from globals/locals.
->>> # noinspection PyShadowingNames
->>> log = getlog()  # `l` or e.top.logger or v.get('logger', None) or unconfigured `rc.logger`.
->>>
->>> @trace(start=LogCall.ERROR)
->>> def test_log():
-...     log.info('test')
-...     test_log.action = Action.RELEASED
 """
 __all__ = (
     'subprocess',
     'gitpython',
     'typer',
+    'Logger',
 
     'ALL',
     'AnyPath',
@@ -37,6 +19,7 @@ __all__ = (
     'cliinvoke',
     'FILE',
     'conf',
+    'conf_log',
     'Configuration',
     'ExceptionUnion',
     'FILE',
@@ -44,12 +27,17 @@ __all__ = (
     'GitUser',
     'IPv',
     'LOG',
-    'LogCall',
     'NEWLINE',
+    'PYTHON_REQUIRES',
+    'Top',
     'TMP',
+    'TOOL',
 
     'App',
+    'LoggerType',
+    'AnyLogger',
 
+    'Action',
     'Pis',
     'Pname',
 
@@ -63,7 +51,9 @@ __all__ = (
     'noexc',
     'parent',
     'TMPDIR',
+    'setupls',
     'shell',
+    'stdquiet',
     'strip',
     'top',
     'trace',
@@ -73,10 +63,15 @@ __all__ = (
     'GitHub',
     'Command',
     'Distro',
-    'Install',
+    'egg_info',
+    'install',
+    'sdist',
+    'SysSem',
     'Version',
 )
 
+import atexit
+import distutils.log
 import enum
 import inspect
 import io
@@ -88,6 +83,7 @@ import sys
 import venv
 from collections import ChainMap
 from collections import namedtuple
+from contextlib import contextmanager
 from contextlib import redirect_stdout
 from copy import deepcopy
 from functools import cache
@@ -103,6 +99,7 @@ from pathlib import PurePath
 from tempfile import gettempprefix
 from typing import cast
 from typing import Iterable
+from typing import Optional
 from typing import Type
 from typing import Union
 
@@ -114,7 +111,11 @@ import marshmallow
 import marshmallow.validate
 import requests
 import rich.box
+import setuptools.command.egg_info
 import setuptools.command.install
+import setuptools.command.sdist
+import sysv_ipc
+import tinydb
 import toml
 import typer as typer
 import typer.testing
@@ -122,21 +123,23 @@ from build.__main__ import main as build_main
 from furl import furl
 from git import TagReference
 from icecream import ic
+from jinja2 import Environment
+from jinja2 import PackageLoader
+from jinja2 import select_autoescape
 from loguru import logger
 from loguru._defaults import LOGURU_FORMAT
-from pip._internal.network.session import PipSession
-# noinspection PyCompatibility
-from pip._internal.req import parse_requirements
+from loguru._logger import Logger as Logger
+from mergedeep import merge
+from mergedeep import Strategy
+from pkg_resources import parse_requirements
 from psutil import MACOS
 from rich.table import Table
 from semver import VersionInfo
 from setuptools.config import read_configuration
 from strip_ansi import strip_ansi
+from tinydb import TinyDB
 from typer.main import get_click_type as get_type
 
-Action = enum.Enum('Action', {__i: enum.auto() for __i in ('ACQUIRED', 'CANCELLED', 'CONSUMED', 'ERROR', 'FINISHED',
-                                                           'LOCKED', 'NONE', 'PASS', 'PRODUCED', 'QUEUED', 'RELEASED',
-                                                           'START', 'WAITING')})
 ALL = 'all'
 AnyPath = Union[str, bytes, PathLike, Path]
 cachemodule = {}
@@ -147,15 +150,15 @@ clirunner = typer.testing.CliRunner(mix_stderr=False)
 cliinvoke = clirunner.invoke
 FILE = Path(__file__)
 conf = envtoml.load(FILE.parent / '.toml')
-Configuration = namedtuple('Configuration', 'pyproject_toml setup_cfg setup_py')
+conf_log = conf['log']
+Configuration = namedtuple('Configuration', 'manifest_in pyproject_toml setup_cfg setup_py')
 ExceptionUnion = Union[tuple[Type[Exception]], Type[Exception]]
 GITHUB_API_URL = furl('https://api.github.com')
-GitUser = namedtuple('GitUser', 'blog id https key login name org pip repos ssh token url')
+GitUser = namedtuple('GitUser', 'blog email id https key login name org pip repos ssh token url')
 IPv = Union[IPv4Address, IPv6Address]
 LOG = Path.home() / 'log'
-LogCall = enum.Enum('LogCall', {__i: getattr(logger.__class__, __i.lower()) for __i in conf['log']['number']})
-
 NEWLINE = '\n'
+PYTHON_REQUIRES = VersionInfo(*conf['tool']['options']['python_requires'].rpartition(' ')[2].split('.'))
 Top = namedtuple('Top', 'exists file git_dir init_py installed jlogfile jlogload logger logfile name path prefix '
                         'pyproject_toml rlogfile root setup_cfg setup_py tmp venv work')
 """Attributes:\n
@@ -181,6 +184,8 @@ venv: Generated (not made).\n
 work: Generated (not made).\n
 """
 TMP = Path('/') / gettempprefix()
+TOOL = conf['distro']['tool']
+_action_count = itertools.count()
 
 
 # <editor-fold desc="Patches">
@@ -207,20 +212,54 @@ def _get_click_type(*, annotation, parameter_info):
         raise RuntimeError(f"Type not yet supported: {annotation}")  # pragma no cover
 
 
+def _setuptools_command_init(self, dist, **kw):
+    ic(f'Start: {_setuptools_command_init.__qualname__}')
+    setuptools._Command.__init__(self, dist)
+    vars(self).update(kw)
+    distutils.log.set_threshold(self.threshold)
+    ic(f'End: {_setuptools_command_init.__qualname__}')
+
+
 class App(typer.Typer):
     def __init__(self, *args, **kwargs):
         kwargs = conf['app'] | kwargs
         super().__init__(*args, **kwargs)
 
 
+class LoggerType(Logger):
+    cached: Optional[bool] = ...
+    configured: bool = ...
+    deepcopied: bool = ...
+    top_name: str = ...
+
+
+setuptools.Command.threshold = distutils.log.ERROR
+setuptools.Command.__init__ = _setuptools_command_init
 subprocess.CalledProcessError.__str__ = _callprocesserror
 typer.main.get_click_type = _get_click_type
-
+AnyLogger = Union[Logger, LoggerType]
 app = App()
+
+
 # </editor-fold>
 
 
-# <editor-fold desc="Path Enums">
+# <editor-fold desc="Enums">
+class Action(enum.Enum):
+    ACQUIRED = (Logger.trace, next(_action_count),)
+    CANCELLED = (Logger.trace, next(_action_count),)
+    CONSUMED = (Logger.trace, next(_action_count),)
+    ERROR = (Logger.error, next(_action_count),)
+    FINISHED = (Logger.info, next(_action_count),)
+    LOCKED = (Logger.warning, next(_action_count),)
+    NONE = (Logger.debug, next(_action_count),)
+    PRODUCED = (Logger.debug, next(_action_count),)
+    QUEUED = (Logger.trace, next(_action_count),)
+    RELEASED = (Logger.trace, next(_action_count),)
+    START = (Logger.trace, next(_action_count),)
+    WAITING = (Logger.warning, next(_action_count),)
+
+
 class _Pis(enum.Enum):
     def _generate_next_value_(self, *args):
         return getattr(Path, self.lower())
@@ -253,13 +292,16 @@ class Pname(_Pname):
     JINJA2 = enum.auto()
     JSON = enum.auto()
     LOG = enum.auto()
+    MD = enum.auto()
     MONGO = enum.auto()
     OUT = enum.auto()
     PY = enum.auto()
     PYI = enum.auto()
     PYPROJECT = enum.auto()
+    README = enum.auto()
     REQUIREMENTS = enum.auto()
     RLOG = enum.auto()
+    RST = enum.auto()
     SCRIPTS = enum.auto()
     SETUP = enum.auto()
     SH = enum.auto()
@@ -271,6 +313,7 @@ class Pname(_Pname):
     TXT = enum.auto()
     YAML = enum.auto()
     YML = enum.auto()
+
     def bash(self, name=None): return Path((name or self.name) + Pname.BASH.dot.name)
     def cfg(self, name=None): return Path((name or self.name) + Pname.CFG.dot.name)
     @property
@@ -280,11 +323,13 @@ class Pname(_Pname):
     def j2(self, name=None): return Path((name or self.name) + Pname.J2.dot.name)
     def json(self, name=None): return Path((name or self.name) + Pname.JSON.dot.name)
     def log(self, name=None): return Path((name or self.name) + Pname.LOG.dot.name)
+    def md(self, name=None): return Path((name or self.name) + Pname.MD.dot.name)
     @property
     def name(self): return self.value.name
     def py(self, name=None): return Path((name or self.name) + Pname.PY.dot.name)
     def pyi(self, name=None): return Path((name or self.name) + Pname.PYI.dot.name)
     def rlog(self, name=None): return Path((name or self.name) + Pname.RLOG.dot.name)
+    def rst(self, name=None): return Path((name or self.name) + Pname.RST.dot.name)
     def sh(self, name=None): return Path((name or self.name) + Pname.SH.dot.name)
     def test(self, name=None): return Path((name or self.name) + Pname.TEST.dot.name)
     def toml(self, name=None): return Path((name or self.name) + Pname.TOML.dot.name)
@@ -308,7 +353,7 @@ def copylogger(l, add=False):
     Returns:
         logger.
     """
-    values = {i: getattr(l, i) for i in ('cached', 'configured', 'deepcopied', 'top_name', ) if hasattr(l, i)}
+    values = {i: getattr(l, i) for i in ('cached', 'configured', 'deepcopied', 'top_name',) if hasattr(l, i)}
     handlers = l._core.handlers.copy()
     l._core.handlers = {}
     # for i in l._core.handlers:
@@ -407,12 +452,7 @@ def findup(path=None, kind=Pis.IS_FILE, name=Pname.NONE.env, uppermost=False):
             return latest
 
 
-def getlog(e=None, l=None, extra_add=(), std_add=(), std_default=False, copy=False,
-           *,
-           trace_='light-black', debug='light-blue', info='light-magenta', success=('green', 'bold',),
-           warning=('yellow', 'bold',), error=('red', 'bold',), critical=('RED', 'bold',),
-           time='light-black', level='level', name='light-black', function='cyan', line='light-black',
-           extra='level', message='level', colon='light-white', vertical='light-white'):
+def getlog(e=None, l=None, extra_add=(), std_add=(), std_default=False, copy=False, **kwargs):
     """
     Get Logger and Configure.
 
@@ -442,29 +482,25 @@ def getlog(e=None, l=None, extra_add=(), std_add=(), std_default=False, copy=Fal
         std_add: record field names to add to std (default: ()).
         std_default: Use default loguru format for std.
         copy: Deepcopy logger before configure. It always deepcopy first time for package/top (default: ()).
-        trace_: trace level color.
-        debug: debug level color.
-        info: info level color.
-        success: success level color.
-        warning: warning level color.
-        error: error level color.
-        critical: critical level color.
-        time: time record key color.
-        level: level record key color.
-        name: name  record key color.
-        function: function record key color.
-        line: line record key color.
-        extra: extra record key color.
-        message: message record key color.
-        colon: colon output separator color.
-        vertical: vertical output separator color.
+        **kwargs: colors.
 
     Returns:
         logger.
     """
-    # TODO: añadir module a format, igual añadir el top como extra.
-    #   si añado el module mirar si parche o no.
-    std_width = 15
+
+    def add_field(_format, _file=True):
+        for field in std_add:
+            if (_file and field not in ('time', 'level', 'name', 'function', 'line',)) or not _file:
+                _color = color.get(field, 'level')
+
+                _field = '{' + field + log_map.get(field, log_map_default) + '}'
+                _format += elementadd(_color) + _field + elementadd(_color, closing=True) + vertical
+        return _format
+
+    color = conf_log['color'] | kwargs
+    log_map = conf_log['map']
+    log_map_default = conf_log['map']['function']
+
     if getlog not in cachemodule:
         cachemodule[getlog] = {}
     if not e or not l:
@@ -486,56 +522,41 @@ def getlog(e=None, l=None, extra_add=(), std_add=(), std_default=False, copy=Fal
     new.configured, new.top_name = True, e.top.name
 
     extra_add = (extra_add,) if isinstance(extra_add, str) else extra_add
-    std_add = (std_add, 'function', ) if isinstance(std_add, str) else std_add + ('function', )
-    message = elementadd(message) + '{message}' + elementadd(message, closing=True)
-    colon = elementadd(colon) + ':' + elementadd(colon, closing=True)
-    vertical = ' ' + elementadd(vertical) + '|' + elementadd(vertical, closing=True) + ' '
+    std_add = (std_add, 'function',) if isinstance(std_add, str) else std_add + ('function',)
+    message = elementadd(color['message']) + '{message}' + elementadd(color['message'], closing=True)
+    colon = elementadd(color['colon']) + ':' + elementadd(color['colon'], closing=True)
+    vertical = ' ' + elementadd(color['vertical']) + '|' + elementadd(color['vertical'], closing=True) + ' '
 
-    f = elementadd(time) + '{time:MM-DD HH:mm:ss}' + elementadd(time, closing=True) + vertical + \
-        elementadd(level) + '{level: <8}' + elementadd(level, closing=True) + vertical + \
-        elementadd(name) + '{name}' + elementadd(name, closing=True) + colon + \
-        elementadd(function) + '{function}' + elementadd(function, closing=True) + colon + \
-        elementadd(line) + '{line}' + elementadd(line, closing=True) + vertical
-    f = f + ((elementadd(extra) + '{extra}' + elementadd(extra, closing=True) + vertical) if extra_add else '') + \
-        message
+    file = elementadd(color['time']) + '{time:MM-DD HH:mm:ss}' + elementadd(color['time'], closing=True) + vertical + \
+        elementadd('level') + '{level: <8}' + elementadd('level', closing=True) + vertical + \
+        elementadd(color['name']) + '{name}' + elementadd(color['name'], closing=True) + colon + \
+        elementadd(color['function']) + '{function}' + elementadd(color['function'], closing=True) + colon + \
+        elementadd(color['line']) + '{line}' + elementadd(color['line'], closing=True) + vertical
+    file = add_field(file)
+    file += ((elementadd(color['extra']) + '{extra}' + elementadd(color['extra'], closing=True) + vertical)
+             if extra_add else '') + message
 
     std = LOGURU_FORMAT
     if not std_default:
-        std = (colon.join(elementadd(extra) + '{extra[' + i + ']}' + elementadd(extra, closing=True)
+        std = (colon.join(elementadd(color['extra']) + '{extra[' + i + ']}' + elementadd(color['extra'], closing=True)
                           for i in extra_add) + vertical) if extra_add else ''
-        for field in std_add:
-            kw = locals().get(field, level)
-            _map = {
-                'function': ': <15',
-                'level': ': <8',
-                'line': ': <5',
-                'name': ': <10',
-            }
-            _field = '{' + field + _map.get(field, _map['function']) + '}'
-            std = std + elementadd(kw) + _field + elementadd(kw, closing=True) + vertical
+        std = add_field(std, _file=False)
         std += message
 
     new.configure(
         handlers=[
-            dict(sink=sys.stderr, level=e.level_std, format=std,
-                 backtrace=True, diagnose=True),
-            dict(sink=e.top.logfile, level=e.level_file, format=f,
-                 backtrace=True, diagnose=True,
-                 retention='10 days', rotation='500 MB', compression='zip', enqueue=True,
-                 colorize=True),
-            dict(sink=e.top.jlogfile, level=e.level_file,
-                 backtrace=True, diagnose=True,
-                 retention='5 days', rotation='500 MB', compression='zip', enqueue=True,
-                 serialize=True),
+            dict(sink=sys.stderr, level=e.level_std, format=std, **conf_log['common']),
+            dict(sink=e.top.logfile, level=e.level_file, format=file, **conf_log['common'], **conf_log['file']),
+            dict(sink=e.top.jlogfile, level=e.level_json, **conf_log['common'], **conf_log['json']),
         ],
         levels=[
-            dict(name='TRACE', icon='✏️', color=elementadd(trace_)),
-            dict(name='DEBUG', icon='🐞', color=elementadd(debug)),
-            dict(name='INFO', icon='ℹ️', color=elementadd(info)),
-            dict(name='SUCCESS', icon='✔️', color=elementadd(success)),
-            dict(name='WARNING', icon='⚠️', color=elementadd(warning)),
-            dict(name='ERROR', icon='❌', color=elementadd(error)),
-            dict(name='CRITICAL', icon='☠️', color=elementadd(critical)),
+            dict(name='TRACE', icon='✏️', color=elementadd(color['trace'])),
+            dict(name='DEBUG', icon='🐞', color=elementadd(color['debug'])),
+            dict(name='INFO', icon='ℹ️', color=elementadd(color['info'])),
+            dict(name='SUCCESS', icon='✔️', color=elementadd(color['success'])),
+            dict(name='WARNING', icon='⚠️', color=elementadd(color['warning'])),
+            dict(name='ERROR', icon='❌', color=elementadd(color['error'])),
+            dict(name='CRITICAL', icon='☠️', color=elementadd(color['critical'])),
         ],
     )
     return new
@@ -633,7 +654,9 @@ def parent(path=FILE, home=False, tmp=False):
     Returns:
         Path
     """
+
     def mk(p, dot=''): r = p / f'{dot}{rv.name}'; r.mkdir(parents=True, exist_ok=True); return r
+
     parent.mk = mk
     rv = path.parent if (path := Path(path)).is_file() else path if path.is_dir() else None
     if rv and home:
@@ -644,6 +667,57 @@ def parent(path=FILE, home=False, tmp=False):
 
 
 TMPDIR = parent(tmp=True)
+
+
+def setupls(dirname=None):
+    """
+    Yields Files under Git for Setuptools plugin file_finders.
+
+    Examples:
+        >>> import rc
+        >>> from rc import setupls
+        >>>
+        >>> p = Path(rc.__file__).parent
+        >>> n = p.name
+        >>> for _i in setupls(str(p)):
+        ...     assert _i.startswith(f'{n}/')  # 'rc/...'
+        >>>
+        >>> p = p.parent
+        >>> n = p.name
+        >>> for _i in setupls(str(p)):
+        ...     assert _i.startswith(f'{n}/')  # 'bashrc/...'
+        >>>
+        >>> p = Path(rc.__file__)
+        >>> files = list(setupls())
+        >>> assert 'setup.cfg' in files
+        >>> assert str(p.relative_to(p.parent.parent)) in files
+
+    Args:
+        dirname: dirname or None for cwd.
+
+    Returns:
+        Relative path to dirname including dirname.
+    """
+    ic(dirname)
+    name = Path(dirname).name if dirname else None
+    ls = Distro(dirname).ls
+    always_name = True
+    if name:
+        for i in ls:
+            if i.parts[0] == name:
+                always_name = False
+                break
+    for i in Distro(dirname).ls:
+        if name:
+            if always_name:
+                yield str(Path(name) / i)
+            elif i.parts[0] == name:
+                yield str(i)
+            else:
+                continue
+        else:
+            ic(str(i))
+            yield str(i)
 
 
 def shell(cmd, ansi=False, cwd=None, environment=None, exc=True, executable=None, stdout=True, sudo=None):
@@ -690,6 +764,29 @@ def shell(cmd, ansi=False, cwd=None, environment=None, exc=True, executable=None
     if stdout:
         return out if rv.returncode == 0 else None
     return subprocess.CompletedProcess(rv.args, rv.returncode, out, err)
+
+
+@contextmanager
+def stdquiet():
+    """
+    Redirect stdout/stderr to StringIO objects to prevent console output from
+    distutils commands.
+
+    Returns:
+        Stdout, Stderr
+    """
+
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    new_stdout = sys.stdout = io.StringIO()
+    new_stderr = sys.stderr = io.StringIO()
+    try:
+        yield new_stdout, new_stderr
+    finally:
+        new_stdout.seek(0)
+        new_stderr.seek(0)
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
 
 def strip(data, ansi=False, new=True):
@@ -751,7 +848,7 @@ def top(data=2, cwd=False, imp_logger=False):
     if file in cachemodule[top]:
         return cachemodule[top][file]
 
-    _jlogload = git_dir = init_py = installed = jlogfile = path = pyproject_toml = setup_cfg = setup_py = None
+    git_dir = init_py = installed = path = pyproject_toml = setup_cfg = setup_py = None
     start = parent(file)
     root = Path(rv) if (rv := shell('git rev-parse --show-toplevel', cwd=start, exc=False)) else None
     v = root / venv.__name__ if root else None
@@ -797,21 +894,19 @@ def top(data=2, cwd=False, imp_logger=False):
         cachemodule[top][name] = new.cached = True
     __l = new or _logger
     __l.configured, __l.top_name = False, name
-    jlogfile = LOG / Pname.NONE.json(name)
+    logname = name.removeprefix('.')
+    jlogfile = LOG / Pname.NONE.json(logname)
     cachemodule[top][file] = Top(exists=exists, file=file, git_dir=git_dir, init_py=init_py, installed=installed,
                                  jlogfile=jlogfile, jlogload=partial(jlogload, jlogfile), logger=__l,
-                                 logfile=LOG / Pname.NONE.log(name), name=name,
+                                 logfile=LOG / Pname.NONE.log(logname), name=name,
                                  path=path, prefix=f'{name.upper()}_', pyproject_toml=pyproject_toml,
-                                 rlogfile=LOG / Pname.NONE.rlog(name), root=root, setup_cfg=setup_cfg,
-                                 setup_py=setup_py, tmp=TMP / name, venv=v, work=Path.home() / f'.{name}')
+                                 rlogfile=LOG / Pname.NONE.rlog(logname), root=root, setup_cfg=setup_cfg,
+                                 setup_py=setup_py, tmp=TMP / logname, venv=v,
+                                 work=Path.home() / f'{"" if name.startswith(".") else "."}{name}')
     return cachemodule[top][file]
 
 
-def trace(l=None, add_end=(), add_start=(), patch=True, qual=False, reraise=True,
-          *,
-          acquired=LogCall.TRACE, finish=LogCall.INFO, pass_=LogCall.DEBUG,
-          produced=LogCall.DEBUG,
-          released=LogCall.TRACE, start=None, waiting=LogCall.TRACE):
+def trace(l=None, add_end=(), add_start=None, patch=True, qual=False, reraise=True, method_end=None, method_start=None):
     """
     Trace Logging Decorator.
 
@@ -819,75 +914,78 @@ def trace(l=None, add_end=(), add_start=(), patch=True, qual=False, reraise=True
 
     Examples:
 
-    #
-    # To use default loguru format for stderr.
-    #
-    >>> @trace(l=getlog(std_default=True, copy=True), add_end=('test', ), released=LogCall.INFO, start=LogCall.ERROR)
-    ... def log_trace_loguru_default():
-    ...     name = log_trace_loguru_default.__name__
-    ...     log.info(name)
-    ...     log_trace_loguru_default.test = name
-    ...     log_trace_loguru_default.action = Action.RELEASED
-    >>> log_trace_loguru_default()  # __init__ since file does not exists in doctest and not patch.
-    >>> # 2021-07-10 15:44:56.840 | ERROR    | __init__:log_trace_loguru_default:68 - START
-
-    #
-    # To add 'name' record field to default stderr which only has 'function'.
-    #
-    >>> @trace(l=getlog(std_add=('name',), copy=True), add_end=('test', ), released=LogCall.SUCCESS, start=LogCall.ERROR)
-    ... def log_trace_std_add_name():
-    ...     name = log_trace_std_add_name.__name__
-    ...     log.info(name)
-    ...     log_trace_std_add_name.test = name
-    ...     log_trace_std_add_name.action = Action.RELEASED
-    >>> log_trace_std_add_name()  # __init__ since file does not exists in doctest and not patch.
-    >>> # __init__        | log_trace_std_add_name | START
-    >>> # __init__        | log_trace_std_add_name | RELEASED: test='log_trace_std_add_name'
-
-    #
-    # To use globals `log` which add 'name' and 'line' record fields to default stderr which only has 'function'.
-    #
-    >>> # noinspection PyShadowingNames
-    >>> env = Env()
-    >>> # noinspection PyShadowingNames
-    >>> log = getlog(std_add=('name', 'line', ))
-    >>>
-    >>> @trace(add_end=('test', ), add_start=True, released=LogCall.SUCCESS, start=LogCall.WARNING)
-    ... def log_trace_globals(arg1, kwarg_1='kwarg_1'):
-    ...     name = log_trace_globals.__name__
-    ...     log.info(name)
-    ...     log_trace_globals.test = name
-    ...     log_trace_globals.action = Action.RELEASED
-    >>> log_trace_globals(1)
-    >>> # __init__   | 966   | log_trace_globals | START: arg1=1, kwarg_1='kwarg_1'
-    >>> # __init__   | 964   | log_trace_globals | RELEASED: test='log_trace_globals'
+        >>> from rc import getlog, Logger, trace, Action
+        >>>
+        >>> #
+        >>> # To use default loguru format for stderr.
+        >>> #
+        >>> _logger = getlog(std_default=True, copy=True)
+        >>> @trace(l=_logger, add_end=('test', ), add_start=(), method_end=Logger.info, method_start=Logger.error)
+        ... def log_trace_loguru_default():
+        ...     name = log_trace_loguru_default.__name__
+        ...     log.info(name)
+        ...     log_trace_loguru_default.test = name
+        ...     log_trace_loguru_default.action = Action.RELEASED
+        >>> log_trace_loguru_default()  # __init__ since file does not exists in doctest and not patch.
+        >>> # 2021-07-13 12:41:43.899 | ERROR    | rc:log_trace_loguru_default:968 - ACQUIRED
+        >>>
+        >>> #
+        >>> # To add 'name' record field to default stderr which only has 'function'.
+        >>> #
+        >>> _str_add = ('file', 'file.path', 'module', 'name', 'process', 'process.name', 'thread', 'thread.name', )
+        >>> _logger = getlog(std_add=_str_add, copy=True)
+        >>> @trace(l=_logger, add_end=('test', ), add_start=(), method_end=Logger.success, method_start=Logger.error)
+        ... def log_trace_std_add_name():
+        ...     name = log_trace_std_add_name.__name__
+        ...     log.info(name)
+        ...     log_trace_std_add_name.test = name
+        ...     log_trace_std_add_name.action = Action.RELEASED
+        >>> log_trace_std_add_name()  # __init__ since file does not exists in doctest and not patch.
+        >>> # __init__.py | /Users/jose/bashrc/rc/__init__.py |__init__   | rc         |  28479   | MainProcess |
+        >>> #   4547399104 | MainThread | log_trace_std_add_name | ACQUIRED
+        >>> # __init__.py | /Users/jose/bashrc/rc/__init__.py | __init__   | rc         | 28479   | MainProcess |
+        >>> #   4547399104 | MainThread | log_trace_std_add_name | ACQUIRED: test='log_trace_std_add_name'
+        >>>
+        >>> #
+        >>> # To use globals `log` which add 'name' and 'line' record fields to default stderr which only has 'function'
+        >>> #
+        >>> # noinspection PyShadowingNames
+        >>> env = Env()
+        >>> # noinspection PyShadowingNames
+        >>> log = getlog(std_add=('name', 'line', ))
+        >>>
+        >>> @trace(add_end=('test', ), add_start=True, method_end=Logger.success, method_start=Logger.warning)
+        ... def log_trace_globals(arg1, kwarg_1='kwarg_1'):
+        ...     name = log_trace_globals.__name__
+        ...     log.info(name)
+        ...     log_trace_globals.test = name
+        ...     log_trace_globals.action = Action.RELEASED
+        >>> log_trace_globals(1)
+        >>> # rc         | 968   | log_trace_globals | ACQUIRED: arg1=1, kwarg_1='kwarg_1'
+        >>> # rc         | 968   | log_trace_globals | ACQUIRED: test='log_trace_globals'
 
     Args:
         l: log to use. Order: configured globals/locals `log`, unconfigured globals/locals `logger`,
             or rc.logger  (default: None).
         add_end: add attributes from func or self/args[0] to end message.
-        add_start: add attributes from func args, kwargs to start message. If `True` adds all but `cls` and `self`.
-            It will overwrite `start` if it is `None`.
+        add_start: add attributes from func args, kwargs to start message (default: None).
+            - `True`: adds all but `cls` and `self`.
+            - () or `False`: logs start of function with no additional values.
+            - `None`: do not log stat of function.
         patch: patch name, lineno and func_name.
         qual: Use qualname instead of name patching function (default: False).
         reraise: Re-raise exception (default: True).
-        acquired: Level method name to use when ACQUIRED action (default: LogCall.TRACE).
-        finish: Level method name to use when FINISHED action (default: LogCall.INFO).
-        pass_: Level method name to use when PASS action (default: LogCall.DEBUG).
-        produced: Level method name to use when PRODUCED action (default: LogCall.DEBUG).
-        released: Level method name to use when RELEASED action (default: LogCall.TRACE).
-        start: Level method name to use if logging start of function (default: None or LogCall.DEBUG if add_start).
-        waiting: Level method name to use when WAITING action (default: LogCall.TRACE).
+        method_end: Logger method. None to use Action method.
+        method_start: Logger method. None to use Action method.
 
     Returns:
         decorating:
     """
-    start_default = LogCall.DEBUG
+    add_start = () if add_start is False else add_start
 
     def decorating(func):
         if trace not in cachemodule:
-            cachemodule[trace] = dict(cls={}, func_name={}, log=dict(arg={}, stack={}), patch={}, module_function={},
-                                      start={})
+            cachemodule[trace] = dict(cls={}, func_name={}, log=dict(arg={}, stack={}), patch={}, module_function={})
 
         if func not in cachemodule[trace]['func_name']:
             qualname = func.__qualname__
@@ -910,28 +1008,33 @@ def trace(l=None, add_end=(), add_start=(), patch=True, qual=False, reraise=True
                 __l = l or v.get('log', None) or v.get('logger', None) or logger
             cachemodule[trace]['log']['stack'][func] = __l
             cachemodule[trace]['func_name'][func] = qualname if qual else func_name
-            cachemodule[trace]['start'][func] = start_default if start is None and add_start else start
         func_name = cachemodule[trace]['func_name'][func]
         module_function = cachemodule[trace]['module_function'][func]
-        trace_start = cachemodule[trace]['start'][func]
 
         is_async_generator = inspect.isasyncgenfunction(func)
         is_async = inspect.iscoroutinefunction(func)
         is_generator = inspect.isgeneratorfunction(func)
 
-        def _action(*args, _func=None, _end=False, **kwargs):
+        def _info(*args, _func=None, _end=False, **kw):
+            rv = {}
             self = args[0] if len(args) >= 1 else None
             _func = _func or func
-            action = getattr(self, 'action', None) or getattr(_func, 'action', None)
+            action_default = Action.FINISHED if _end else Action.START
+            action = getattr(self, 'action', None) or getattr(_func, 'action', None) or action_default
+            rv['message'] = action.name if (is_action := isinstance(action, Action)) else action
+            rv['method'] = (method_end if _end else method_start) or (action if is_action else action_default).value[0]
+
             if _end:
-                _add = {i: getattr(obj, i) for obj in (self, _func, )
-                        for i in add_end if hasattr(obj, i)} if add_end else {}
+                rv['add'] = {i: getattr(obj, i) for obj in (self, _func,)
+                             for i in add_end if hasattr(obj, i)} if add_end else {}
             else:
                 count = itertools.count()
-                _add = {_k: args[next(count)] if _v.default == inspect._empty else kwargs.get(_k, _v.default)
-                        for _k, _v in inspect.signature(func).parameters.items()
-                        if (add_start is True or _k in add_start) and _k not in ('cls', 'self',)} if add_start else {}
-            return action, _add
+                rv['add'] = {} if add_start is None else {
+                    _k: args[next(count)] if _v.default == inspect._empty else kw.get(_k, _v.default)
+                    for _k, _v in inspect.signature(func).parameters.items()
+                    if (add_start is True or _k in add_start) and _k not in ('cls', 'self',)
+                }
+            return rv
 
         def _log(*args):
             if func not in cachemodule[trace]['log']['arg']:
@@ -947,94 +1050,113 @@ def trace(l=None, add_end=(), add_start=(), patch=True, qual=False, reraise=True
                 _func = _v.get(func_name, None)
                 return _func
 
-        def _patch(action=None, _add=None, end=False, _l=None):
+        def _patch(info, end=False, _l=None):
+            if add_start is None and not end:
+                return
             _l = _l.patch(lambda record: record.update(function=func_name, **cachemodule[trace]['patch'][func]))
-            _add = ': ' + ', '.join(f'{_k}={repr(_v)}' for _k, _v in _add.items()) if _add else ''
-            if end:
-                method = finish
-                if action and action == Action.PASS:
-                    method = pass_
-                elif action and action == Action.ACQUIRED:
-                    method = acquired
-                elif action and action == Action.ERROR:
-                    method = LogCall.ERROR
-                elif action and action == Action.PRODUCED:
-                    method = produced
-                elif action and action == Action.RELEASED:
-                    method = released
-                elif action and action == Action.WAITING:
-                    method = waiting
-                # noinspection PyCallingNonCallable
-                method(_l, (action or Action.FINISHED).name + _add)
-            elif trace_start:
-                trace_start(_l, (action or Action.START).name + _add)
+            _add = ': ' + ', '.join(f'{_k}={repr(_v)}' for _k, _v in info['add'].items()) if info['add'] else ''
+            info['method'](_l, info['message'] + _add)
 
         if is_async_generator:
             @wraps(func)
-            async def wrapper(*args, **kwargs):
-                action, _l = _action(*args, **kwargs), _log(*args)
+            async def wrapper(*args, **kw):
+                _l = _log(*args)
                 with _l.catch(reraise=reraise):
-                    if start:
-                        _patch(action=action[0], _add=action[1], _l=_l)
+                    if add_start is not None:
+                        _patch(_info(*args, **kw), _l=_l)
                     try:
-                        async for result in func(*args, **kwargs):
+                        async for result in func(*args, **kw):
                             yield result
                     finally:
                         # Module Function attrs only for end.
-                        action, _l = _action(*args, _func=_module_func(), _end=True), _log(*args)
-                        _patch(action=action[0], _add=action[1], end=True, _l=_l)
+                        _patch(_info(*args, _func=_module_func(), _end=True), end=True, _l=_l)
         elif is_async:
             @wraps(func)
-            async def wrapper(*args, **kwargs):
-                action, _l = _action(*args, **kwargs), _log(*args)
+            async def wrapper(*args, **kw):
+                _l = _log(*args)
                 with _l.catch(reraise=reraise):
-                    if start:
-                        _patch(action=action[0], _add=action[1], _l=_l)
-                    rv = await func(*args, **kwargs)
+                    if add_start is not None:
+                        _patch(_info(*args, **kw), _l=_l)
+                    rv = await func(*args, **kw)
                     # Module Function attrs only for end.
-                    action, _l = _action(*args, _func=_module_func(), _end=True), _log(*args)
-                    _patch(action=action[0], _add=action[1], end=True, _l=_l)
+                    _patch(_info(*args, _func=_module_func(), _end=True), end=True, _l=_l)
                     return rv
         elif is_generator:
             @wraps(func)
-            def wrapper(*args, **kwargs):
-                action, _l = _action(*args, **kwargs), _log(*args)
+            def wrapper(*args, **kw):
+                _l = _log(*args)
                 with _l.catch(reraise=reraise):
-                    if start:
-                        _patch(action=action[0], _add=action[1], _l=_l)
+                    if add_start is not None:
+                        _patch(_info(*args, **kw), _l=_l)
                     if is_generator:
                         try:
-                            yield from func(*args, **kwargs)
+                            yield from func(*args, **kw)
                         finally:
-                            _patch(action=action[0], _add=action[1], end=True, _l=_l)
+                            _patch(_info(*args, _func=_module_func(), _end=True), end=True, _l=_l)
                     else:
-                        rv = func(*args, **kwargs)
+                        rv = func(*args, **kw)
                         # Module Function attrs only for end.
-                        action, _l = _action(*args, _func=_module_func(), _end=True), _log(*args)
-                        _patch(action=action[0], _add=action[1], end=True, _l=_l)
+                        _patch(_info(*args, _func=_module_func(), _end=True), end=True, _l=_l)
                         return rv
         else:
             @wraps(func)
-            def wrapper(*args, **kwargs):
-                _func = func
-                action, _l = _action(*args, **kwargs), _log(*args)
+            def wrapper(*args, **kw):
+                # _func = func
+                _l = _log(*args)
                 with _l.catch(reraise=reraise):
-                    if start:
-                        _patch(action=action[0], _add=action[1], _l=_l)
-                rv = func(*args, **kwargs)
+                    if add_start is not None:
+                        _patch(_info(*args, **kw), _l=_l)
+                rv = func(*args, **kw)
                 # Module Function attrs only for end.
-                action, _l = _action(*args, _func=_module_func(), _end=True), _log(*args)
-                _patch(action=action[0], _add=action[1], end=True, _l=_l)
+                _patch(_info(*args, _func=_module_func(), _end=True), end=True, _l=_l)
                 return rv
         return wrapper
+
     return decorating
 
 
 # </editor-fold>
 
 
+# <editor-fold desc="Classes">
 class Env(environs.Env):
-    """Env Class."""
+    """
+    Env Class.
+
+    >>> from enum import Enum, auto
+    >>> from os import environ
+    >>> from urllib.parse import urlparse
+    >>> from rc import env
+    >>>
+    >>> class Test(Enum):
+    ...     A = auto()
+    ...     B = auto()
+    >>>
+    >>> environ['VAR'] = 'https://github.com'
+    >>> env.read_env(override=True)
+    >>> assert env.url('VAR') == urlparse('https://github.com')
+    >>>
+    >>> environ['VAR'] = '1, 2, 3,4'
+    >>> env.read_env(override=True)
+    >>> assert env.list('VAR', subcast=int) == [1, 2, 3, 4]
+    >>>
+    >>> environ['VAR'] = '1 2 3 4'
+    >>> env.read_env(override=True)
+    >>> assert env.list('VAR', delimiter=' ', subcast=int) == [1, 2, 3, 4]
+    >>>
+    >>> environ['VAR'] = '2=2, 3= 3, 4 = 4'
+    >>> env.read_env(override=True)
+    >>> assert env.dict('VAR', subcast_keys=int, subcast_values=int) == {2: 2, 3: 3, 4: 4}
+    >>>
+    >>> environ['VAR'] = '{"name":"John", "age":30, "car":null}'
+    >>> env.read_env(override=True)
+    >>> assert env.json('VAR') == {'name': 'John', 'age': 30, 'car': None}
+    >>>
+    >>> environ['VAR'] = 'a'
+    >>> env.read_env(override=True)
+    >>> assert env.enum('VAR', ignore_case=True, type=Test) == Test.A
+    """
+
     def __init__(self, *, eager=True, expand_vars=False, ignore_case=True, index=2,
                  override=True, path=None, prefix=None, use_prefix=False):
         """
@@ -1083,19 +1205,19 @@ class Env(environs.Env):
         >>> var = 'VAR'
         >>>
         >>> environ[var] = '24'
-        >>> assert e.level(var, default=None) is None
+        >>> assert e.level(var, default=None, use_prefix=False) is None
         >>>
         >>> environ[var] = '30'
-        >>> assert e.level(var) == 'WARNING'
+        >>> assert e.level(var, use_prefix=False) == 'WARNING'
         >>>
         >>> environ[var] = 'deb'
-        >>> assert e.level(var, default=None) is None
+        >>> assert e.level(var, default=None, use_prefix=False) is None
         >>>
         >>> environ[var] = 'debug'
-        >>> assert e.level(var) == 'DEBUG'
+        >>> assert e.level(var, use_prefix=False) == 'DEBUG'
         >>>
         >>> environ[var] = 'DEBUG'
-        >>> assert e.level(var) == 'DEBUG'
+        >>> assert e.level(var, use_prefix=False) == 'DEBUG'
 
         Args:
             value: value to parse.
@@ -1266,19 +1388,19 @@ class Env(environs.Env):
         >>> VAR = (prefix + var).upper()
         >>>
         >>> environ[VAR] = '24'
-        >>> assert e.level(prefix + var, None) is None
+        >>> assert e.level(prefix + var, default=None, use_prefix=False) is None
         >>>
         >>> environ[VAR] = '30'
-        >>> assert e.level(prefix + var) == 'WARNING'
+        >>> assert e.level(prefix + var, use_prefix=False) == 'WARNING'
         >>>
         >>> environ[VAR] = 'deb'
-        >>> assert e.level(prefix + var, None) is None
+        >>> assert e.level(prefix + var, default=None, use_prefix=False) is None
         >>>
         >>> environ[VAR] = 'debug'
-        >>> assert e.level(prefix + var) == 'DEBUG'
+        >>> assert e.level(prefix + var, default=None, use_prefix=False) == 'DEBUG'
         >>>
         >>> environ[VAR] = 'DEBUG'
-        >>> assert e.level(prefix + var) == 'DEBUG'
+        >>> assert e.level(prefix + var, use_prefix=False) == 'DEBUG'
 
         Args:
             name: var name.
@@ -1368,6 +1490,39 @@ class Env(environs.Env):
             str.
         """
         name = self.__class__.level_file.fget.__name__
+        return self.level(name, default=conf['log']['default'][name])
+
+    @property
+    def level_json(self):
+        """
+        Log Level JSON File Level.
+
+        >>> from os import environ
+        >>> from rc import Env, conf
+        >>>
+        >>> e, var, prefix = Env(), 'level_json', 'TEST_'
+        >>> e.prefix = prefix
+        >>> VAR = (prefix + var).upper()
+        >>>
+        >>> environ[VAR] = '24'
+        >>> assert e.level_json == conf['log']['default'][var]
+        >>>
+        >>> environ[VAR] = '30'
+        >>> assert e.level_json == 'WARNING'
+        >>>
+        >>> environ[VAR] = 'deb'
+        >>> assert e.level_json == conf['log']['default'][var]
+        >>>
+        >>> environ[VAR] = 'debug'
+        >>> assert e.level_json == 'DEBUG'
+        >>>
+        >>> environ[VAR] = 'DEBUG'
+        >>> assert e.level_json == 'DEBUG'
+
+        Returns:
+            str.
+        """
+        name = self.__class__.level_json.fget.__name__
         return self.level(name, default=conf['log']['default'][name])
 
     @property
@@ -1483,30 +1638,26 @@ class Env(environs.Env):
 
 
 env = Env()
-log = getlog(std_add=('name',))
-log.error('rc')
+log = getlog()
+log_distro = getlog(extra_add=('repo',), copy=True)
 
 
 class _GitHub(enum.Enum):
-    # _all = 'all'
-    # _argument = None
-    # _autocomplete = ()
-    # _default = ''
-    # _repos = {}
-
     @classmethod
-    def envvar(cls, name, token=False):
+    def envvar(cls, name, email=False, token=False):
         """
-        Get Env Var for name using: GITHUB_NAME/GITHUB_NAME_TOKEN.
+        Get Env Var for name using: GITHUB_NAME/GITHUB_NAME_EMAIL/GITHUB_NAME_TOKEN.
 
         Args:
             name: name to be added to var.
+            email: add email.
             token: add token.
 
         Returns:
             Str.
         """
-        return env(f'{cls.__name__.lstrip("_")}_{name}' + ('_TOKEN' if token else ''), default=None)
+        return env(f'{cls.__name__.lstrip("_")}_{name}' + ('_TOKEN' if token else '_EMAIL' if email else ''),
+                   default=None)
 
     @classmethod
     def user(cls, name, alias=None):
@@ -1537,7 +1688,8 @@ class _GitHub(enum.Enum):
             json.dump(rv, file.open(mode='w'))
         https, login, org = furl(rv['html_url']), rv['login'], f'org-{rv["id"]}'
         host = https.host
-        return GitUser(blog=furl(rv['blog']), id=rv['id'], https=https,
+        return GitUser(blog=furl(rv['blog']), email=_GitHub.envvar(alias if alias else name, email=True),
+                       id=rv['id'], https=https,
                        key=requests.get(https.url + '.keys').text.rstrip(NEWLINE),
                        login=login, name=rv['name'], org=org, pip=furl(f'git+ssh://git@{host}/{login}'),
                        repos=furl(rv['repos_url']), ssh=furl(f'{org}@{host}:{login}'),
@@ -1670,10 +1822,30 @@ class GitHub(_GitHub):
             return cachemodule[cls.map]
         except KeyError:
             cachemodule[cls.map] = rv = dict(organization={True: GitHub.ORG, False: GitHub.WORK, None: GitHub.USER},
-                                             pypi={True: GitHub.WORK.value.login, False: GitHub.USER.value.login,
-                                                   None: None})
-            log.warning(f'{cachemodule[cls.map]=}')
+                                             pypi={
+                                                 True: GitHub.WORK.value.login, False: GitHub.USER.value.login,
+                                                 None: None
+                                             })
             return rv
+
+    @classmethod
+    def organization(cls, name):
+        """
+        GitHub Organization/User.
+
+        >>> from rc import GitHub, env
+        >>>
+        >>> assert GitHub.organization('bashrc') == GitHub.USER
+
+        Args:
+            name: repo name.
+
+        Returns:
+            GitHub.
+        """
+        key = cls.organization.__name__
+        if cls.py(name):
+            return cls.map()[key][cls.repos()[name][key]]
 
     @classmethod
     def pip(cls, name, auth=True, ssh=True):
@@ -1703,7 +1875,7 @@ class GitHub(_GitHub):
     @classmethod
     def py(cls, name):
         """
-        GitHub SSH URL.
+        Is Python Project?.
 
         >>> from rc import GitHub
         >>>
@@ -1713,9 +1885,14 @@ class GitHub(_GitHub):
             name: repo name.
 
         Returns:
-            furl GitHub SSH URL.
+            Is Python Project?.
         """
-        return cls.repos()[name][cls.py.__name__]
+        try:
+            return cls.repos()[name][cls.py.__name__]
+        except KeyError:
+            if not name.startswith('tmp'):
+                _l = log_distro.bind(repo=name)
+                _l.warning(f'Not a valid repo in {cls.USER.value.blog.url}: {cls.autocomplete()}')
 
     @classmethod
     def pypi(cls, name):
@@ -1785,9 +1962,7 @@ class GitHub(_GitHub):
         Returns:
             furl GitHub SSH URL.
         """
-        key = 'organization'
-        organization = cls.map()[key][cls.repos()[name][key]]
-        return organization.value.ssh / Pname.NONE.git(name).name
+        return cls.organization(name).value.ssh / Pname.NONE.git(name).name
 
 
 class Command:
@@ -1827,6 +2002,24 @@ class Command:
         """
         print(Distro(data=data).home)
 
+    @staticmethod
+    @app.command()
+    def new(data: str = ''):
+        """
+        Create a new python repository or update and existing with templates.
+
+        Args:
+            data: File, Directory, Name (relative to ``HOME``) or '' for cwd (default: '').
+
+        Returns:
+            None.
+        """
+        if not data and Path.cwd() == Path.home():
+            pass
+        # d = Distro(data=data)
+        # if rv := d.git:
+        #     print(rv)
+
 
 class Distro:
     """
@@ -1834,16 +2027,37 @@ class Distro:
 
     HOME Obtained from: File, Directory, Name (relative to ``HOME``) or CWD.
 
+    Needs `pyproject.toml` file with [tool.rc] section and version key to read configuration.
+    It will create `pyproject.toml` with [tool.rc] section and version='0.0.0' if not found and it's a py project.
+
+    Updates: `pyproject.toml`, `setup.cfg` and `MANIFEST.in`.
+
+        .. code-block:: toml
+
+            [tool.rc]  # pyproject.toml (Read)
+            python_requires = [3, 9]  # Default: conf['distro']['python_requires']
+            version = "0.31.90"  # Default: '0.0.0'
+
+            [tool.rc.cmdclass]
+            install = "rc.Install"
+
+            [tool.rc.entry_points]
+            rc = "rc:app"
+
+            [tool.rc.exclude]
+            manifest = []  # Will be added to conf['tool']['exclude']['manifest']
+            packages = []  # Will be added to conf['tool']['exclude']['packages']
+
     Examples:
         >>> from pathlib import Path
         >>> import rc
         >>> from rc import Distro
-
-
     """
-    __slots__ = ('_configuration', '_dict', '_doproject', '_git', '_https', '_modules', '_name',
-                 '_packages', '_piphttps', '_pipssh', '_py', '_pypi', '_pyproject_toml', '_setup', '_setup_cfg',
-                 '_ssh', '_url', '_urls', 'default', 'detached_exc', 'doit', 'home', 'rm', 'table')
+    __slots__ = ('_configuration', '_doproject', '_git', '_github', '_https', '_name',
+                 '_piphttps', '_pipssh', '_py', '_pypi', '_pyproject_toml', '_requirements',
+                 '_setup', '_setup_cfg',
+                 '_ssh', '_url', '_urls', 'action', 'default', 'detached_exc', 'doit', 'home', 'log',
+                 'rm', 'sem', 'table')
 
     def __init__(self, data='', clone=None, detached_exc=True, doit=False, rm=False, ssh=True):
         """
@@ -1863,22 +2077,20 @@ class Distro:
         for i in self.__slots__:
             self.__setattr__(i, None)
         self.detached_exc, self.doit, self.home, found = detached_exc, doit, parent(data) if data else Path.cwd(), False
-        self.default, self.rm = self.__class__.ssh if ssh else self.__class__.https, rm
+        self.action, self.default, self.rm = Action.NONE, self.__class__.ssh if ssh else self.__class__.https, rm
         if rv := self.git:
             self.home, found = Path(rv.working_tree_dir), True
         elif rv := self.configuration.pyproject_toml:
             self.home, found = rv.parent, True
         if not found and data:
             self.home = Path.home() / data
-            if self.py and self.home.is_dir() and not (file := self.home / 'pyproject.toml').is_file():
-                file.write_text(f"[tool.{conf['distro']['tool']}]\nversion = '0.0.0'")
-                self.configuration = None
+        self.log = log_distro.bind(repo=self.name)
         if not self.home.is_dir():
             if clone is None and MACOS:
                 clone = True
             if clone:
                 self.clone()
-
+        self.sem = SysSem(cls=self.__class__.__name__, name=self.name).sem
         self.table = Table(title=f'[bold red]{self.__class__.__name__}:[/] '
                                  f'[bold blue]{self.name}[/]={self.url}', box=rich.box.ROUNDED)
         self.table.add_column('Attribute', style='magenta')
@@ -1894,6 +2106,11 @@ class Distro:
         yield self.table
 
     def _get(self, attr): return rv() if (rv := object.__getattribute__(self, attr)) and callable(rv) else rv
+
+    @classmethod
+    def all(cls, clone=None, detached_exc=True, doit=False, rm=False, ssh=True):
+        names = GitHub.autocomplete()[1:]
+        return {i: cls(data=i, clone=clone, detached_exc=detached_exc, doit=doit, rm=rm, ssh=ssh) for i in names}
 
     @property
     def branch(self):
@@ -1923,9 +2140,11 @@ class Distro:
         Returns:
             Default Branch Name.
         """
+
         def cmd(name):
             return shell(f'git symbolic-ref refs/remotes/{name}/HEAD | sed "s@^refs/remotes/{name}/@@"',
                          cwd=self.home)
+
         if (rv := self.git) and not rv.head.is_detached:
             if not remote:
                 return {r.name: cmd(r.name) for r in rv.remotes}
@@ -1946,7 +2165,7 @@ class Distro:
         if rv := self.git:
             return tuple(i.name for i in cast(Iterable, rv.branches))
 
-    def build(self):
+    def build(self, quiet=True, warning=False):
         """
         Build
 
@@ -1955,10 +2174,16 @@ class Distro:
         >>> d = Distro()
         >>> d.build()
 
+        Args:
+            quiet: quiet.
+            warning: silent warnings.
+
         Returns:
             None.
         """
+        # {"--global-option": ["-q"],}
         # shell(f'{sys.executable} {self.configuration.setup_py} sdist', ansi=True, cwd=self.home)
+        # build_main([str(self.home), '--sdist', '--no-isolation', '--config-setting', '--global-option "q"'])
         build_main([str(self.home), '--sdist', '--no-isolation'])
 
     def clone(self):
@@ -1971,6 +2196,8 @@ class Distro:
         if self.home.is_dir() and self.rm:
             self.home.unlink(missing_ok=True)
         gitpython.Repo.clone_from(self.default(self).url, self.home)
+        self._git = None
+        return self.git
 
     @property
     def configuration(self):
@@ -1989,10 +2216,11 @@ class Distro:
         ...     assert d.configuration.setup_py
 
         Returns:
-            Configuration (pyproject.toml, setup.py and setup.py).
+            Configuration (MANIFEST.in, pyproject.toml, setup.py and setup.py).
         """
         if not self._configuration:
             self._configuration = Configuration(
+                manifest_in=self.home / 'MANIFEST.in',
                 pyproject_toml=findup(self.home, name=Pname.PYPROJECT.toml),
                 setup_cfg=self.home / Pname.SETUP.cfg(),
                 setup_py=self.home / Pname.SETUP.py()
@@ -2015,19 +2243,6 @@ class Distro:
         if rv := self.git:
             return rv.head.is_detached
         return None
-
-    def dict(self):
-        """
-        Project Configuration Data.
-
-        Returns:
-            Project Configuration Data Dict.
-        """
-        if not self.doproject:
-            print('Nothing to do here!')
-        if self._dict is None:
-            configuration = self.configuration
-            pyproject = toml.load(configuration.pyproject_toml)
 
     @property
     def dirty(self):
@@ -2054,7 +2269,7 @@ class Distro:
             True if project has changed or action is required.
         """
         if self._doproject is None:
-            self._doproject = all([self.configuration.pyproject_toml, self.git, self.has_changes or self.doit])
+            self._doproject = all([MACOS, self.py, self.git, self.has_changes or self.doit])
         return self._doproject
 
     @property
@@ -2081,6 +2296,24 @@ class Distro:
                 if self._git.head.is_detached and self.configuration.pyproject_toml:
                     raise RuntimeError(f"Detached Head and Project. You should create a branch: '{self.home=}'")
         return self._git
+
+    @property
+    def github(self):
+        """
+        GitHub instance.
+
+        >>> from rc import Distro, is_giturl
+        >>>
+        >>> d = Distro()
+        >>>
+        >>> assert is_giturl(d.ssh)
+
+        Returns:
+            GitHub.
+        """
+        if not self._github:
+            self._github = GitHub.organization(self.name)
+        return self._github
 
     @property
     def has_changes(self):
@@ -2133,30 +2366,6 @@ class Distro:
         if rv := self.branch:
             return tuple(map(Path, shell(f'git ls-tree --name-only -r {rv}', cwd=self.home).splitlines()))
 
-    def manifest(self):
-        """
-        Updates MANIFEST.in
-
-        >>> from pathlib import Path
-        >>> import rc
-        >>> from rc import Distro, conf
-        >>>
-        >>> d = Distro()
-        >>> d.manifest()
-        >>> ls, text, p = d.ls, (d.home / 'MANIFEST.in').read_text(), Path(rc.__file__)
-        >>> assert f'{p.parent.name}/{p.name}' in text
-        >>> for i in conf['distro']['exclude']['manifest']:
-        ...     assert i not in text
-        >>> for i in d.scripts:
-        ...     if i in ls:
-        ...         assert i in text
-
-        Returns:
-            None
-        """
-        (self.home / 'MANIFEST.in').write_text('\n'.join(
-            [f'include {l}' for l in self.ls if l.parts[0] not in conf['distro']['exclude']['manifest']]))
-
     @property
     def modules(self):
         """
@@ -2173,16 +2382,20 @@ class Distro:
         ...     test = Path(tmp) / 'test.py'
         ...     test.touch()
         ...     d = Distro(tmp)
-        ...     assert d.modules['test'] == test
+        ...     assert test.stem in d.modules
         ...     assert Pname.SETUP.py().name not in d.modules
 
         Returns:
             List of Module Names.
         """
-        if not self._modules:
-            self._modules = {i.stem: i / i for i in self.home.iterdir()
-                             if i.suffix == Pname.PY.dot.name and i.name != Pname.SETUP.py().name}
-        return self._modules
+        exclude = []
+        try:
+            if rv := self.pyproject_toml_load:
+                exclude = rv['tool'][TOOL]['options']['modules']['find']['exclude']
+        except KeyError:
+            pass
+        exclude = set(conf['tool']['options']['modules']['find']['exclude'] + exclude)
+        return tuple(i.stem for i in self.home.glob(f'*{Pname.PY.dot.name}') if i.stem not in exclude)
 
     @property
     def name(self):
@@ -2204,6 +2417,9 @@ class Distro:
             self._name = Path(rv.path.segments[-1]).stem if (rv := self.url) and rv.url else self.home.name
         return self._name
 
+    def new(self):
+        pass
+
     @property
     def packages(self):
         """
@@ -2218,10 +2434,14 @@ class Distro:
         Returns:
             List of Package Names.
         """
-        if not self._packages:
-            self._packages = {i: self.home / i for i in setuptools.find_packages(
-                self.home, exclude=conf['distro']['exclude']['packages'])}
-        return self._packages
+        exclude = []
+        try:
+            if rv := self.pyproject_toml_load:
+                exclude = rv['tool'][TOOL]['options']['packages']['find']['exclude']
+        except KeyError:
+            pass
+        exclude = tuple(sorted(set(conf['tool']['options']['packages']['find']['exclude'] + exclude)))
+        return {i: self.home / i for i in setuptools.find_packages(self.home, exclude=exclude)}
 
     @property
     def piphttps(self):
@@ -2290,8 +2510,9 @@ class Distro:
             True if Py Distro.
         """
         if not self._py:
-            self._py = GitHub.py(self.name) or (self.home / Pname.PYPROJECT.toml()).is_file() or (
-                    self.home / Pname.SETUP.cfg()).is_file() or (self.home / Pname.SETUP.py()).is_file()
+            c = self.configuration
+            self._py = any([c.pyproject_toml, c.setup_cfg, c.setup_py, self.packages, self.modules]) \
+                if (rv := GitHub.py(self.name)) is None else rv
         return self._py
 
     @property
@@ -2326,14 +2547,28 @@ class Distro:
         Returns:
             Updated pyproject.toml Dict.
         """
-        file = self.configuration.pyproject_toml
+        file, rv = self.pyproject_toml_path, None
         if not self._pyproject_toml and self.doproject:
-            self._pyproject_toml = toml.load(file)
-            # TODO: Version.
-            if self._pyproject_toml.get('build-system') != conf['build-system']:
-                self._pyproject_toml['build-system'] = conf['build-system']
-                toml.dump(self._pyproject_toml, file)
+            if self.home.is_dir() and self.py:
+                if rv := self.pyproject_toml_load:
+                    # TODO: Version.
+                    if rv.get('build-system') != conf['build-system']:
+                        rv['build-system'] = conf['build-system']
+                else:
+                    rv = conf['build-system'] | dict(tool=dict(rc=dict(version='0.0.0')))
+                toml.dump(rv, file.open(mode='+w'))
+                self._configuration = None
+                self._pyproject_toml = self.pyproject_toml_load
         return self._pyproject_toml
+
+    @property
+    def pyproject_toml_load(self):
+        if (rv := (self.configuration.pyproject_toml or self.home / 'pyproject.toml')).is_file():
+            return toml.load(rv)
+
+    @property
+    def pyproject_toml_path(self):
+        return self.configuration.pyproject_toml or self.home / 'pyproject.toml'
 
     def remotediff(self, branch=None, name_only=True, remote=None, stat=False):
         """
@@ -2352,6 +2587,7 @@ class Distro:
         Returns:
             Remote str diff if remote else dict with remote and diffs.
         """
+
         def value(name):
             b = branch if branch else self.branchdefault(remote=name)
             return g.git.diff(str(Path(name) / b), name_only=name_only, stat=stat)
@@ -2393,35 +2629,45 @@ class Distro:
         >>> from rc import Distro
         >>>
         >>> distro = Distro()
-        >>> assert jupyter.__name__ in distro.requirements['optional-dependencies']['dev']
+        >>> assert jupyter.__name__ in distro.requirements['extras_require']['dev']
 
         Returns:
             List Script Paths Relative to Git dir.
         """
+
         def parse(_i):
-            return tuple(r.requirement for r in parse_requirements(str(_i), session=session))
+            return tuple(str(r) for r in parse_requirements('\n'.join(
+                l for l in _i.read_text().splitlines() if l[0] != '-')))
 
-        home, name, session = self.home, Pname.REQUIREMENTS.name, PipSession()
-        rv = {'dependencies': (), 'optional-dependencies': {}}
-        for i in list(self.home.glob(f'*{name}*')) + list((home / name).glob(f'*{name}*')):
-            if i.is_file():
-                if (key := i.stem.rpartition('_')[2]) == name:
-                    rv['dependencies'] = parse(i)
-                else:
-                    rv['optional-dependencies'][key] = parse(i)
-        return rv
+        if not self._requirements and self.doproject:
+            home, name = self.home, Pname.REQUIREMENTS.name
+            self._requirements = {'install_requires': (), 'extras_require': {}}
+            for i in list(self.home.glob(f'*{name}*')) + list((home / name).glob(f'*{name}*')):
+                if i.is_file():
+                    if (key := i.stem.rpartition('_')[2]) == name:
+                        self._requirements['install_requires'] = parse(i)
+                    else:
+                        self._requirements['extras_require'][key] = parse(i)
+        return self._requirements
 
+    @trace()
     def run(self):
         """
         Build, Publish.
 
-        Returns:
+        >>> from rc import Distro
+        >>>
+        >>> d = Distro()
+        >>> d.run()
 
+        Returns:
+            None
         """
-        if not self.doproject:
-            print('Nothing to do here!')
-        configuration = self.configuration
-        pyproject = toml.load(configuration.pyproject_toml)
+        if self.doproject:
+            with self.sem():
+                self.setup_cfg()
+                self.build()
+                self.action = Action.FINISHED
 
     @property
     def scripts(self):
@@ -2447,220 +2693,7 @@ class Distro:
                 scripts.append(rv)
         return {str(s.relative_to(self.home)): s.resolve() for item in scripts for s in item.iterdir()}
 
-    def setup(self):
-        """
-        Needs `pyproject.toml` file with [tool.rc] section and version key to read configuration.
-
-        Updates: `pyproject.toml`, `setup.cfg` and `MANIFEST.in`.
-
-            .. code-block:: toml
-
-                [tool.rc]  # pyproject.toml (Read)
-                cmdclass = {install = 'bashrc:Install'}
-                entry-points = {rc = 'rc:app'}
-                organization = true  # GitHub User: ``true`` organization & absent/anything else for personal.
-                pypi = false  # PyPi Upload: ``true`` organization, ``false`` personal & absent/anything else only Git.
-                version = '0.0.0'  # Required.
-
-                [metadata]  # setup.cfg (Updates fields if empty)
-                author = jose
-                author_email = jose@google.com
-                description = My package description
-                long_description = file: README.md
-                name = bashrc
-                url = https://github.com/j5pu/bashrc.git
-                version = 0.31.90
-
-                [options]
-                cmdclass =
-                    install = rc.Install
-                include_package_data = True
-                install_requires =
-                    requests
-                packages = find:
-                py_modules =  # if no packages
-                    rc
-                python_requires = >= 3.9
-                scripts =
-                    scripts/bashrc
-                zip_safe = False
-
-                [options.entry_points]
-                console_scripts =
-                    rc = rc:app
-
-                [options.extras_require]
-                beta =
-                    bidict
-                dev =
-                    icecream
-                    jupyter
-                test =
-                    pytest
-
-                [options.packages.find]  # if packages
-                exclude =
-                    backup
-                    doc
-                    tests
-                    tmp
-                    venv
-
-        Examples:
-            >>> from rc import Distro, Pname
-            >>>
-            >>> d = Distro()
-            >>> assert d.setup()
-
-        Returns:
-            Dict/kwargs for setup.py
-        """
-        if not self.doproject:
-            return
-        author = 'jose'
-        author_email = 'jose@google'
-        cmdclass = {'install': Install}
-        entry_points = dict(console_scripts=['rc = bashrc:app'])
-        extras_require = list(self.requirements['optional-dependencies'])
-        install_requires = list(self.requirements['dependencies'])
-        name = self.name
-        packages = list(self.packages)
-        python_requires = '>= 3.9'
-        scripts = list(self.scripts)
-        url = 'https://github.com',
-        version = '0.31.90'
-        zip_safe = False
-        if conf['distro']['legacy']:
-            toml.dump(
-                dict(
-                    project={  # https://www.python.org/dev/peps/pep-0621/
-                        'authors': [dict(name=author, email=author_email)],
-                        'entry-points': entry_points,
-                        'optional-dependencies': extras_require,
-                        'dependencies': install_requires,
-                        'name': self.name,
-                        'requires-python': python_requires,
-                        'urls': dict(homepage=url),
-                        'version': version,
-                    },
-                    **envtoml.load(self.configuration.pyproject_toml)
-                ),
-                self.configuration.pyproject_toml)
-            self._setup = dict(
-                cmdclass=cmdclass,
-                packages=packages,
-                scripts=list(self.scripts),
-                zip_safe=zip_safe,
-            )
-        else:
-            self._setup = dict(
-                author=author,
-                author_email=author_email,
-                cmdclass=cmdclass,
-                entry_points=dict(console_scripts=['rc = bashrc:app']),
-                extras_require=extras_require,
-                install_requires=install_requires,
-                name=name,
-                packages=packages,
-                python_requires=python_requires,
-                scripts=scripts,
-                setup_requires=['setuptools', 'wheel'],
-                url=url,
-                version=version,
-                zip_safe=zip_safe,
-            )
-        return self._setup
-
-    # def setup(self):
-    #     """
-    #     Setup dict/kwargs for setup.py.
-    #
-    #     >>> from rc import Distro, Pname
-    #     >>>
-    #     >>> d = Distro()
-    #     >>> assert d.setup()
-    #
-    #     Returns:
-    #         Dict/kwargs for setup.py
-    #     """
-    #     if not self.doproject:
-    #         return
-    #     author = 'jose'
-    #     author_email = 'jose@google'
-    #     cmdclass = {'install': Install}
-    #     entry_points = dict(console_scripts=['rc = bashrc:app'])
-    #     extras_require = list(self.requirements['optional-dependencies'])
-    #     install_requires = list(self.requirements['dependencies'])
-    #     name = self.name
-    #     packages = list(self.packages)
-    #     python_requires = '>= 3.9'
-    #     scripts = list(self.scripts)
-    #     url = 'https://github.com',
-    #     version = '0.31.90'
-    #     zip_safe = False
-    #     if conf['distro']['legacy']:
-    #         toml.dump(
-    #             dict(
-    #                 project={  # https://www.python.org/dev/peps/pep-0621/
-    #                     'authors': [dict(name=author, email=author_email)],
-    #                     'entry-points': entry_points,
-    #                     'optional-dependencies': extras_require,
-    #                     'dependencies': install_requires,
-    #                     'name': self.name,
-    #                     'requires-python': python_requires,
-    #                     # 'scripts': {'rc': 'bashrc:app'},
-    #                     'urls': dict(homepage=url),
-    #                     'version': version,
-    #                 },
-    #                 **envtoml.load(self.pyproject_toml)
-    #             ),
-    #             self.pyproject_toml)
-    #         self._setup = dict(
-    #             cmdclass=cmdclass,
-    #             packages=packages,
-    #             scripts=list(self.scripts),
-    #             zip_safe=zip_safe,
-    #         )
-    #     else:
-    #         self._setup = dict(
-    #             author=author,
-    #             author_email=author_email,
-    #             cmdclass=cmdclass,
-    #             entry_points=dict(console_scripts=['rc = bashrc:app']),
-    #             extras_require=extras_require,
-    #             install_requires=install_requires,
-    #             name=name,
-    #             packages=packages,
-    #             python_requires=python_requires,
-    #             scripts=scripts,
-    #             setup_requires=['setuptools', 'wheel'],
-    #             url=url,
-    #             version=version,
-    #             zip_safe=zip_safe,
-    #         )
-    #     return self._setup
-
-    # def setup(self):
-    #     if self.git:
-    #         (self.project / MANIFEST).write_text('\n'.join([f'include {l}' for l in self.git.ls]))
-    #
-    #     self.setup_kwargs = dict(
-    #         author=self.user.gecos, author_email=Url.email(), description=self.description,
-    #         entry_points=dict(console_scripts=[f'{p} = {p}:{CLI}' for p in self.packages_upload]),
-    #         include_package_data=True, install_requires=self.requirements.get('requirements', list()), name=self.repo,
-    #         package_data={self.repo: [f'{p}/{d}/*' for p in self.packages_upload
-    #                                   for d in (self.project / p).scan(PathOption.DIRS)
-    #                                   if d not in self.exclude_dirs + tuple(self.packages + [DOCS])]},
-    #         packages=self.packages_upload, python_requires=f'>={PYTHON_VERSIONS[0]}, <={PYTHON_VERSIONS[1]}',
-    #         scripts=self.scripts_relative, setup_requires=self.requirements.get('requirements_setup', list()),
-    #         tests_require=self.requirements.get('requirements_test', list()),
-    #         url=Url.lumenbiomics(http=True, repo=self.repo).url,
-    #         version=__version__, zip_safe=False
-    #     )
-    #     return self.setup_kwargs
-
-    @property
-    def setup_cfg(self):
+    def setup_cfg(self, verbose=None):
         """
         setup.cfg update.
 
@@ -2670,17 +2703,32 @@ class Distro:
         >>> if (d.home / Pname.SETUP.cfg()).is_file():
         ...     assert d.setup_cfg
 
+        Args:
+            verbose: distutils messages. They are supressed with setup.cfg global verbose and with
+                threshold patch in setuptools.Command. This supress what is not covered by global verbose.
+                For global verbose modify pyproject.toml.
+
         Returns:
-            setup.cfg Path.
+            setup.cfg contains.
         """
-        # TODO: Aqui lo dejo. Ver que hago con author etc.. y si uso lo de icloud de python o no.
-        file = self.configuration.setup_cfg
+        file = str(self.configuration.setup_cfg)
         if not self._setup_cfg and self.doproject:
-            self._setup_cfg = toml.load(file)
-            if self._pyproject_toml.get('build-system') != conf['build-system']:
-                self._pyproject_toml['build-system'] = conf['build-system']
-                toml.dump(self._pyproject_toml, file)
-        c = read_configuration(str(file))
+            templates = Environment(loader=PackageLoader('rc'), autoescape=select_autoescape(),
+                                    trim_blocks=True, lstrip_blocks=True)
+            tool = dict(metadata=dict(author=env('USER'), author_email=self.github.value.email,
+                                      name=self.name, url=self.github.https(self.name)),
+                        options=dict(install_requires=self.requirements.get('install_requires', []),
+                                     extras_require=self.requirements.get('extras_require', {}),
+                                     modules=self.modules, packages=self.packages, scripts=self.scripts))
+            data = merge({}, conf['tool'], tool, self.pyproject_toml['tool'][TOOL], strategy=Strategy.TYPESAFE_ADDITIVE)
+
+            ic(data)
+            templates.get_template(Pname.SETUP.cfg().name + Pname.J2.dot.name).stream(tool=data).dump(file)
+            self._setup_cfg = read_configuration(file)
+            # distutils.log = { DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, FATAL = 5 }
+            # log = {0 = 4, 1 = 3, 2 = 2, 3 = 1}
+            setuptools.Command.threshold = - (verbose or data.get('global', {}).get('verbose', 0) - distutils.log.ERROR)
+            ic(setuptools.Command.threshold)
         return self._setup_cfg
 
     @property
@@ -2700,6 +2748,53 @@ class Distro:
         if not self._ssh:
             self._ssh = GitHub.ssh(self.name)
         return self._ssh
+
+    def tool(self, verbose=None):
+        """
+        setup.cfg update.
+
+        >>> from rc import Distro, Pname
+        >>>
+        >>> d = Distro()
+
+
+        Args:
+            verbose: distutils messages. They are supressed with setup.cfg global verbose and with
+                threshold patch in setuptools.Command. This supress what is not covered by global verbose.
+                For global verbose modify pyproject.toml.
+
+        Returns:
+            setup.cfg contains.
+        """
+        name = self.name
+        ld = tuple(tuple(self.home.glob(f'{i}.*')) for i in (Pname.README.name.upper(), 'CHANGELOG', 'LICENSE',))
+        rv = merge(
+            {},
+            conf['tool'],
+            dict(
+                metadata=dict(
+                    author=env('USER'),
+                    author_email=self.github.value.email,
+                    description=((ld[0][0].read_text().splitlines() or [name]) if ld[0] else [name])[0].lstrip(
+                        '#').lstrip(' '),
+                    name=name,
+                    url=self.github.https(name)),
+                options=dict(
+                    install_requires=self.requirements.get('install_requires', []),
+                    extras_require=self.requirements.get('extras_require', {}),
+                    modules=self.modules,
+                    packages=self.packages,
+                    scripts=self.scripts)
+            ),
+            self.pyproject_toml['tool'][TOOL],
+            strategy=Strategy.TYPESAFE_ADDITIVE
+        )
+        ic(rv)
+        # distutils.log = { DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, FATAL = 5 }
+        # log = {0 = 4, 1 = 3, 2 = 2, 3 = 1}
+        setuptools.Command.threshold = - (verbose or rv.get('global', {}).get('verbose', 0) - distutils.log.ERROR)
+        ic(setuptools.Command.threshold)
+        return rv
 
     @property
     def untracked_files(self):
@@ -2755,12 +2850,98 @@ class Distro:
         return self._urls
 
 
-class Install(setuptools.command.install.install):
+class egg_info(setuptools.command.egg_info.egg_info):
+    def __init__(self, *args, **kwargs): super().__init__(*args, **kwargs)
+
+    def run(self): super().run()
+
+
+class install(setuptools.command.install.install):
     """INSTALL ``cmdclass`` :class:`setuptools.command.install.install` Sub Class."""
 
+    def __init__(self, *args, **kwargs): super().__init__(*args, **kwargs)
+
     def run(self):
+        ic(f'Start: {self.run.__qualname__}')
         setuptools.command.install.install.run(self)
-        print('Hello!')
+        ic(f'End: {self.run.__qualname__}')
+
+
+class sdist(setuptools.command.sdist.sdist):
+    def __init__(self, *args, **kwargs): super().__init__(*args, **kwargs)
+
+    def run(self): super().run()
+
+
+class SysSem(sysv_ipc.Semaphore):
+    """Sysv SysSem Class."""
+    KEY_MIN = sysv_ipc.KEY_MIN
+    KEY_MAX = sysv_ipc.KEY_MAX
+    db = TinyDB(Path.home() / '.syssem.json', sort_keys=True, indent=4, separators=(',', ': '))
+    atexit.register(db.close)
+    __slots__ = ('kwargs', 'log',)
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.log = getlog(extra_add=tuple(kwargs), std_add=('process',), copy=True).bind(**kwargs)
+        if doc := self.db.get(tinydb.Query().kwargs == kwargs):
+            key = doc.doc_id
+        else:
+            key = self.db.insert({'kwargs': kwargs})
+        try:
+            super().__init__(key)
+        except sysv_ipc.ExistentialError:
+            super().__init__(key, sysv_ipc.IPC_CREX, initial_value=1)
+        atexit.register(self.release)
+
+    def __reduce__(self): return self.__class__, tuple(self.kwargs.items())
+
+    def __repr__(self): return f'{self.__class__.__name__}({self.key=}, {self.kwargs=}, {self.value=})'
+
+    def __str__(self): return f'{self.kwargs}'
+
+    @staticmethod
+    def purge():
+        """Removes all ShareMemory, MessageQueue and Semaphore."""
+        if not typer.confirm("Are you sure you want to remove all Semaphores?"):
+            raise typer.Abort()
+        found = False
+        previous = None
+        for i in range(SysSem.KEY_MIN, SysSem.KEY_MAX + 1):
+            try:
+                sysv_ipc.remove_semaphore(i)
+                if not found:
+                    found = True
+                    print(previous)
+            except (sysv_ipc.ExistentialError, OverflowError):
+                pass
+            previous = i
+
+    @contextmanager
+    def sem(self):
+        """
+        If:
+            @contextmanager
+            @trace(start='trace')
+            def sem(self):
+
+            Only see: Condition.WAITING.
+
+        If:
+            @trace(start='trace')
+            @contextmanager
+            def sem(self):
+
+            Only see: Condition.WAITING.
+
+        Returns:
+
+        """
+        self.log.trace(Action.WAITING.name)
+        with self:
+            self.log.trace(Action.ACQUIRED.name)
+            yield
+        self.log.trace(Action.RELEASED.name)
 
 
 class Version(VersionInfo):
@@ -2797,3 +2978,4 @@ class Version(VersionInfo):
 
     @property
     def vtext(self): return f'v{str(self)}'
+# </editor-fold>

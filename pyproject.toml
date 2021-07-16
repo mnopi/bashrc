@@ -1,5 +1,24 @@
-[tool.rc]
-cmdclass = { install = 'rc.Install' }
-find = { exclude = [ 'backup', 'doc', 'tests', 'tmp', 'venv' ] }
-entry_points = { rc = 'rc:app' }
-version = '0.31.90'
+[build-system]
+requires = [ "build", "setuptools>=45.0", "wheel",]
+build-backend = "setuptools.build_meta"
+
+[tool.rc.metadata]
+version = "0.31.90"
+
+[tool.rc.global]
+verbose = 0
+
+[tool.rc.options]
+python_requires = ">= 3.9"
+
+[tool.rc.options.cmdclass]
+install = "rc.install"
+
+[tool.rc.options.entry_points.console_scripts]
+rc = "rc:app"
+
+[tool.rc.options.packages.find]
+exclude = []
+
+[tool.rc.options.py_modules.find]
+exclude = []
