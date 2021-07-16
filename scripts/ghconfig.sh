@@ -8,7 +8,7 @@ gh alias set loguser --shell 'gh auth login --with-token <<< $GITHUB_USER_TOKEN'
 gh alias set logwork --shell 'gh auth login --with-token <<< $GITHUB_WORK_TOKEN'
 
 info.sh ghconfig
-cd "${USERHOME/git}" || exit 1
+cd "${USERHOME}/git" || exit 1
 gall.sh
 if secrets.sh; then exit 0; else exit 1; fi
 
