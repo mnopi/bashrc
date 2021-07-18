@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ubuntu" type="docker-deploy" factoryName="docker-image" singleton="false" server-name="macos">
+    <deployment type="docker-image">
+      <settings>
+        <option name="imageTag" value="ubuntu:latest" />
+        <option name="containerName" value="ubuntu" />
+      </settings>
+    </deployment>
+    <method v="2" />
+  </configuration>
+</component>

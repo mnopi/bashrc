@@ -12,3 +12,4 @@ if ! test -d "${home}"; then
   exit 1
 fi
 echo "${home}"
+

@@ -4,12 +4,12 @@
 export starting="${BASH_SOURCE[0]}"; debug.sh starting
 [[ ! "${TIMES-}" ]] || start="$( date +%s )"
 
-DARWIN="$(uname -a | grep -i darwin 2>/dev/null)"; export DARWIN  ## First: home.sh uses it (USERHOME)
-KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
-DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
-UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
-export USERNAME="jose"
-USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
+#DARWIN="$(uname -a | grep -i darwin 2>/dev/null)"; export DARWIN  ## First: home.sh uses it (USERHOME)
+#KALI="$(uname -a | grep -i kali 2>/dev/null)"; export KALI
+#DEBIAN="$(uname -a | grep -i debian 2>/dev/null)"; export DEBIAN
+#UBUNTU="$(uname -a | grep -i ubuntu 2>/dev/null)"; export UBUNTU
+#export USERNAME="jose"
+#USERHOME="$( home.sh "${USERNAME}" )"; export USERHOME
 export PASSWD_PATH="${USERHOME}/.passwd"
 export GITHUB_USER="j5pu"
 export GITHUB_DOMAIN="github.com"
@@ -34,7 +34,6 @@ if test -n "${DARWIN}"; then
   unset _v
 else
   REALNAME="$( id -nu )"
-
 fi
 export REALNAME
 export ICLOUD="${USERHOME}/${ICLOUD_BASENAME}"

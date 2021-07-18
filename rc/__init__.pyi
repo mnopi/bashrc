@@ -4,6 +4,7 @@ import itertools
 import subprocess as subprocess
 import distutils.dist
 from contextlib import contextmanager
+from os import environ
 from typing import Literal
 from typing import TextIO
 
@@ -59,6 +60,7 @@ conf: dict[str, Any] = ...
 conf_log: dict[str, Any] = ...
 Configuration = NamedTuple('Configuration', manifest_in=Path, pyproject_toml=Optional[Path], setup_cfg=Optional[Path],
                            setup_py=Optional[Path])
+EnvironOS = type(environ)
 ExceptionUnion = Union[tuple[Type[Exception]], Type[Exception]]
 GITHUB_API_URL: furl = ...
 GitUser = NamedTuple('GitUser', blog=furl, email=str, id=int, https=furl, key=str, login=str,  name=str, org=str,
@@ -160,6 +162,8 @@ class Pname(_Pname):
 # Functions
 def copylogger(l:AnyLogger, add: bool = ...) -> AnyLogger: ...
 def elementadd(name: Union[str, tuple[str, ...]], closing: Optional[bool] = ...) -> str: ...
+def envbash(path: AnyPath = ..., fixups: Iterable = ..., into: Mapping = ..., missing_ok: bool = ...,
+            new: bool = ..., override: bool = ...) -> Union[EnvironOS, dict[str, str]]: ...
 def findup(path: AnyPath = None, kind: Pis = ...,
            name: Union[str, Pname, Path, Callable[..., Path]] = ...,
            uppermost: bool = ...) -> Optional[Path]: ...

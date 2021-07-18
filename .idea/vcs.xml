@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../Downloads/vendoring" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../git" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../pyproject-toml" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../req2toml" vcs="Git" />
   </component>

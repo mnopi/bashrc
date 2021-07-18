@@ -1,3 +1,6 @@
+[defaults]
+envbash = 'env.bash'
+
 [app]
     add_completion = false
     context_settings = {help_option_names = ['-h', '--help'], color = true}

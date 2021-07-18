@@ -40,18 +40,18 @@ sudo chown -R "${USERNAME}":"$( id -g "${USERNAME}" )" "${VARLOG}" >/dev/null 2>
 sudo /bin/chmod -R g+s "${VARLOG}"
 
 export APPLICATIONS="${MACDEV}/applications"
-export PACKAGES="${MACDEV}/packages"
+#export PACKAGES="${MACDEV}/packages"
 export REPOS="${MACDEV}/repos"
 export SCRIPTS="${MACDEV}/scripts"
 
 export MSF_DATABASE_CONFIG="${USERHOME}/msf4/db"
 
-export BREWFILE="${PACKAGES}/Brewfile"
-export GEMFILE="${PACKAGES}/Gemfile"
-export NPMFILE="${PACKAGES}/npmfile"
-export OPAMFILE="${PACKAGES}/Opamfile"
-export USERFILE="${PACKAGES}/Userfile"
-export REQUIREMENTS="${PACKAGES}/requirements.txt"
+#export BREWFILE="${PACKAGES}/Brewfile"
+#export GEMFILE="${PACKAGES}/Gemfile"
+#export NPMFILE="${PACKAGES}/npmfile"
+#export OPAMFILE="${PACKAGES}/Opamfile"
+#export USERFILE="${PACKAGES}/Userfile"
+#export REQUIREMENTS="${PACKAGES}/requirements.txt"
 
 export USB="/Volumes/USB-2TB"
 export TIME="${USB}/Backups.backupdb/$( hostname )"

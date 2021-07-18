@@ -21,6 +21,7 @@ __all__ = (
     'conf',
     'conf_log',
     'Configuration',
+    'EnvironOS',
     'ExceptionUnion',
     'FILE',
     'GITHUB_API_URL',
@@ -77,6 +78,7 @@ import inspect
 import io
 import itertools
 import json
+import os
 import signal
 import subprocess as subprocess
 import sys
@@ -92,6 +94,7 @@ from functools import wraps
 from ipaddress import ip_address
 from ipaddress import IPv4Address
 from ipaddress import IPv6Address
+from os import environ
 from os import getcwd
 from os import PathLike
 from pathlib import Path
@@ -152,6 +155,7 @@ FILE = Path(__file__)
 conf = envtoml.load(FILE.parent / '.toml')
 conf_log = conf['log']
 Configuration = namedtuple('Configuration', 'manifest_in pyproject_toml setup_cfg setup_py')
+EnvironOS = type(environ)
 ExceptionUnion = Union[tuple[Type[Exception]], Type[Exception]]
 GITHUB_API_URL = furl('https://api.github.com')
 GitUser = namedtuple('GitUser', 'blog email id https key login name org pip repos ssh token url')
@@ -405,6 +409,62 @@ def elementadd(name, closing=False):
     return ''.join(f'<{"/" if closing else ""}{i}>' for i in ((name,) if isinstance(name, str) else name))
 
 
+def envbash(path=None, fixups=None, into=None, missing_ok=False, new=False, override=True):
+    """
+    Source ``path`` or ``path``relative to cwd upwards and return the resulting environment as a dictionary.
+
+    Args:
+        path: bash file to source or name relative to cwd upwards.
+        fixups: remove from new environment if they are not in os.environ or get from os.environ instead of new env.
+        into: if override updated into (Default: None for os.environ).
+        missing_ok: do not raise exception if file ot found.
+        new: return only vars in file.
+        override: override
+
+    Raises:
+        FileNotFoundError.
+
+    Return:
+        Dict.
+    """
+    conf_envbash, o_path, rv = conf['defaults'][envbash.__name__], path, None
+    path = rv if (rv := Path(path or conf_envbash)).is_file() else rv \
+        if (rv := findup(name=path)) and rv.is_file() else None
+    if envbash not in cachemodule:
+        cachemodule[envbash] = {}
+    cachemodule[envbash][(Path.cwd(), o_path)] = path
+
+    if path is None:
+        if missing_ok:
+            return
+        else:
+            raise FileNotFoundError(f'{conf_envbash=}, {o_path=}, {Path.cwd()}, {rv=}, {path=}')
+
+    rv = shell(f'set -a; source {path} > /dev/null; python -c "import os; print(repr(dict(os.environ)))"')
+
+    if not rv:
+        raise ValueError(f'source {path=}')
+
+    fixups = fixups or ['_', 'OLDPWD', 'PWD', 'SHLVL']
+
+    if new:
+        return {k: v for k, v in eval(rv).items() if k not in os.environ and k not in fixups}
+
+    new = {}
+    for k, v in eval(rv).items():
+        if not k.startswith('BASH_FUNC_'):
+            if k in fixups and k in os.environ:
+                new[k] = os.environ[k]
+            elif k not in fixups:
+                new[k] = v
+
+    if override:
+        into = os.environ if into is None else into
+        into.update(new)
+        return into
+    return new
+
+
 def findup(path=None, kind=Pis.IS_FILE, name=Pname.NONE.env, uppermost=False):
     """
     Find up if name exists or is file or directory.
@@ -580,6 +640,10 @@ def getstdout(func, *args, ansi=False, new=True, **kwargs):
     with redirect_stdout(buffer):
         func(*args, **kwargs)
     return strip(buffer.getvalue(), ansi=ansi, new=new) if ansi or new else buffer.getvalue()
+
+
+def icloud2f():
+    pass
 
 
 def is_giturl(remote):
@@ -1918,7 +1982,7 @@ class GitHub(_GitHub):
         """
         Repo Information.
 
-        [repos](https://j5pu.github.io/projects/repos/)
+        [repos](https://j5pu.github.io/data/repos/)
 
         1. **organization**: *GitHub User*.
 
