@@ -4,14 +4,7 @@
 # List directory contents
 # https://console.scaleway.com/object-storage/buckets/fr-par/pictures-documents-j5pu/explorer
 # https://www.scaleway.com/en/docs/how-to-migrate-object-storage-buckets-with-rclone/
-alias ....="cd ../../.." # Up three levels
-alias ...="cd ../.."     # Up two levels
-alias ..="cd .."         # Up one level
-alias .ansible="cd '${ANSIBLE}'"
-alias .bapy="cd '${USERHOME}/bapy'"
-alias .bash="cd '${BASH_D}'"
-alias .caches="cd '${CACHES}'"
-alias .clones="cd '${CLONES}'"
+
 alias .desktop="cd '${USERHOME}/Desktop'"
 alias .documents="cd '${USERHOME}/Documents'"
 alias .downloads="cd '${USERHOME}/Downloads'"
