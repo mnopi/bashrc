@@ -8,7 +8,7 @@ else
 fi
 
 if sudo apt -qq full-upgrade -y; then
-  info.sh apt full-upgrad
+  info.sh apt full-upgrade
 else
   error.sh apt full-upgrade; exit 1
 fi
@@ -68,7 +68,8 @@ else
   error.sh apt auto-clean; exit 1
 fi
 
-if sudo apt -qq auto-remove -y; then
+if sudo apt
+; then
   info.sh apt auto-remove
 else
   error.sh apt auto-remove; exit 1
